@@ -1,0 +1,27 @@
+name: Bug report
+description: Report a reproducible SDK or sample problem.
+body:
+  - type: markdown
+    attributes:
+      value: Do not attach private documents, personal data, license keys or credentials. Use fictional data in reproductions.
+  - type: input
+    id: environment
+    attributes:
+      label: Environment
+      description: SDK version, browser or Node.js version, and operating system.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction
+      description: Steps, minimal sample code, and a sanitized document if needed.
+    validations:
+      required: true
+  - type: textarea
+    id: result
+    attributes:
+      label: Expected and actual behavior
+      description: For rendering issues, describe how Word or LibreOffice differs.
+    validations:
+      required: true

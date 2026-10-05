@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex"><title>Document workflows · OnoDocs</title><link rel="stylesheet" href="workflows.css"></head>
+<body><header><nav aria-label="Workflow examples"><a href="#ai-title">AI pipeline</a><a href="#ascii-title">ASCII</a><a href="#ast-title">AST</a></nav></header><p id="status" role="status">Reading document…</p>
+<main hidden>
+<section aria-labelledby="ai-title"><div class="example"><h2 id="ai-title"><span>01</span> Word brief → email</h2><p>Extract the delivery schedule and ask an LLM to turn it into a team email. This demo simulates the response locally.</p>
+<ol class="pipeline"><li><div class="step-heading"><span class="step-number">1</span><h3>Collect the delivery schedule</h3></div><ul id="delivery-cards"></ul><details><summary>View extracted data</summary><pre id="ai-context" tabindex="0" aria-label="AI context"></pre></details></li>
+<li><div class="step-heading"><span class="step-number">2</span><h3>Request an email draft</h3></div><p class="request">Write a short team email summarizing these deliveries. Keep every owner and date, and ask the team to flag blockers.</p><button id="apply-response" disabled>Draft email</button></li>
+<li><div class="step-heading"><span class="step-number">3</span><h3>Review the email</h3></div><div id="email-draft" hidden><pre id="email-output" aria-live="polite"></pre></div></li></ol>
+</div><aside aria-label="AI pipeline code"><div class="code-content"><div class="code-heading"><strong>Extract → LLM → email</strong><button data-copy="ai-code">Copy code</button></div><pre><code id="ai-code">import OpenAI from "openai";
+
+const data = doc.query.tables()
+  .where({ headers: ["Deliverable", "Owner", "Due"] })
+  .one().textRows;
+
+const llm = new OpenAI();
+const response = await llm.responses.create({
+  model: process.env.OPENAI_MODEL,
+  instructions: "Write a short team email summarizing " +
+    "these deliveries. Keep every owner and date, " +
+    "and ask the team to flag blockers.",
+  input: JSON.stringify(data)
+});
+
+const email = response.output_text;</code></pre><p>Run this request on your server with <code>OPENAI_API_KEY</code> and <code>OPENAI_MODEL</code> configured. The live demo simulates this step; the code shows the actual LLM request.</p><a href="https://developers.openai.com/api/docs/guides/text" target="_blank" rel="noreferrer">OpenAI request documentation</a></div></aside></section>
+<section aria-labelledby="ascii-title"><div class="example"><h2 id="ascii-title"><span>02</span> Full document → ASCII</h2><p>The whole brief in reading order, with paragraphs and plain-text tables. Images and visual formatting are omitted; non-ASCII punctuation is simplified.</p><pre id="ascii-output" tabindex="0" aria-label="ASCII document"></pre></div><aside aria-label="ASCII code"><div class="code-content"><div class="code-heading"><strong>Convert text and tables</strong><button data-copy="ascii-code">Copy code</button></div><pre><code id="ascii-code" data-source="examples/sdk/ascii.ts"></code></pre><p>This application formatter walks the SDK tree. It is a simplified text export, not a reproduction of page layout.</p></div></aside></section>
+<section aria-labelledby="ast-title"><div class="example"><h2 id="ast-title"><span>03</span> Document AST</h2><p>Explore the document's structure through stories, paragraphs, tables and cells. Text appears once, at paragraph level.</p><pre id="ast-output" tabindex="0" aria-label="Document tree"></pre></div><aside aria-label="AST code"><div class="code-content"><div class="code-heading"><strong>Read the document tree</strong><button data-copy="ast-code">Copy code</button></div><pre><code id="ast-code" data-source="examples/sdk/ast.ts"></code></pre><p>The query tree is a view of supported document content. No layout or canvas is created.</p></div></aside></section>
+</main><script type="module" src="workflows.js"></script></body></html>

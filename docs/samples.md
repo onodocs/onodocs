@@ -1,0 +1,52 @@
+# OnoDocs samples
+
+OnoDocs renders Word documents in the browser and exposes document structure,
+queries, text updates, selection, and geometry for application workflows.
+Rendering requires no backend. Document analysis also runs in Node.js.
+
+The repository and website are currently private previews. No npm release is
+required to run these samples. You need access to this repository, Node.js
+22.18 or newer (Node.js 24 LTS recommended), and the GitHub CLI signed in with `gh auth login`.
+
+```sh
+git clone https://github.com/onodocs/onodocs.git
+cd onodocs
+npm run setup
+npm start
+```
+
+Open http://127.0.0.1:5174/samples.html. Setup downloads the SDK archive from this
+repository's release and installs its dependencies. You can instead download
+`onodocs-sdk-0.1.9.tgz` into `vendor/` yourself and run `npm install`.
+
+| Sample | Entry point | Demonstrates |
+| --- | --- | --- |
+| Viewer | `examples/sdk/document.ts` | Mount a document, open local files, zoom, export PNG |
+| Custom form | `examples/sdk/document.ts` | Anchor HTML fields to tagged content and collect values |
+| Template | `examples/sdk/document.ts` | Fill a booking confirmation and print it |
+| Document workflows | `examples/sdk/workflows.ts` | Inspect tables, ASCII output and the document tree |
+| Node.js inspection | `examples/analyze.ts` | Read text and tables without rendering |
+
+```sh
+npm run analyze
+npm run analyze -- path/to/document.docx
+npm run typecheck
+npm run build
+```
+
+Build output goes to `~/.tmp/onodocs-samples/dist`. The browser examples embed
+the authored sample documents and do not upload selected documents. The email
+draft step is simulated locally; it makes no AI request and sends no email.
+
+Samples intentionally use evaluation mode, which adds a watermark. For a
+watermark-free trial or commercial use, pass your issued `licenseKey` to
+`openDocument`. Customer licenses verify offline; never embed a signing key.
+
+Sample code and authored documents are MIT-licensed. The SDK is separately
+licensed: unrestricted-duration non-production evaluation, an optional 30-day
+watermark-free trial, or a perpetual commercial application license.
+
+[Documentation](https://onodocs.com/developers/) ·
+[API reference](https://onodocs.com/developers/api/) ·
+[Pricing](https://onodocs.com/pricing/) ·
+[Support](https://onodocs.com/support/)

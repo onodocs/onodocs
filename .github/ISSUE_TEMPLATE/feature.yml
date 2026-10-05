@@ -1,0 +1,15 @@
+name: Feature request
+description: Describe a document workflow the SDK should support.
+body:
+  - type: textarea
+    id: need
+    attributes:
+      label: Application need
+      description: What are you trying to do, and what prevents it today?
+    validations:
+      required: true
+  - type: textarea
+    id: approach
+    attributes:
+      label: Proposed API or behavior
+      description: Include alternatives or workarounds you have considered.

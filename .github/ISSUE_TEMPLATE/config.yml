@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Documentation and API reference
+    url: https://onodocs.com/developers/
+    about: Integration instructions and supported APIs.
+  - name: Private and commercial support
+    url: https://onodocs.com/support/
+    about: Billing, licensing and reports containing private information.
