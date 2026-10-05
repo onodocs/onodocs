@@ -17,7 +17,7 @@ npm start
 
 Open http://127.0.0.1:5174/samples.html. Setup downloads the SDK archive from this
 repository's release and installs its dependencies. You can instead download
-`onodocs-sdk-0.1.9.tgz` into `vendor/` yourself and run `npm install`.
+the archive named in `sdk-release.json` into `vendor/` yourself and run `npm install`.
 
 | Sample | Entry point | Demonstrates |
 | --- | --- | --- |
