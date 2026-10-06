@@ -31,7 +31,7 @@ async function open(source: File | Uint8Array) {
     content = extractContent(doc);
     showOutput();
     copy.disabled = download.disabled = false;
-    status.textContent = `Ready · ${content.paragraphs.length} body paragraphs · ${content.tables.length} tables · ${content.deliveryTables.length} delivery tables. Everything stays in this browser.`;
+    status.textContent = `Ready · ${content.paragraphs.length} body ${content.paragraphs.length === 1 ? "paragraph" : "paragraphs"} · ${content.tables.length} ${content.tables.length === 1 ? "table" : "tables"} · ${content.deliveryTables.length} delivery ${content.deliveryTables.length === 1 ? "table" : "tables"}. Your file and extracted content stay in this browser.`;
   } catch (error) {
     if (!signal.aborted) status.textContent = `Unable to extract document. ${error instanceof Error ? error.message : "Try another Word file."}`;
   } finally {
@@ -58,7 +58,7 @@ copy.addEventListener("click", async () => {
   } catch {
     output.focus();
     output.select();
-    status.textContent = "Copy unavailable. The output is selected; use Ctrl+C or Command+C.";
+    status.textContent = "The output is selected. Press Ctrl+C or Command+C to copy it.";
   }
 });
 download.addEventListener("click", () => {

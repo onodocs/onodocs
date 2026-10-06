@@ -41,7 +41,7 @@ export function DocxViewer({ source, licenseKey = "" }: DocxViewerProps) {
           onProgress(progress) {
             if (signal.aborted) return;
             view = progress.view;
-            setStatus(progress.pages.length ? `Loading… ${progress.pages.length} pages available` : `Loading: ${progress.stage}…`);
+            setStatus(progress.pages.length ? `Loading… ${progress.pages.length} ${progress.pages.length === 1 ? "page" : "pages"} available` : `Loading: ${progress.stage}…`);
           }
         });
         if (signal.aborted) { doc.dispose(); return; }

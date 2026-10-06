@@ -24,7 +24,7 @@ async function open(source: File | Uint8Array) {
       onProgress(progress) {
         if (signal.aborted) return;
         view = progress.view;
-        status.textContent = progress.pages.length ? `Loading… ${progress.pages.length} pages available` : `Loading: ${progress.stage}…`;
+        status.textContent = progress.pages.length ? `Loading… ${progress.pages.length} ${progress.pages.length === 1 ? "page" : "pages"} available` : `Loading: ${progress.stage}…`;
       }
     });
     if (signal.aborted) { doc.dispose(); return; }

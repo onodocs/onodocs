@@ -48,7 +48,7 @@ async function load(input?: File) {
       if (signal.aborted) return;
       const pages = progress.pages;
       view = progress.view;
-      status.textContent = progress.stage === "parsing" ? "Reading document…" : progress.stage === "fonts" ? "Preparing fonts…" : pages.length ? `Loading document… ${pages.length} pages available` : "Laying out document…";
+      status.textContent = progress.stage === "parsing" ? "Reading document…" : progress.stage === "fonts" ? "Preparing fonts…" : pages.length ? `Loading document… ${pages.length} ${pages.length === 1 ? "page" : "pages"} available` : "Laying out document…";
     } });
     if (signal.aborted) { opened.dispose(); return; }
     current = opened;
@@ -87,7 +87,7 @@ function attachFields() {
   submitButton.addEventListener("click", () => {
     const dates = fields.map(({ deliverable, input }) => ({ deliverable, date: input.value }));
     const data = { dates, clientApproval: approval.checked, approvalDate: approvalDate.value };
-    document.querySelector("#form-feedback")!.textContent = "Collected " + dates.length + " delivery dates. This handler could send these values to your backend.";
+    document.querySelector("#form-feedback")!.textContent = "Collected " + dates.length + " delivery dates. Add your own submit handler to send these values to your backend.";
     document.querySelector("#dates-json")!.textContent = JSON.stringify(data, null, 2);
     document.querySelector<HTMLDialogElement>("#dates-dialog")!.showModal();
   });
