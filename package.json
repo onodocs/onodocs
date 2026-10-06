@@ -11,7 +11,8 @@
     "start": "node tools/build.mjs --serve",
     "build": "node tools/build.mjs",
     "typecheck": "tsc --noEmit",
-    "analyze": "node examples/analyze.ts"
+    "analyze": "node examples/analyze.ts",
+    "extract": "node examples/docx-extraction/node.ts"
   },
   "dependencies": {
     "@onodocs/sdk": "file:vendor/onodocs-sdk-0.2.0-beta.3.tgz",

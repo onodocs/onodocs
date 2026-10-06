@@ -27,10 +27,15 @@ the archive named in `sdk-release.json` into `vendor/` yourself and run `npm ins
 | Viewer | `examples/sdk/document.ts` | Mount a document, open local files, select text, export PNG/PDF |
 | Custom form | `examples/sdk/document.ts` | Anchor HTML fields to tagged content and collect values |
 | Template | `examples/sdk/document.ts` | Fill a booking confirmation and print it |
+| Text and table extraction | `examples/docx-extraction/main.ts`, `main.js` | Local files, raw tables, header-based records, copy and download |
+| Node.js extraction | `examples/docx-extraction/node.ts`, `node.js` | The same extraction function, JSON on stdout |
 | Document workflows | `examples/sdk/workflows.ts` | Inspect tables, ASCII output and the document tree |
 | Node.js inspection | `examples/analyze.ts` | Read text and tables without rendering |
 
 ```sh
+npm run extract
+npm run extract -- path/to/document.docx
+node examples/docx-extraction/node.js path/to/document.docx > extracted.json
 npm run analyze
 npm run analyze -- path/to/document.docx
 npm run typecheck
@@ -65,3 +70,9 @@ cancellation and replacement. The [React guide](https://onodocs.com/developers/r
 includes the full component, styles and Next.js client-component guidance. Import
 the component and styles in an existing React application and pass a browser
 `File` or stable bytes. Only the sample application uses the bundled DOCX loader.
+
+Open http://127.0.0.1:5174/docx-extraction/ or /javascript-extraction/ for the
+TypeScript and JavaScript extraction samples. Copy or download body text, all
+body tables, or delivery records selected by exact first-row headers. The
+[extraction guide](https://onodocs.com/developers/extract-docx-text-tables/) explains
+story scope, missing or repeated tables, merged cells and the shared Node.js CLI.

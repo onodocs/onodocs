@@ -36,6 +36,7 @@ sign-in or licence key is required. You can also [download the source ZIP](https
 | DOCX viewer in JavaScript | [main.js](examples/docx-viewer/main.js) | The same complete example in plain JavaScript |
 | React and TypeScript Word viewer | [DocxViewer.tsx](examples/react-docx-viewer/DocxViewer.tsx) | Typed component, progress, cancellation, replacement, unmounting and Strict Mode |
 | Viewer, custom forms and templates | [document.ts](examples/sdk/document.ts) | Document viewing, PNG/PDF export, anchored inputs and tagged template fields |
+| Text and table extraction | [extract.ts](examples/docx-extraction/extract.ts) | Browser and Node.js text, tables and JSON, with complete JavaScript equivalents |
 | Document workflows | [workflows.ts](examples/sdk/workflows.ts) | Tables, document tree, ASCII output and a locally simulated email draft |
 | Node.js analysis | [analyze.ts](examples/analyze.ts) | Read document content without a browser |
 
@@ -43,6 +44,8 @@ Selected documents stay in your browser. The samples do not upload document
 contents, call an AI service or send emails. See [sample setup and commands](docs/samples.md).
 
 ## Guides
+
+- [Extract DOCX text and tables in JavaScript and TypeScript](https://onodocs.com/developers/extract-docx-text-tables/) — [guide source](guides/extract-docx-text-tables/index.html)
 
 - [Build a DOCX viewer in JavaScript and TypeScript](https://onodocs.com/developers/javascript-docx-viewer/) — [guide source](guides/javascript-docx-viewer/index.html)
 - [Build a React Word viewer with TypeScript and Next.js](https://onodocs.com/developers/react-docx-viewer/) — [guide source](guides/react-docx-viewer/index.html)
