@@ -4,9 +4,9 @@ OnoDocs renders Word documents in the browser and exposes document structure,
 queries, text updates, selection, and geometry for application workflows.
 Rendering requires no backend. Document analysis also runs in Node.js.
 
-The repository and website are currently private previews. No npm release is
-required to run these samples. You need access to this repository, Node.js
-22.18 or newer (Node.js 24 LTS recommended), and the GitHub CLI signed in with `gh auth login`.
+The [public repository](https://github.com/onodocs/onodocs) contains JavaScript
+and TypeScript samples and the published guides. You need Node.js 22.18 or newer
+and npm. No GitHub sign-in or public npm SDK release is required.
 
 ```sh
 git clone https://github.com/onodocs/onodocs.git
@@ -21,7 +21,9 @@ the archive named in `sdk-release.json` into `vendor/` yourself and run `npm ins
 
 | Sample | Entry point | Demonstrates |
 | --- | --- | --- |
-| Viewer | `examples/sdk/document.ts` | Mount a document, open local files, zoom, export PNG |
+| TypeScript DOCX viewer | `examples/docx-viewer/main.ts` | Local files, progressive loading, selection, cancellation and cleanup |
+| JavaScript DOCX viewer | `examples/docx-viewer/main.js` | The same complete viewer in JavaScript |
+| Viewer | `examples/sdk/document.ts` | Mount a document, open local files, select text, export PNG/PDF |
 | Custom form | `examples/sdk/document.ts` | Anchor HTML fields to tagged content and collect values |
 | Template | `examples/sdk/document.ts` | Fill a booking confirmation and print it |
 | Document workflows | `examples/sdk/workflows.ts` | Inspect tables, ASCII output and the document tree |
@@ -50,3 +52,8 @@ watermark-free trial, or a perpetual commercial application license.
 [API reference](https://onodocs.com/developers/api/) ·
 [Pricing](https://onodocs.com/pricing/) ·
 [Support](https://onodocs.com/support/)
+
+The complete [viewer guide](https://onodocs.com/developers/javascript-docx-viewer/)
+and [all guide sources](../guides/) are included in this repository. Browser
+samples link directly to their GitHub source. The published samples use an
+evaluation-only licence adapter; they do not contact the website licensing API.

@@ -3,6 +3,7 @@ import sample from "../view-document/sample.docx";
 
 import { toAscii } from "./ascii";
 import { tree } from "./ast";
+import { demoLicense } from "./license";
 
 const controller = new AbortController();
 const status = document.querySelector<HTMLElement>("#status")!;
@@ -12,7 +13,7 @@ let deliveries: readonly (readonly string[])[] = [];
 async function load() {
   try {
     const signal = controller.signal;
-    const doc = await openDocument(sample, { signal });
+    const doc = await openDocument(sample, { signal, licenseKey: await demoLicense(signal) });
     if (controller.signal.aborted) return;
     deliveries = doc.query.tables().where({ headers: ["Deliverable", "Owner", "Due"] }).one().textRows;
     const tasks = deliveries.slice(1).map(([task, owner, due]) => ({ task: task!, owner: owner!, due: due! }));

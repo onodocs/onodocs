@@ -6,3 +6,5 @@ const bytes = await readFile(process.argv[2] ?? new URL("./view-document/sample.
 const doc = await openDocument(bytes);
 console.log(toAscii(doc.query.one()));
 console.log(JSON.stringify(doc.query.tables().map(table => table.textRows), null, 2));
+
+console.log("Sample source: https://github.com/onodocs/onodocs/blob/main/examples/analyze.ts");

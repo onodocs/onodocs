@@ -1,0 +1,148 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>DOCX Viewer in JavaScript &amp; TypeScript: Working Example | OnoDocs</title><meta name="description" content="Build a browser DOCX viewer with JavaScript or TypeScript. Complete sample code for local files, progressive rendering, text selection, cancellation and cleanup."><link rel="canonical" href="https://onodocs.com/developers/javascript-docx-viewer/"><meta property="og:type" content="article"><meta property="og:site_name" content="OnoDocs"><meta property="og:title" content="Build a DOCX viewer in JavaScript and TypeScript"><meta property="og:description" content="A working Word document viewer with local files, loading progress, selection and cancellation."><meta property="og:url" content="https://onodocs.com/developers/javascript-docx-viewer/"><link rel="stylesheet" href="https://onodocs.com/style.css"></head>
+<body><a class="skip-link" href="#main">Skip to content</a><header class="site-header"><a class="brand" href="https://onodocs.com/" aria-label="OnoDocs home">OnoDocs</a><span class="release-label">Preview</span><nav aria-label="Main"><a href="https://onodocs.com/examples/">Demos</a><a href="https://onodocs.com/developers/" aria-current="page">Docs</a><a href="https://onodocs.com/pricing/">Pricing</a><a href="https://onodocs.com/support/">Support</a></nav></header>
+<main id="main"><section class="page-intro"><p class="eyebrow">Developer guide · Browser rendering</p><h1>Build a DOCX viewer in JavaScript and TypeScript</h1><p>Open a Word document inside your application, render its pages, and let users select and copy text. This example processes local files in the browser and needs no document-processing backend.</p><p><a href="https://github.com/onodocs/onodocs/tree/main/examples/docx-viewer">Get the sample on GitHub</a> · <a href="https://github.com/onodocs/onodocs/blob/main/guides/javascript-docx-viewer/index.html">Guide source</a> · <a href="https://onodocs.com/samples/docx-viewer/sample.docx" download="">Download the Word sample</a></p></section>
+<div class="doc-layout"><nav class="doc-nav" aria-label="Guide sections"><a href="#try-it">Try the viewer</a><a href="#setup">Run locally</a><a href="#first-render">First render</a><a href="#complete-example">Complete example</a><a href="#lifecycle">Loading and cleanup</a><a href="#selection">Select and copy</a><a href="#fonts">Fonts and fidelity</a><a href="#privacy">Local processing</a><a href="#troubleshooting">Troubleshooting</a><a href="#next">Next steps</a></nav><article class="prose">
+<section id="try-it"><h2>Try the viewer</h2><p>Choose a local Word file, or use the included project brief. Drag across text to select it. The sample uses unrestricted evaluation mode and displays the SDK watermark.</p><iframe class="guide-demo" src="https://onodocs.com/samples/docx-viewer/" title="JavaScript and TypeScript DOCX viewer" loading="lazy"></iframe><p><a href="https://onodocs.com/samples/docx-viewer/" target="_blank" rel="noopener">Open the viewer in a full tab</a>. The live example and the source below use the same implementation.</p></section>
+<section id="setup"><h2>Run the JavaScript or TypeScript sample locally</h2><p>You need Node.js 22.18 or newer and npm. Clone the <a href="https://github.com/onodocs/onodocs">public OnoDocs repository</a>, or <a href="https://github.com/onodocs/onodocs/archive/refs/heads/main.zip">download its ZIP</a> and extract it.</p><pre><code>git clone https://github.com/onodocs/onodocs.git
+cd onodocs
+npm run setup
+npm start</code></pre><p>Open <code>http://127.0.0.1:5174/samples.html</code> and choose the JavaScript or TypeScript DOCX viewer. Setup downloads the pinned SDK release and installs dependencies. No GitHub account, registration or licence key is needed for evaluation.</p><p>The <a href="https://github.com/onodocs/onodocs/tree/main/examples/docx-viewer">sample folder</a> contains <code>main.ts</code>, its JavaScript equivalent <code>main.js</code>, HTML and CSS. Both language versions run through the included build script. TypeScript declarations ship with <code>@onodocs/sdk</code>; a separate types package is unnecessary.</p><p>For an existing application, download the <a href="https://github.com/onodocs/onodocs/releases/tag/sdk-v0.2.0-beta.3">SDK release archive</a> and install the local file:</p><pre><code>npm install ./onodocs-sdk-0.2.0-beta.3.tgz</code></pre><p>Use your application's bundler and import <code>@onodocs/sdk/browser</code>. The SDK is distributed through GitHub releases during preview; it is not published to public npm. Sample code and authored documents are MIT-licensed. The SDK has separate <a href="https://onodocs.com/terms/">evaluation and commercial terms</a>.</p></section>
+<section id="first-render"><h2>Render your first DOCX file</h2><p>Give the SDK a DOM container and a <code>File</code>, <code>ArrayBuffer</code> or <code>Uint8Array</code>. For example, inside your file-picker handler:</p><pre><code>import { openDocument } from "@onodocs/sdk/browser";
+
+const doc = await openDocument(file, {
+  container: document.querySelector("#pages"),
+  viewOptions: { zoom: "fit-width" }
+});
+await doc.view.whenRendered();</code></pre><p>This short snippet shows the rendering call. The complete example below also handles errors, replacement, cancellation and disposal. In TypeScript, use <code>document.querySelector&lt;HTMLElement&gt;("#pages")!</code> when your HTML guarantees that the container exists.</p><p>For documents served by your application, fetch the authorized URL and pass its bytes. Check <code>response.ok</code>, forward the cancellation signal to <code>fetch</code>, and retain your application's access controls. See the <a href="https://onodocs.com/developers/#lifecycle">shared mount helper</a> for that version.</p></section>
+<section id="complete-example"><h2>Complete source: TypeScript and JavaScript</h2><p>The example embeds the supplied Word sample at build time. Local files selected afterward are passed directly to the SDK. Copy the folder and its <code>../view-document/sample.docx</code> dependency, or run the complete repository.</p><details open=""><summary>TypeScript · main.ts</summary><pre><code>import { openDocument, type BrowserDocument, type DocumentView } from "@onodocs/sdk/browser";
+import sample from "../view-document/sample.docx";
+
+const pages = document.querySelector&lt;HTMLElement&gt;("#pages")!;
+const status = document.querySelector&lt;HTMLOutputElement&gt;("#status")!;
+const file = document.querySelector&lt;HTMLInputElement&gt;("#file")!;
+const cancel = document.querySelector&lt;HTMLButtonElement&gt;("#cancel")!;
+let stop = () =&gt; {};
+
+async function open(source: File | Uint8Array) {
+  stop();
+  const controller = new AbortController();
+  const { signal } = controller;
+  let doc: BrowserDocument | undefined;
+  let view: DocumentView | undefined;
+  stop = () =&gt; { controller.abort(); view?.dispose(); doc?.dispose(); };
+  status.textContent = "Opening document…";
+  cancel.disabled = false;
+  try {
+    doc = await openDocument(source, {
+      container: pages,
+      signal,
+      viewOptions: { zoom: "fit-width" },
+      onProgress(progress) {
+        if (signal.aborted) return;
+        view = progress.view;
+        status.textContent = progress.pages.length ? `Loading… ${progress.pages.length} pages available` : `Loading: ${progress.stage}…`;
+      }
+    });
+    if (signal.aborted) { doc.dispose(); return; }
+    view = doc.view;
+    await view!.whenRendered();
+    if (!signal.aborted) status.textContent = `Ready · ${doc.pages.length} ${doc.pages.length === 1 ? "page" : "pages"}. Select text to copy it.`;
+  } catch (error) {
+    view?.dispose();
+    doc?.dispose();
+    if (!signal.aborted) status.textContent = `Unable to open document. ${error instanceof Error ? error.message : "Try another Word file."}`;
+  } finally {
+    if (!signal.aborted) cancel.disabled = true;
+  }
+}
+
+file.addEventListener("change", () =&gt; {
+  const selected = file.files?.[0];
+  file.value = "";
+  if (selected) void open(selected);
+});
+document.querySelector("#sample")!.addEventListener("click", () =&gt; { void open(sample); });
+cancel.addEventListener("click", () =&gt; {
+  stop();
+  cancel.disabled = true;
+  status.textContent = "Loading cancelled. Choose another file or open the sample.";
+});
+window.addEventListener("pagehide", event =&gt; { if (!event.persisted) stop(); });
+void open(sample);
+</code></pre></details><details><summary>JavaScript · main.js</summary><pre><code>import { openDocument } from "@onodocs/sdk/browser";
+import sample from "../view-document/sample.docx";
+const pages = document.querySelector("#pages");
+const status = document.querySelector("#status");
+const file = document.querySelector("#file");
+const cancel = document.querySelector("#cancel");
+let stop = () =&gt; {
+};
+async function open(source) {
+  stop();
+  const controller = new AbortController();
+  const { signal } = controller;
+  let doc;
+  let view;
+  stop = () =&gt; {
+    controller.abort();
+    view?.dispose();
+    doc?.dispose();
+  };
+  status.textContent = "Opening document\u2026";
+  cancel.disabled = false;
+  try {
+    doc = await openDocument(source, {
+      container: pages,
+      signal,
+      viewOptions: { zoom: "fit-width" },
+      onProgress(progress) {
+        if (signal.aborted) return;
+        view = progress.view;
+        status.textContent = progress.pages.length ? `Loading\u2026 ${progress.pages.length} pages available` : `Loading: ${progress.stage}\u2026`;
+      }
+    });
+    if (signal.aborted) {
+      doc.dispose();
+      return;
+    }
+    view = doc.view;
+    await view.whenRendered();
+    if (!signal.aborted) status.textContent = `Ready \xB7 ${doc.pages.length} ${doc.pages.length === 1 ? "page" : "pages"}. Select text to copy it.`;
+  } catch (error) {
+    view?.dispose();
+    doc?.dispose();
+    if (!signal.aborted) status.textContent = `Unable to open document. ${error instanceof Error ? error.message : "Try another Word file."}`;
+  } finally {
+    if (!signal.aborted) cancel.disabled = true;
+  }
+}
+file.addEventListener("change", () =&gt; {
+  const selected = file.files?.[0];
+  file.value = "";
+  if (selected) void open(selected);
+});
+document.querySelector("#sample").addEventListener("click", () =&gt; {
+  void open(sample);
+});
+cancel.addEventListener("click", () =&gt; {
+  stop();
+  cancel.disabled = true;
+  status.textContent = "Loading cancelled. Choose another file or open the sample.";
+});
+window.addEventListener("pagehide", (event) =&gt; {
+  if (!event.persisted) stop();
+});
+void open(sample);
+</code></pre></details><details><summary>HTML · index.html</summary><pre><code>&lt;!doctype html&gt;
+&lt;html lang="en"&gt;&lt;head&gt;&lt;meta charset="utf-8"&gt;&lt;meta name="viewport" content="width=device-width,initial-scale=1"&gt;&lt;meta name="robots" content="noindex"&gt;&lt;title&gt;JavaScript and TypeScript DOCX viewer sample | OnoDocs&lt;/title&gt;&lt;link rel="stylesheet" href="style.css"&gt;&lt;/head&gt;
+&lt;body&gt;&lt;header&gt;&lt;label&gt;Open Word file &lt;input id="file" type="file" accept=".docx,.docm,.dotx,.dotm"&gt;&lt;/label&gt;&lt;button id="sample"&gt;Open sample&lt;/button&gt;&lt;button id="cancel" disabled&gt;Cancel loading&lt;/button&gt;&lt;a href="https://github.com/onodocs/onodocs/tree/main/examples/docx-viewer" target="_blank" rel="noopener"&gt;Source on GitHub&lt;/a&gt;&lt;/header&gt;&lt;output id="status" role="status"&gt;Opening document…&lt;/output&gt;&lt;main id="viewport" aria-label="Document pages"&gt;&lt;div id="pages"&gt;&lt;/div&gt;&lt;/main&gt;&lt;script type="module" src="main.js"&gt;&lt;/script&gt;&lt;/body&gt;&lt;/html&gt;
+</code></pre></details><details><summary>CSS · style.css</summary><pre><code>:root{font:15px/1.5 system-ui,sans-serif;color:#302820;background:#f2ede5}*{box-sizing:border-box}html,body{height:100%;margin:0}body{display:flex;flex-direction:column}header{display:flex;flex-wrap:wrap;align-items:center;gap:12px;padding:12px;background:#fbf9f5;border-bottom:1px solid #ded8cf}label{display:flex;flex-wrap:wrap;align-items:center;gap:8px}input{max-width:230px}button,input{font:inherit}button{padding:6px 10px;cursor:pointer}button:disabled{cursor:default}a{color:#942d21}output{padding:8px 12px}#viewport{flex:1;min-height:0;overflow:auto}button:focus-visible,input:focus-visible,a:focus-visible{outline:2px solid #942d21;outline-offset:3px}
+</code></pre></details><p><a href="https://github.com/onodocs/onodocs/tree/main/examples/docx-viewer">Browse or download the full sample on GitHub</a>. Run <code>npm run typecheck</code> to check the TypeScript examples, and <code>npm run build</code> to bundle both versions.</p></section>
+<section id="lifecycle"><h2>Handle loading, cancellation and cleanup</h2><p>Passing <code>container</code> allows early pages to appear while the remaining document is laid out. <code>onProgress</code> reports the current stage and available pages. That count is provisional: pagination can change before opening finishes, so the example does not present it as a completion percentage.</p><p>Each opening operation owns an <code>AbortController</code>. Choosing another file aborts the previous operation and disposes its preview view and completed document. The signal checks prevent an older operation from overwriting the new status. The Cancel button uses the same cleanup path.</p><p>The completed view paints nearby pages as you scroll. This reduces retained canvases; parsing and the document model still require memory. Large or complex files can therefore take longer, especially on mobile devices.</p><p>Call cleanup when removing the viewer. The standalone sample uses <code>pagehide</code>; React, Vue and other frameworks should use their component lifecycle. See the <a href="https://onodocs.com/developers/#frameworks">framework integration examples</a>.</p></section>
+<section id="selection"><h2>Select and copy text</h2><p>The SDK view supplies text selection. Drag through the document, or focus it and use Shift with the arrow keys. Use Ctrl+C on Windows and Linux or Command+C on macOS to copy. Selection can span pages and survives virtualized scrolling. Application controls such as the file picker keep their normal keyboard behavior.</p><p>The document is a rendered viewer. Text selection does not turn it into a general Word editor. Our <a href="https://onodocs.com/developers/#updates">text-update APIs</a> support template workflows; DOCX round-trip saving is not available.</p></section>
+<section id="fonts"><h2>Match the document's fonts</h2><p>Fonts influence line wrapping, page count and visual fidelity. Embedded document fonts load automatically. For additional fonts, provide browser-accessible font URLs through the SDK's <code>fonts</code> option and ensure you have permission to distribute them. See <a href="https://onodocs.com/developers/#fonts">fonts and deployment</a>.</p><p>Compare your representative documents using the same fonts. The renderer supports Word documents, but exact parity for every Word feature and document is not guaranteed. Older binary <code>.doc</code> files and RTF are unsupported; convert them to DOCX before loading.</p></section>
+<section id="privacy"><h2>Preview documents without uploading them</h2><p>The file picker supplies a browser <code>File</code>. The sample performs parsing, layout and rendering on the device; it does not upload file contents or filenames, send analytics, or call an AI service. The bundled example document also needs no document download after the application has loaded.</p><p>Loading the webpage still downloads scripts and styles. Your application may separately fetch documents or fonts from URLs you configure. For offline use, serve or cache all required assets locally. Commercial licence signatures are verified locally; they require no licence-server request.</p></section>
+<section id="troubleshooting"><h2>Common integration problems</h2><dl><dt>Nothing appears</dt><dd>Run the sample through its HTTP server, verify that <code>#pages</code> exists, and give the scrolling area a usable height. An HTML file opened directly from disk is not the supported setup.</dd><dt>A local file will not open</dt><dd>Check that it is a supported Word package. Password-protected documents and old <code>.doc</code> files need to be converted or unlocked first. The UI should keep the error visible and allow another file.</dd><dt>Remote loading fails</dt><dd>Check your HTTP response, authentication and CORS configuration. These belong to the application that retrieves the bytes.</dd><dt>The layout differs from Word</dt><dd>Check fonts first, then test a minimal document. Report reproducible differences with the SDK version and a non-confidential sample through <a href="https://github.com/onodocs/onodocs/issues">GitHub Issues</a>.</dd></dl></section>
+<section id="next"><h2>Build on the viewer</h2><p>Use the <a href="https://onodocs.com/developers/api/#views">view API</a> for scrolling, page coordinates and selection. Explore <a href="https://onodocs.com/examples/">custom forms, template filling and document workflows</a>, or read the <a href="https://onodocs.com/developers/">JavaScript and TypeScript integration guide</a>. <a href="https://onodocs.com/pricing/">Commercial licences</a> remove evaluation notices for your application.</p><p><a href="https://github.com/onodocs/onodocs">All guides and samples on GitHub</a></p></section>
+</article></div></main><footer class="site-footer"><span>OnoDocs · Ion OÜ</span><nav aria-label="Footer"><a href="https://onodocs.com/refunds/">Refunds</a><a href="https://onodocs.com/privacy/">Privacy</a><a href="https://onodocs.com/terms/">License &amp; terms</a><a href="https://github.com/onodocs/onodocs">GitHub</a><a href="https://onodocs.com/support/">Support</a></nav></footer>
+</body></html>

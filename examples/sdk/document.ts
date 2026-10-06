@@ -1,29 +1,34 @@
 import { openDocument, type BrowserDocument, type DocumentView } from "@onodocs/sdk/browser";
 import sample from "../view-document/sample.docx";
 import template from "./template.docx";
+import { demoLicense } from "./license";
 
 const container = document.querySelector<HTMLElement>("#document-view")!;
 const viewport = document.querySelector<HTMLElement>("#document-viewport")!;
 const status = document.querySelector<HTMLElement>("#status")!;
+const cancel = document.querySelector<HTMLButtonElement>("#cancel-loading")!;
 const feedback = document.querySelector<HTMLOutputElement>("#feedback")!;
-const zoom = document.querySelector<HTMLSelectElement>("#zoom")!;
 const download = document.querySelector<HTMLButtonElement>("#download-page")!;
-const documentButtons = [...document.querySelectorAll<HTMLButtonElement>("#download-page, #fill-template, #print-document")];
+const documentButtons = [...document.querySelectorAll<HTMLButtonElement>("#download-page, #fill-template, [data-save-pdf]")];
 const mode = new URLSearchParams(location.search).get("mode") ?? "viewer";
 let current: BrowserDocument | undefined;
 let view: DocumentView | undefined;
+let exportController: AbortController | undefined;
+let documentName = "document";
 let controller = new AbortController();
-const resizeObserver = new ResizeObserver(applyZoom);
 const bookings = {
   offsite: { event: "Team offsite", customer: "Willow Design", date: "12 November 2026, 09:00–17:00", venue: "Meadow House · Garden room", guests: "24 guests", details: "Workshop seating, projector and Wi-Fi included. Coffee on arrival and a seasonal lunch are arranged for all guests." },
   launch: { event: "Product launch", customer: "Arc Studio", date: "3 December 2026, 18:00–22:00", venue: "Meadow House · Main hall", guests: "80 guests", details: "Reception layout with a presentation area, sound system and welcome drinks. A technician will be available during setup." },
 };
 
 function dispose() {
-  resizeObserver.disconnect();
   controller.abort();
+  exportController = undefined;
+  view?.dispose();
   current?.dispose();
-  container.style.minWidth = "";
+  current = undefined;
+  view = undefined;
+  cancel.hidden = true;
   documentButtons.forEach(button => button.disabled = true);
 }
 
@@ -33,17 +38,25 @@ async function load(input?: File) {
   const { signal } = controller;
   status.hidden = false;
   status.textContent = "Opening document…";
+  cancel.hidden = false;
   feedback.hidden = true;
+  documentName = input ? input.name.replace(/\.[^.]+$/, "") : mode === "template" ? "booking-confirmation" : "document";
+  viewport.scrollTop = 0;
   try {
     const source = input ?? (mode === "template" ? template : sample);
-    const opened = await openDocument(source, { signal });
+    const opened = await openDocument(source, { signal, licenseKey: await demoLicense(signal), container, viewOptions: { zoom: "fit-width", gap: 0 }, onProgress(progress) {
+      if (signal.aborted) return;
+      const pages = progress.pages;
+      view = progress.view;
+      status.textContent = progress.stage === "parsing" ? "Reading document…" : progress.stage === "fonts" ? "Preparing fonts…" : pages.length ? `Loading document… ${pages.length} pages available` : "Laying out document…";
+    } });
     if (signal.aborted) { opened.dispose(); return; }
     current = opened;
-    view = current.mount(container, { zoom: "fit-width", gap: 0 });
-    zoom.value = "fit-width";
-    applyZoom();
-    resizeObserver.observe(viewport);
+    view = current.view;
+    await view!.whenRendered();
+    if (signal.aborted) return;
     status.hidden = true;
+    cancel.hidden = true;
     if (mode === "form") attachFields();
     documentButtons.forEach(button => button.disabled = false);
   } catch (error) {
@@ -80,62 +93,83 @@ function attachFields() {
   });
 }
 
-function applyZoom() {
-  if (!view || !current || current.disposed) return;
-  const numericZoom = Number(zoom.value);
-  container.style.minWidth = Number.isFinite(numericZoom) ? `${current.pages.reduce((width, page) => Math.max(width, page.size.width * 96 / 1440 * numericZoom), 0)}px` : "";
-  if (zoom.value === "fit-page") {
-    const page = current.pages[0]!;
-    const scale = Math.min(container.clientWidth / page.size.width, viewport.clientHeight / page.size.height) * 1440 / 96;
-    if (scale > 0) view.setZoom(scale);
-  } else view.setZoom(zoom.value === "fit-width" ? "fit-width" : numericZoom);
-}
-
-async function perform(action: (doc: BrowserDocument, signal: AbortSignal) => Promise<void>) {
+async function perform(action: (doc: BrowserDocument, signal: AbortSignal) => Promise<void>, cancellable = false) {
   const doc = current;
-  const signal = controller.signal;
+  const documentSignal = controller.signal;
   if (!doc || doc.disposed) return;
+  const operation = cancellable ? new AbortController() : undefined;
+  const signal = operation ? AbortSignal.any([documentSignal, operation.signal]) : documentSignal;
+  if (operation) { exportController = operation; status.hidden = false; cancel.hidden = false; }
   documentButtons.forEach(button => button.disabled = true);
   feedback.hidden = true;
   try {
     await action(doc, signal);
     if (signal.aborted) return;
-    applyZoom();
+    await view?.whenRendered();
   } catch (error) {
     if (!signal.aborted) { feedback.textContent = error instanceof Error ? error.message : "Unable to update document."; feedback.hidden = false; }
-  } finally { if (!signal.aborted) documentButtons.forEach(button => button.disabled = false); }
+  } finally {
+    if (!documentSignal.aborted) {
+      documentButtons.forEach(button => button.disabled = false);
+      if (operation) { status.hidden = true; cancel.hidden = true; }
+    }
+    if (exportController === operation) exportController = undefined;
+  }
 }
 
 for (const name of ["viewer", "template"]) document.querySelector<HTMLElement>(`#${name}-controls`)!.hidden = mode !== name;
-document.querySelector<HTMLElement>(".controls")!.hidden = mode === "form";
 document.querySelector("#fill-template")!.addEventListener("click", () => void perform(async (doc, signal) => {
   const data = bookings[document.querySelector<HTMLSelectElement>("#template-data")!.value as keyof typeof bookings];
   await doc.update(Object.entries(data).map(([tag, text]) => ({ target: doc.query.contentControls().where({ tag }).one(), text })), { signal });
 }));
-document.querySelector("#print-document")!.addEventListener("click", () => {
-  if (!current || current.disposed || !view) return;
-  const style = document.createElement("style");
-  style.textContent = current.pages.map(page => `@page document${page.index} { size:${page.size.width / 20}pt ${page.size.height / 20}pt; margin:0 } #document-view section:nth-child(${page.index + 1}) { page:document${page.index}; }`).join("\n");
-  document.head.append(style);
-  view.setZoom(1);
-  try { window.print(); } finally { style.remove(); applyZoom(); }
-});
+for (const button of document.querySelectorAll("[data-save-pdf]")) button.addEventListener("click", () => void perform(async (doc, signal) => {
+  const filename = `${documentName}.pdf`;
+  status.textContent = "Preparing PDF…";
+  const { PDFDocument } = await import("pdf-lib");
+  const pdf = await PDFDocument.create();
+  const canvas = document.createElement("canvas");
+  try {
+    for (const page of doc.pages) {
+      signal.throwIfAborted();
+      status.textContent = `Saving PDF… ${page.index + 1} of ${doc.pages.length} pages`;
+      await page.render(canvas, { dpi: 144, signal });
+      const blob = await new Promise<Blob | null>(resolve => canvas.toBlob(resolve));
+      signal.throwIfAborted();
+      if (!blob) throw new Error("Unable to export this page.");
+      const image = await pdf.embedPng(await blob.arrayBuffer());
+      const width = page.size.width / 20;
+      const height = page.size.height / 20;
+      pdf.addPage([width, height]).drawImage(image, { x: 0, y: 0, width, height });
+      await image.embed();
+      await new Promise(resolve => setTimeout(resolve, 0));
+    }
+    status.textContent = "Finishing PDF…";
+    const bytes = await pdf.save();
+    signal.throwIfAborted();
+    saveBlob(new Blob([new Uint8Array(bytes)], { type: "application/pdf" }), filename);
+  } finally { canvas.width = canvas.height = 0; }
+}, true));
 const picker = document.querySelector<HTMLInputElement>("#local-file")!;
 document.querySelector("#open-document")!.addEventListener("click", () => picker.click());
 picker.addEventListener("change", () => { const file = picker.files?.[0]; picker.value = ""; if (file) void load(file); });
-zoom.addEventListener("change", applyZoom);
-download.addEventListener("click", () => {
-  if (!current || current.disposed) return;
-  const canvas = document.createElement("canvas");
-  current.pages[0]!.render(canvas, { dpi: 144 });
-  canvas.toBlob(blob => {
-    if (!blob) return;
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url; link.download = "page-1.png"; link.click();
-    setTimeout(() => URL.revokeObjectURL(url), 1000);
-  });
+cancel.addEventListener("click", () => {
+  if (exportController) { exportController.abort(); return; }
+  dispose(); status.textContent = "Opening cancelled.";
 });
+download.addEventListener("click", () => void perform(async (doc, signal) => {
+  const canvas = document.createElement("canvas");
+  await doc.pages[0]!.render(canvas, { dpi: 144, signal });
+  const blob = await new Promise<Blob | null>(resolve => canvas.toBlob(resolve));
+  if (!blob || signal.aborted) return;
+  saveBlob(blob, "page-1.png");
+}));
+
+function saveBlob(blob: Blob, filename: string) {
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url; link.download = filename; link.click();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
 Object.assign(window, { onodocsSample: { openDocument: load, dispose } });
 window.addEventListener("pagehide", event => { if (!event.persisted) dispose(); });
 void load();
