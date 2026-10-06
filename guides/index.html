@@ -89,7 +89,7 @@ export function mountDocument(container: HTMLElement, url: string, onError: (err
 </code></pre></details><pre><code>const stop = mountDocument(container, "/sample.docx", showError);</code></pre><p>Call the returned <code>stop()</code> when replacing the document or removing its container. Framework examples connect this to their lifecycle hooks. For server rendering, dispose documents in <code>finally</code>, and dispose the renderer when the service or job ends. The short server example below shows the successful path.</p>
 </section>
 <section aria-labelledby="frameworks"><h2 id="frameworks">Use your framework</h2>
-<p>Use the <a href="#lifecycle">shared mount helper</a> above. These examples show only the framework lifecycle; loading and error handling stay in the helper.</p><h3 id="react">React / Next.js</h3><p>In Next.js, use a client component.</p><pre><code>"use client";
+<p>Use the <a href="#lifecycle">shared mount helper</a> above. These examples show only the framework lifecycle; loading and error handling stay in the helper.</p><h3 id="react">React / Next.js</h3><p>Follow the complete <a href="https://onodocs.com/developers/react-docx-viewer/">React and TypeScript Word viewer guide</a> for a runnable component with progress, cancellation, replacement and Strict Mode cleanup.</p><p>In Next.js, use a client component.</p><pre><code>"use client";
 import { useEffect, useRef } from "react";
 import { mountDocument } from "./mount";
 

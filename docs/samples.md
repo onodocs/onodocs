@@ -23,6 +23,7 @@ the archive named in `sdk-release.json` into `vendor/` yourself and run `npm ins
 | --- | --- | --- |
 | TypeScript DOCX viewer | `examples/docx-viewer/main.ts` | Local files, progressive loading, selection, cancellation and cleanup |
 | JavaScript DOCX viewer | `examples/docx-viewer/main.js` | The same complete viewer in JavaScript |
+| React and TypeScript viewer | `examples/react-docx-viewer/DocxViewer.tsx` | Typed props, progress, cancellation, replacement and unmount cleanup |
 | Viewer | `examples/sdk/document.ts` | Mount a document, open local files, select text, export PNG/PDF |
 | Custom form | `examples/sdk/document.ts` | Anchor HTML fields to tagged content and collect values |
 | Template | `examples/sdk/document.ts` | Fill a booking confirmation and print it |
@@ -57,3 +58,10 @@ The complete [viewer guide](https://onodocs.com/developers/javascript-docx-viewe
 and [all guide sources](../guides/) are included in this repository. Browser
 samples link directly to their GitHub source. The published samples use an
 evaluation-only licence adapter; they do not contact the website licensing API.
+
+Open http://127.0.0.1:5174/react-docx-viewer/ for the React sample. Its development
+build keeps Strict Mode enabled. Try Hide viewer during loading, Show viewer,
+cancellation and replacement. The [React guide](https://onodocs.com/developers/react-docx-viewer/)
+includes the full component, styles and Next.js client-component guidance. Import
+the component and styles in an existing React application and pass a browser
+`File` or stable bytes. Only the sample application uses the bundled DOCX loader.

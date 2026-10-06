@@ -15,11 +15,15 @@
   },
   "dependencies": {
     "@onodocs/sdk": "file:vendor/onodocs-sdk-0.2.0-beta.3.tgz",
-    "pdf-lib": "1.17.1"
+    "pdf-lib": "1.17.1",
+    "react": "19.3.0",
+    "react-dom": "19.3.0"
   },
   "devDependencies": {
     "esbuild": "0.28.2",
     "typescript": "7.0.2",
-    "@types/node": "^25.9.9"
+    "@types/node": "^25.9.9",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0"
   }
 }

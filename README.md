@@ -34,6 +34,7 @@ sign-in or licence key is required. You can also [download the source ZIP](https
 | --- | --- | --- |
 | DOCX viewer in TypeScript | [main.ts](examples/docx-viewer/main.ts) | Local files, progressive loading, selection, cancellation and cleanup |
 | DOCX viewer in JavaScript | [main.js](examples/docx-viewer/main.js) | The same complete example in plain JavaScript |
+| React and TypeScript Word viewer | [DocxViewer.tsx](examples/react-docx-viewer/DocxViewer.tsx) | Typed component, progress, cancellation, replacement, unmounting and Strict Mode |
 | Viewer, custom forms and templates | [document.ts](examples/sdk/document.ts) | Document viewing, PNG/PDF export, anchored inputs and tagged template fields |
 | Document workflows | [workflows.ts](examples/sdk/workflows.ts) | Tables, document tree, ASCII output and a locally simulated email draft |
 | Node.js analysis | [analyze.ts](examples/analyze.ts) | Read document content without a browser |
@@ -44,6 +45,7 @@ contents, call an AI service or send emails. See [sample setup and commands](doc
 ## Guides
 
 - [Build a DOCX viewer in JavaScript and TypeScript](https://onodocs.com/developers/javascript-docx-viewer/) — [guide source](guides/javascript-docx-viewer/index.html)
+- [Build a React Word viewer with TypeScript and Next.js](https://onodocs.com/developers/react-docx-viewer/) — [guide source](guides/react-docx-viewer/index.html)
 - [JavaScript, TypeScript and Node.js integration](https://onodocs.com/developers/) — [guide source](guides/index.html)
 - [SDK API reference](https://onodocs.com/developers/api/) — [reference source](guides/api/index.html)
 
