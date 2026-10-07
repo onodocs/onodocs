@@ -1,4 +1,5 @@
-import { openDocument, type BrowserDocument, type DocumentView } from "@onodocs/sdk/browser";
+import { openDocument, type BrowserDocument } from "@onodocs/sdk/browser";
+import { createDocument, type CanvasDocument } from "@onodocs/canvas";
 import sample from "../view-document/sample.docx";
 
 const pages = document.querySelector<HTMLElement>("#pages")!;
@@ -12,27 +13,25 @@ async function open(source: File | Uint8Array) {
   const controller = new AbortController();
   const { signal } = controller;
   let doc: BrowserDocument | undefined;
-  let view: DocumentView | undefined;
-  stop = () => { controller.abort(); view?.dispose(); doc?.dispose(); };
+  let canvasDocument: CanvasDocument | undefined;
+  stop = () => { controller.abort(); canvasDocument?.dispose(); doc?.dispose(); };
   status.textContent = "Opening document…";
   cancel.disabled = false;
   try {
     doc = await openDocument(source, {
-      container: pages,
       signal,
-      viewOptions: { zoom: "fit-width" },
       onProgress(progress) {
         if (signal.aborted) return;
-        view = progress.view;
-        status.textContent = progress.pages.length ? `Loading… ${progress.pages.length} ${progress.pages.length === 1 ? "page" : "pages"} available` : `Loading: ${progress.stage}…`;
+        canvasDocument ??= createDocument(progress.document, { container: pages, viewOptions: { zoom: "fit-width" } });
+        const count = progress.document.pages.length;
+        status.textContent = count ? `Loading… ${count} ${count === 1 ? "page" : "pages"} available` : `Loading: ${progress.stage}…`;
       }
     });
     if (signal.aborted) { doc.dispose(); return; }
-    view = doc.view;
-    await view!.whenRendered();
+    await canvasDocument!.view!.whenRendered();
     if (!signal.aborted) status.textContent = `Ready · ${doc.pages.length} ${doc.pages.length === 1 ? "page" : "pages"}. Select text to copy it.`;
   } catch (error) {
-    view?.dispose();
+    canvasDocument?.dispose();
     doc?.dispose();
     if (!signal.aborted) status.textContent = `Unable to open document. ${error instanceof Error ? error.message : "Try another Word file."}`;
   } finally {

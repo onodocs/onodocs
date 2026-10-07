@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import type { BrowserDocument, DocumentView } from "@onodocs/sdk/browser";
+import type { BrowserDocument } from "@onodocs/sdk/browser";
+import type { CanvasDocument } from "@onodocs/canvas";
 
 export interface DocxViewerProps {
   source: File | ArrayBuffer | Uint8Array;
@@ -19,8 +20,8 @@ export function DocxViewer({ source, licenseKey = "" }: DocxViewerProps) {
     const controller = new AbortController();
     const { signal } = controller;
     let doc: BrowserDocument | undefined;
-    let view: DocumentView | undefined;
-    const stop = () => { controller.abort(); view?.dispose(); doc?.dispose(); };
+    let canvasDocument: CanvasDocument | undefined;
+    const stop = () => { controller.abort(); canvasDocument?.dispose(); doc?.dispose(); };
     cancel.current = () => {
       stop();
       setLoading(false);
@@ -32,24 +33,23 @@ export function DocxViewer({ source, licenseKey = "" }: DocxViewerProps) {
     async function open() {
       try {
         const { openDocument } = await import("@onodocs/sdk/browser");
+        const { createDocument } = await import("@onodocs/canvas");
         if (signal.aborted) return;
         doc = await openDocument(source, {
-          container,
           signal,
           licenseKey,
-          viewOptions: { zoom: "fit-width" },
           onProgress(progress) {
             if (signal.aborted) return;
-            view = progress.view;
-            setStatus(progress.pages.length ? `Loading… ${progress.pages.length} ${progress.pages.length === 1 ? "page" : "pages"} available` : `Loading: ${progress.stage}…`);
+            canvasDocument ??= createDocument(progress.document, { container, viewOptions: { zoom: "fit-width" } });
+            const count = progress.document.pages.length;
+            setStatus(count ? `Loading… ${count} ${count === 1 ? "page" : "pages"} available` : `Loading: ${progress.stage}…`);
           }
         });
         if (signal.aborted) { doc.dispose(); return; }
-        view = doc.view;
-        await view!.whenRendered();
+        await canvasDocument!.view!.whenRendered();
         if (!signal.aborted) setStatus(`Ready · ${doc.pages.length} ${doc.pages.length === 1 ? "page" : "pages"}. Select text to copy it.`);
       } catch (error) {
-        view?.dispose();
+        canvasDocument?.dispose();
         doc?.dispose();
         if (!signal.aborted) setStatus(`Unable to open document. ${error instanceof Error ? error.message : "Try another Word file."}`);
       } finally {

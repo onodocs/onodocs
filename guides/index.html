@@ -1,31 +1,32 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="description" content="Install OnoDocs, render DOCX in JavaScript or TypeScript, query text and tables, attach HTML controls, and export images with Node.js. Includes framework integration examples."><title>Word Document Rendering with JavaScript &amp; TypeScript | OnoDocs</title><link rel="stylesheet" href="https://onodocs.com/style.css"><link rel="canonical" href="https://onodocs.com/developers/"><meta property="og:type" content="website"><meta property="og:site_name" content="OnoDocs"><meta property="og:title" content="Word Document Rendering with JavaScript &amp; TypeScript | OnoDocs"><meta property="og:description" content="Install OnoDocs, render DOCX in JavaScript or TypeScript, query text and tables, attach HTML controls, and export images with Node.js. Includes framework integration examples."><meta property="og:url" content="https://onodocs.com/developers/"><link rel="icon" type="image/svg+xml" href="https://onodocs.com/brand-mark.svg"><meta name="referrer" content="strict-origin"></head><body><a class="skip-link" href="#main">Skip to content</a><header class="site-header"><a class="brand" href="https://onodocs.com/" aria-label="OnoDocs home"><img class="brand-mark" src="https://onodocs.com/brand-mark.svg" width="28" height="28" alt="O">noDocs</a><span class="release-label">Preview</span><nav aria-label="Main"><a href="https://onodocs.com/examples/">Demos</a><a href="https://onodocs.com/developers/" aria-current="page">Docs</a><a href="https://onodocs.com/pricing/">Pricing</a><a href="https://onodocs.com/support/">Support</a><a class="github-link" href="https://github.com/onodocs/onodocs" target="_blank" rel="noopener" aria-label="OnoDocs on GitHub" title="OnoDocs on GitHub"><img src="https://onodocs.com/github-mark.svg" width="18" height="18" alt=""></a></nav></header><main id="main"><section class="page-intro"><p class="eyebrow">Documentation</p><h1>JavaScript, TypeScript and Node.js integration</h1><p>Render pages, query text and tables, fill templates, and attach HTML controls. <a href="https://onodocs.com/developers/api/">API reference</a></p><p><a href="https://github.com/onodocs/onodocs">Guides and samples on GitHub</a></p></section><div class="doc-layout"><nav class="doc-nav" aria-label="Documentation sections"><a href="https://onodocs.com/developers/api/">API reference</a><a href="#quick-start">Install</a><a href="#browser">Render in the browser</a><a href="#queries">Inspect content</a><a href="#anchors">Attach HTML</a><a href="#updates">Fill templates</a><a href="#geometry">Pages and coordinates</a><a href="#lifecycle">Errors and cleanup</a><a href="#frameworks">Frameworks</a><a href="#node">Analyze in Node</a><a href="#server">Server output</a><a href="#fonts">Fonts and deployment</a></nav><article class="prose">
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="description" content="Install OnoDocs, render DOCX in JavaScript or TypeScript, query text and tables, attach HTML controls, and export images with Node.js. Includes framework integration examples."><title>Word Document Rendering with JavaScript &amp; TypeScript | OnoDocs</title><link rel="stylesheet" href="https://onodocs.com/style.css"><link rel="canonical" href="https://onodocs.com/developers/"><meta property="og:type" content="website"><meta property="og:site_name" content="OnoDocs"><meta property="og:title" content="Word Document Rendering with JavaScript &amp; TypeScript | OnoDocs"><meta property="og:description" content="Install OnoDocs, render DOCX in JavaScript or TypeScript, query text and tables, attach HTML controls, and export images with Node.js. Includes framework integration examples."><meta property="og:url" content="https://onodocs.com/developers/"><link rel="icon" type="image/svg+xml" href="https://onodocs.com/brand-mark.svg"><meta name="referrer" content="strict-origin"></head><body><a class="skip-link" href="#main">Skip to content</a><header class="site-header"><a class="brand" href="https://onodocs.com/" aria-label="OnoDocs home"><img class="brand-mark" src="https://onodocs.com/brand-mark.svg" width="28" height="28" alt="O">noDocs</a><nav aria-label="Main"><a href="https://onodocs.com/examples/">Demos</a><a href="https://onodocs.com/developers/" aria-current="page">Docs</a><a href="https://onodocs.com/pricing/">Pricing</a><a href="https://onodocs.com/support/">Support</a><a class="github-link" href="https://github.com/onodocs/onodocs" target="_blank" rel="noopener" aria-label="OnoDocs on GitHub" title="OnoDocs on GitHub"><img src="https://onodocs.com/github-mark.svg" width="18" height="18" alt=""></a></nav></header><main id="main"><section class="page-intro"><p class="eyebrow">Documentation</p><h1>JavaScript, TypeScript and Node.js integration</h1><p>Render pages, query text and tables, fill templates, and attach HTML controls. <a href="https://onodocs.com/developers/api/">API reference</a></p><p><a href="https://github.com/onodocs/onodocs">Guides and samples on GitHub</a></p></section><div class="doc-layout"><nav class="doc-nav" aria-label="Documentation sections"><a href="https://onodocs.com/developers/api/">API reference</a><a href="#quick-start">Install</a><a href="#browser">Render in the browser</a><a href="#queries">Inspect content</a><a href="#anchors">Attach HTML</a><a href="#updates">Fill templates</a><a href="#geometry">Pages and coordinates</a><a href="#lifecycle">Errors and cleanup</a><a href="#frameworks">Frameworks</a><a href="#node">Analyze in Node</a><a href="#combined">Backend and frontend</a><a href="#server">Server output</a><a href="#fonts">Fonts and deployment</a></nav><article class="prose">
 <section aria-labelledby="viewer-guide"><h2 id="viewer-guide">Build a DOCX viewer</h2><p>The <a href="https://onodocs.com/developers/javascript-docx-viewer/">JavaScript and TypeScript DOCX viewer guide</a> includes a live demo and source code for opening local files, showing progress, cancelling a load, and selecting text.</p></section>
 <section aria-labelledby="quick-start"><h2 id="quick-start">Install</h2>
-<p>One package supports browser rendering, document analysis, and server output.</p><p>Download the SDK archive and run the JavaScript and TypeScript examples from <a href="https://github.com/onodocs/onodocs/blob/main/docs/samples.md">the public developer repository</a>. The samples cover the viewer, custom forms, templates, document workflows, and Node.js inspection.</p>
-<div class="notice"><p>During preview, download the SDK from the public GitHub releases and install it using the archive’s local path. The SDK is not yet on public npm. <a href="https://onodocs.com/terms/">Availability and terms.</a></p></div><pre><code>npm install ./path/to/onodocs-sdk.tgz</code></pre><p>Replace the example path with the supplied archive’s actual location and filename.</p><table><thead><tr><th>Import</th><th>Purpose</th></tr></thead><tbody><tr><td><code>@onodocs/sdk</code></td><td>Inspect and query documents in Node.js or the browser.</td></tr><tr><td><code>@onodocs/sdk/browser</code></td><td>Render pages and attach HTML controls.</td></tr><tr><td><code>@onodocs/sdk/server</code></td><td>Export images and PDFs with headless Chromium.</td></tr></tbody></table><p>Examples below focus on the operation being demonstrated. See <a href="#lifecycle">Errors and cleanup</a> for shared lifecycle handling and the <a href="https://onodocs.com/developers/api/">API reference</a> for signatures, options, and return values.</p>
+<p>The SDK processes documents in the browser or Node.js. Canvas provides the browser viewer, page painting, selection and HTML attachments.</p><pre><code>npm install @onodocs/sdk @onodocs/canvas</code></pre><p><a href="https://www.npmjs.com/package/@onodocs/sdk">SDK on npm</a> · <a href="https://www.npmjs.com/package/@onodocs/canvas">Canvas on npm</a> · <a href="https://github.com/onodocs/onodocs/releases">Release archives</a></p><p>Install matching versions. A backend doing analysis or image/PDF export needs only the SDK. A frontend receiving prepared pages needs only Canvas. The <a href="https://github.com/onodocs/onodocs/blob/main/docs/samples.md">public repository</a> contains runnable JavaScript and TypeScript samples. <a href="https://onodocs.com/terms/">Evaluation and commercial terms</a> apply.</p><table><thead><tr><th>Import</th><th>Purpose</th></tr></thead><tbody><tr><td><code>@onodocs/sdk</code></td><td>Inspect and query documents in Node.js or the browser.</td></tr><tr><td><code>@onodocs/sdk/browser</code></td><td>Lay out documents and publish immutable pages.</td></tr><tr><td><code>@onodocs/sdk/server</code></td><td>Export images and PDFs with headless Chromium.</td></tr><tr><td><code>@onodocs/canvas</code></td><td>Paint pages, mount views, select text and attach HTML controls.</td></tr></tbody></table><p>Examples below focus on the operation being demonstrated. See <a href="#lifecycle">Errors and cleanup</a> for shared lifecycle handling and the <a href="https://onodocs.com/developers/api/">API reference</a> for signatures, options, and return values.</p>
 </section>
 <section aria-labelledby="browser"><h2 id="browser">Render in the browser</h2>
 <p>Serve these files with your existing bundler, or run <code>npx vite</code> in a project with Vite installed. Download the <a href="https://onodocs.com/samples/sdk/sample.docx" download="">sample document</a> as <code>sample.docx</code> in the project root.</p><h3>index.html</h3><pre><code>&lt;div id="pages"&gt;&lt;/div&gt;
 &lt;script type="module" src="/main.js"&gt;&lt;/script&gt;</code></pre><h3>main.js</h3><pre><code>import { openDocument } from "@onodocs/sdk/browser";
+import { createDocument } from "@onodocs/canvas";
 
 const response = await fetch("/sample.docx");
-const doc = await openDocument(await response.arrayBuffer(), {
-  container: document.querySelector("#pages"),
-  viewOptions: { zoom: "fit-width" }
-});
-const view = doc.view;</code></pre><p>Pass a DOCX, DOCM, DOTX or DOTM <code>File</code> from a file input directly to <code>openDocument</code>. Macros are not executed. Give the container a usable width. <code>fit-width</code> follows resizing. The following browser examples use this <code>doc</code> and <code>view</code>.</p>
+if (!response.ok) throw new Error("Document is unavailable.");
+const doc = await openDocument(await response.arrayBuffer());
+const canvasDocument = createDocument(doc);
+const view = canvasDocument.mount(document.querySelector("#pages"), { zoom: "fit-width" });</code></pre><p>Pass a DOCX, DOCM, DOTX or DOTM <code>File</code> from a file input directly to <code>openDocument</code>. Macros are not executed. Give the container a usable width. <code>fit-width</code> follows resizing. The following browser examples use this <code>doc</code>, <code>canvasDocument</code> and <code>view</code>.</p>
 </section>
-<section aria-labelledby="large-documents"><h2 id="large-documents">Load large documents progressively</h2><p>Pass a container when opening to show early pages while the rest of the document is laid out. Scrolling paints nearby pages and releases distant canvases.</p><pre><code>const controller = new AbortController();
+<section aria-labelledby="large-documents"><h2 id="large-documents">Load large documents progressively</h2><p>Create a Canvas document from the progress source once to show early pages while layout continues. Scrolling paints nearby pages and releases distant canvases.</p><pre><code>const controller = new AbortController();
+let canvasDocument;
 const doc = await openDocument(file, {
-  container,
   signal: controller.signal,
-  onProgress({ stage, pages }) {
+  onProgress({ stage, document }) {
+    canvasDocument ??= createDocument(document, { container });
+    const pages = document.pages;
     status.textContent = stage === "ready"
       ? pages.length + " pages"
       : "Loading… " + pages.length + " pages available";
   }
 });
-await doc.view.whenRendered();</code></pre><p>Early pages are provisional and may change as pagination settles. The promise resolves with the complete document. Call <code>controller.abort()</code> to cancel loading and remove its preview. Document content and layout still consume memory proportional to document size.</p></section>
+await canvasDocument.view.whenRendered();</code></pre><p>Early pages are provisional and may change as pagination settles. The promise resolves with the complete document. Call <code>controller.abort()</code> to cancel loading and remove its preview. Document content and layout still consume memory proportional to document size.</p></section>
 <section aria-labelledby="licensing"><h2 id="licensing">Embed a license</h2><p>Pass your signed license key when opening a document. Embed it in static HTML or your JavaScript bundle. Verification is offline. The signed token is safe to distribute with your application. Keep the private signing key on the issuer's server.</p><pre><code>const doc = await openDocument(bytes, { licenseKey: "YOUR_SIGNED_LICENSE" });</code></pre><p>Commercial licenses keep working for covered SDK releases without periodic renewal requests. Trial and temporary demo tokens expire. Before expiry, replace the embedded token or serve a current token with the HTML response. A static deployment cannot renew an expired token by itself.</p></section>
 <section aria-labelledby="extraction-guide"><h2 id="extraction-guide">Extract text and tables</h2><p>Follow the <a href="https://onodocs.com/developers/extract-docx-text-tables/">JavaScript and TypeScript DOCX extraction guide</a> to read paragraphs, select tables by headers and export JSON in the browser or Node.js. The guide includes a live demo and <a href="https://github.com/onodocs/onodocs/tree/main/examples/docx-extraction">complete sample source</a>.</p></section>
 <section aria-labelledby="queries"><h2 id="queries">Inspect document content</h2>
@@ -41,7 +42,7 @@ const headers = doc.query.stories().where({ story: "header" }).paragraphs().all(
 &lt;button id="submit"&gt;Submit&lt;/button&gt;</code></pre><pre><code>const field = doc.query.contentControls().where({ tag: "delivery-date" }).first();
 const input = document.querySelector("#delivery-date");
 input.value = field.text;
-view.attach(input, { anchor: field });
+view.attach(input, { anchor: doc.geometry.fragments(field)[0] });
 
 view.attach(document.querySelector("#submit"), {
   anchor: doc.pages[0],
@@ -59,35 +60,39 @@ await doc.update({ target: customer, text: "Willow Design" });</code></pre><p>Up
 view.setZoom("fit-width");
 
 const canvas = document.createElement("canvas");
-await doc.pages[0].render(canvas, { dpi: 144 });</code></pre><p>Page indices are zero based. Page coordinates use twips: 1440 units per inch.</p><h3>Find the content under a click</h3><pre><code>view.element.addEventListener("click", event =&gt; {
+await canvasDocument.pages[0].render(canvas, { dpi: 144 });</code></pre><p>Page indices are zero based. Page coordinates use twips: 1440 units per inch.</p><h3>Find the content under a click</h3><pre><code>view.element.addEventListener("click", event =&gt; {
   const hit = view.hitTest({ x: event.clientX, y: event.clientY });
-  console.log(hit?.element);
+  console.log(hit ? doc.query.get(hit.elementId) : undefined);
 });</code></pre><h3>Search and reveal a match</h3><pre><code>const match = doc.query.findText(/approval/i).first();
-if (match) view.scrollTo(match, { block: "center" });</code></pre><p>See <a href="https://onodocs.com/developers/api/#views">coordinate conversion</a> and <a href="https://onodocs.com/developers/api/#geometry">geometry and hit results</a> for return values and offset units.</p>
+const fragment = match &amp;&amp; doc.geometry.fragments(match)[0];
+if (fragment) view.scrollTo(fragment, { block: "center" });</code></pre><p>See <a href="https://onodocs.com/developers/api/#views">coordinate conversion</a> and <a href="https://onodocs.com/developers/api/#geometry">geometry and hit results</a> for return values and offset units.</p>
 </section>
 <section aria-labelledby="lifecycle"><h2 id="lifecycle">Errors and cleanup</h2>
 <p>Handle rejected SDK promises in your application and check <code>response.ok</code> when fetching documents. Pass an <code>AbortSignal</code> to cancel work when the source changes or the component disappears. Release browser documents when no longer needed. This also removes their views and attachments. Analysis-only documents need no disposal.</p>
 <p>This shared application helper handles fetching, errors, cancellation, and cleanup. Save it as <code>mount.ts</code> for the framework examples below. It logs errors by default; pass a third argument to display them in your application.</p>
-<details><summary>Shared mount helper</summary><pre><code>import { openDocument, type BrowserDocument, type DocumentView } from "@onodocs/sdk/browser";
+<details><summary>Shared mount helper</summary><pre><code>import { openDocument, type BrowserDocument } from "@onodocs/sdk/browser";
+import { createDocument, type CanvasDocument } from "@onodocs/canvas";
 
 export function mountDocument(container: HTMLElement, url: string, onError: (error: unknown) =&gt; void = console.error) {
   const controller = new AbortController();
   let document: BrowserDocument | undefined;
-  let view: DocumentView | undefined;
+  let canvasDocument: CanvasDocument | undefined;
   void (async () =&gt; {
     try {
       const response = await fetch(url, { signal: controller.signal, credentials: "same-origin" });
       if (!response.ok) throw new Error(`Document request failed (${response.status})`);
-      document = await openDocument(await response.arrayBuffer(), { signal: controller.signal, container, viewOptions: { zoom: "fit-width" }, onProgress(progress) { view = progress.view; } });
+      document = await openDocument(await response.arrayBuffer(), { signal: controller.signal, onProgress(progress) {
+        canvasDocument ??= createDocument(progress.document, { container, viewOptions: { zoom: "fit-width" } });
+      } });
       if (controller.signal.aborted) document.dispose();
     } catch (error) {
       document?.dispose();
       if (!controller.signal.aborted) onError(error);
     }
   })();
-  return () =&gt; { controller.abort(); view?.dispose(); document?.dispose(); };
+  return () =&gt; { controller.abort(); canvasDocument?.dispose(); document?.dispose(); };
 }
-</code></pre></details><pre><code>const stop = mountDocument(container, "/sample.docx", showError);</code></pre><p>Call the returned <code>stop()</code> when replacing the document or removing its container. Framework examples connect this to their lifecycle hooks. For server rendering, dispose documents in <code>finally</code>, and dispose the renderer when the service or job ends. The short server example below shows the successful path.</p>
+</code></pre></details><pre><code>const stop = mountDocument(container, "/sample.docx", showError);</code></pre><p>Call the returned <code>stop()</code> when replacing the document or removing its container. Framework examples connect this to their lifecycle hooks. For server rendering, dispose documents in <code>finally</code>, and dispose the renderer when the service or job ends. The server example below includes this cleanup.</p>
 </section>
 <section aria-labelledby="frameworks"><h2 id="frameworks">Use your framework</h2>
 <p>Use the <a href="#lifecycle">shared mount helper</a> above. These examples connect the helper to each framework’s lifecycle hooks.</p><h3 id="react">React / Next.js</h3><p>Follow the complete <a href="https://onodocs.com/developers/react-docx-viewer/">React and TypeScript Word viewer guide</a> for a runnable component with progress, cancellation, replacement and Strict Mode cleanup.</p><p>In Next.js, use a client component.</p><pre><code>"use client";
@@ -182,14 +187,35 @@ console.log(`${doc.query.tables().count()} tables`);</code></pre><p>The same que
 import { createRenderer } from "@onodocs/sdk/server";
 
 const renderer = await createRenderer({ channel: "chrome" });
-const doc = await renderer.openDocument(await readFile(process.argv[2]));
-
-await writeFile("page-1.png", await doc.renderPage(0, { dpi: 144 }));
-await writeFile("document.pdf", await doc.pdf({ dpi: 150 }));
-
-await doc.dispose();
-await renderer.dispose();</code></pre><p>Reuse a renderer across requests in a service. PDFs contain page images, without searchable text or accessibility tags. See <a href="https://onodocs.com/developers/api/#server">server options and lifecycle</a>.</p>
+try {
+  const doc = await renderer.openDocument(await readFile(process.argv[2]));
+  try {
+    await writeFile("page-1.png", await doc.renderPage(0, { dpi: 144 }));
+    await writeFile("document.pdf", await doc.pdf({ dpi: 150 }));
+  } finally { await doc.dispose(); }
+} finally { await renderer.dispose(); }</code></pre><p>Reuse a renderer across requests in a service. PDFs contain page images, without searchable text or accessibility tags. See <a href="https://onodocs.com/developers/api/#server">server options and lifecycle</a>.</p>
 </section>
+<section aria-labelledby="combined"><h2 id="combined">Process on the backend, display in the frontend</h2><p>The server renderer publishes a manifest and immutable pages. Expose them through authenticated routes in your application. Use <code>encode</code> and <code>decode</code> from Canvas to preserve bigint coordinates and byte arrays.</p><pre><code>import { createRenderer } from "@onodocs/sdk/server";
+import { encode } from "@onodocs/canvas";
+
+const renderer = await createRenderer({ channel: "chrome" });
+const doc = await renderer.openDocument(bytes, { fonts });
+const manifestResponse = encode(await doc.manifest());
+const firstPageResponse = encode(await doc.page(0));</code></pre><p>The frontend needs only Canvas. This example assumes your application supplies the routes below.</p><pre><code>import { createDocument, decode } from "@onodocs/canvas";
+
+const response = await fetch("/document/manifest");
+if (!response.ok) throw new Error("Document is unavailable.");
+const manifest = decode(await response.text());
+const canvasDocument = createDocument({
+  pages: manifest.pages.map(page =&gt; ({
+    ...page,
+    async load(signal) {
+      const response = await fetch(`/document/pages/${page.index}`, { signal });
+      if (!response.ok) throw new Error("Page is unavailable.");
+      return decode(await response.text());
+    }
+  }))
+}, { container });</code></pre><p>Queries and updates stay on the backend. After an update, replace the manifest and page set together and dispose the previous Canvas document. Keep server documents alive while their page routes are in use, then dispose them and the renderer. Published pages contain visible text and resource bytes. Supply font files for consistent results across hosts; installed server fonts must also be available to the client. Use matching SDK and Canvas versions.</p></section>
 <section aria-labelledby="fonts"><h2 id="fonts">Fonts and deployment</h2>
 <p>Fonts affect line breaks and page count. Embedded document fonts load automatically. Provide additional fonts to match your documents.</p><pre><code>const doc = await openDocument(file, {
   fonts: { "Example Sans": "/fonts/example-sans.woff2" }

@@ -6,7 +6,7 @@ Rendering requires no backend. Document analysis also runs in Node.js.
 
 The [public repository](https://github.com/onodocs/onodocs) contains JavaScript
 and TypeScript samples and the published guides. You need Node.js 22.18 or newer
-and npm. No GitHub sign-in or public npm SDK release is required.
+and npm. No GitHub sign-in or license key is required for evaluation.
 
 ```sh
 git clone https://github.com/onodocs/onodocs.git
@@ -15,9 +15,7 @@ npm run setup
 npm start
 ```
 
-Open http://127.0.0.1:5174/samples.html. Setup downloads the SDK archive from this
-repository's release and installs its dependencies. You can instead download
-the archive named in `sdk-release.json` into `vendor/` yourself and run `npm install`.
+Open http://127.0.0.1:5174/samples.html. Setup installs matching SDK and Canvas packages from npm and the other sample dependencies.
 
 | Sample | Entry point | Demonstrates |
 | --- | --- | --- |
@@ -26,7 +24,7 @@ the archive named in `sdk-release.json` into `vendor/` yourself and run `npm ins
 | React and TypeScript viewer | `examples/react-docx-viewer/DocxViewer.tsx` | Typed props, progress, cancellation, replacement and unmount cleanup |
 | Viewer | `examples/sdk/document.ts` | Mount a document, open local files, select text, export PNG/PDF |
 | Custom form | `examples/sdk/document.ts` | Anchor HTML fields to tagged content and collect values |
-| Template | `examples/sdk/document.ts` | Fill a booking confirmation and print it |
+| Template | `examples/sdk/document.ts` | Fill a booking confirmation and export PDF |
 | Text and table extraction | `examples/docx-extraction/main.ts`, `main.js` | Local files, raw tables, header-based records, copy and download |
 | Node.js extraction | `examples/docx-extraction/node.ts`, `node.js` | The same extraction function, JSON on stdout |
 | Document workflows | `examples/sdk/workflows.ts` | Inspect tables, ASCII output and the document tree |

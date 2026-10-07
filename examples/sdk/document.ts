@@ -1,4 +1,5 @@
-import { openDocument, type BrowserDocument, type DocumentView } from "@onodocs/sdk/browser";
+import { openDocument, type BrowserDocument } from "@onodocs/sdk/browser";
+import { createDocument, type CanvasDocument, type DocumentView } from "@onodocs/canvas";
 import sample from "../view-document/sample.docx";
 import template from "./template.docx";
 import { demoLicense } from "./license";
@@ -6,12 +7,14 @@ import { demoLicense } from "./license";
 const container = document.querySelector<HTMLElement>("#document-view")!;
 const viewport = document.querySelector<HTMLElement>("#document-viewport")!;
 const status = document.querySelector<HTMLElement>("#status")!;
+const spinner = document.querySelector<HTMLElement>("#loading-indicator")!;
 const cancel = document.querySelector<HTMLButtonElement>("#cancel-loading")!;
 const feedback = document.querySelector<HTMLOutputElement>("#feedback")!;
 const download = document.querySelector<HTMLButtonElement>("#download-page")!;
 const documentButtons = [...document.querySelectorAll<HTMLButtonElement>("#download-page, #fill-template, [data-save-pdf]")];
 const mode = new URLSearchParams(location.search).get("mode") ?? "viewer";
 let current: BrowserDocument | undefined;
+let canvasDocument: CanvasDocument | undefined;
 let view: DocumentView | undefined;
 let exportController: AbortController | undefined;
 let documentName = "document";
@@ -24,11 +27,14 @@ const bookings = {
 function dispose() {
   controller.abort();
   exportController = undefined;
-  view?.dispose();
+  canvasDocument?.dispose();
   current?.dispose();
   current = undefined;
+  canvasDocument = undefined;
   view = undefined;
   cancel.hidden = true;
+  spinner.hidden = true;
+  viewport.style.visibility = "";
   documentButtons.forEach(button => button.disabled = true);
 }
 
@@ -36,23 +42,25 @@ async function load(input?: File) {
   dispose();
   controller = new AbortController();
   const { signal } = controller;
-  status.hidden = false;
-  status.textContent = "Opening document…";
-  cancel.hidden = false;
+  status.hidden = true;
+  cancel.hidden = true;
+  spinner.hidden = false;
+  viewport.style.visibility = "hidden";
   feedback.hidden = true;
   documentName = input ? input.name.replace(/\.[^.]+$/, "") : mode === "template" ? "booking-confirmation" : "document";
   viewport.scrollTop = 0;
   try {
     const source = input ?? (mode === "template" ? template : sample);
-    const opened = await openDocument(source, { signal, licenseKey: await demoLicense(signal), container, viewOptions: { zoom: "fit-width", gap: 0 }, onProgress(progress) {
+    const opened = await openDocument(source, { signal, licenseKey: await demoLicense(signal), onProgress(progress) {
       if (signal.aborted) return;
-      const pages = progress.pages;
-      view = progress.view;
-      status.textContent = progress.stage === "parsing" ? "Reading document…" : progress.stage === "fonts" ? "Preparing fonts…" : pages.length ? `Loading document… ${pages.length} ${pages.length === 1 ? "page" : "pages"} available` : "Laying out document…";
+      canvasDocument ??= createDocument(progress.document, { container, viewOptions: { zoom: "fit-width", gap: 0 } });
+      view = canvasDocument.view;
+      const loading = progress.stage !== "ready";
+      spinner.hidden = !loading;
+      viewport.style.visibility = loading ? "hidden" : "visible";
     } });
     if (signal.aborted) { opened.dispose(); return; }
     current = opened;
-    view = current.view;
     await view!.whenRendered();
     if (signal.aborted) return;
     status.hidden = true;
@@ -74,11 +82,11 @@ function attachFields() {
   const fields = doc.query.contentControls().where({ tag: "delivery-date" }).map(field => {
     const input = deliveryInput.content.firstElementChild!.cloneNode(true) as HTMLInputElement;
     input.value = field.text;
-    view!.attach(input, { anchor: field, placement: "inside-center-left", size: { width: 1640, height: 420 } });
+    view!.attach(input, { anchor: doc.geometry.fragments(field)[0]!, placement: "inside-center-left", size: { width: 1640, height: 420 } });
     return { deliverable: field.title, input };
   });
-  view!.attach(approval, { anchor: doc.query.findText("Client approval:").one(), placement: "outside-right", gap: 80, size: { width: 420, height: 420 } });
-  view!.attach(approvalDate, { anchor: doc.query.findText("Date:").one(), placement: "outside-right", gap: 80, size: { width: 1800, height: 420 } });
+  view!.attach(approval, { anchor: doc.geometry.fragments(doc.query.findText("Client approval:").one())[0]!, placement: "outside-right", gap: 80, size: { width: 420, height: 420 } });
+  view!.attach(approvalDate, { anchor: doc.geometry.fragments(doc.query.findText("Date:").one())[0]!, placement: "outside-right", gap: 80, size: { width: 1800, height: 420 } });
   view!.attach(submitButton, { anchor: doc.pages[0]!, placement: "inside-bottom-right", inset: 480, size: { width: 2400, height: 600 } });
   approval.addEventListener("change", () => {
     const today = new Date();
@@ -129,7 +137,7 @@ for (const button of document.querySelectorAll("[data-save-pdf]")) button.addEve
   const pdf = await PDFDocument.create();
   const canvas = document.createElement("canvas");
   try {
-    for (const page of doc.pages) {
+    for (const page of canvasDocument!.pages) {
       signal.throwIfAborted();
       status.textContent = `Saving PDF… ${page.index + 1} of ${doc.pages.length} pages`;
       await page.render(canvas, { dpi: 144, signal });
@@ -158,7 +166,7 @@ cancel.addEventListener("click", () => {
 });
 download.addEventListener("click", () => void perform(async (doc, signal) => {
   const canvas = document.createElement("canvas");
-  await doc.pages[0]!.render(canvas, { dpi: 144, signal });
+  await canvasDocument!.pages[0]!.render(canvas, { dpi: 144, signal });
   const blob = await new Promise<Blob | null>(resolve => canvas.toBlob(resolve));
   if (!blob || signal.aborted) return;
   saveBlob(blob, "page-1.png");

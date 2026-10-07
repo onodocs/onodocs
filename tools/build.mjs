@@ -5,7 +5,7 @@ import { join } from "node:path";
 
 const outdir = join(homedir(), ".tmp/onodocs-samples/dist");
 await mkdir(outdir, { recursive: true });
-for (const file of ["index.html", "style.css", "workflows.html", "workflows.css"]) await copyFile(`examples/sdk/${file}`, join(outdir, file));
+for (const file of ["index.html", "style.css", "loading.css", "workflows.html", "workflows.css"]) await copyFile(`examples/sdk/${file}`, join(outdir, file));
 await copyFile("index.html", join(outdir, "samples.html"));
 await cp("guides", join(outdir, "guides"), { recursive: true });
 for (const directory of ["docx-viewer", "javascript-viewer"]) {

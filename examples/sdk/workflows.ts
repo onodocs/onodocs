@@ -7,6 +7,7 @@ import { demoLicense } from "./license";
 
 const controller = new AbortController();
 const status = document.querySelector<HTMLElement>("#status")!;
+const spinner = document.querySelector<HTMLElement>("#loading-indicator")!;
 const apply = document.querySelector<HTMLButtonElement>("#apply-response")!;
 let deliveries: readonly (readonly string[])[] = [];
 
@@ -31,10 +32,15 @@ async function load() {
       cards.append(card);
     }
     apply.disabled = false;
+    spinner.hidden = true;
     status.hidden = true;
     document.querySelector<HTMLElement>("main")!.hidden = false;
   } catch (error) {
-    if (!controller.signal.aborted) status.textContent = `Unable to open document. ${error instanceof Error ? error.message : "Try resetting the sample."}`;
+    if (!controller.signal.aborted) {
+      spinner.hidden = true;
+      status.hidden = false;
+      status.textContent = `Unable to open document. ${error instanceof Error ? error.message : "Try resetting the sample."}`;
+    }
   }
 }
 
@@ -49,6 +55,7 @@ apply.addEventListener("click", () => {
 
 function dispose() {
   controller.abort();
+  spinner.hidden = true;
   deliveries = [];
   apply.disabled = true;
   document.querySelector("main")!.replaceChildren();

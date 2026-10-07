@@ -26,9 +26,7 @@ npm run setup
 npm start
 ```
 
-Open **http://127.0.0.1:5174/samples.html**. Setup downloads the pinned SDK archive
-from this repository's public GitHub release and installs dependencies. No GitHub
-sign-in or licence key is required. You can also [download the source ZIP](https://github.com/onodocs/onodocs/archive/refs/heads/main.zip).
+Open **http://127.0.0.1:5174/samples.html**. Setup installs matching SDK and Canvas packages from npm and the other dependencies. No GitHub sign-in or licence key is required. You can also [download the source ZIP](https://github.com/onodocs/onodocs/archive/refs/heads/main.zip).
 
 | Sample | Source | What it demonstrates |
 | --- | --- | --- |
@@ -59,21 +57,22 @@ for TypeScript integrations.
 
 ## Use the SDK in your application
 
-Download the archive named in [sdk-release.json](sdk-release.json) from
-[GitHub releases](https://github.com/onodocs/onodocs/releases) and install it:
+Install matching SDK and Canvas packages from npm:
 
 ```sh
-npm install ./onodocs-sdk-0.2.0-beta.3.tgz
+npm install @onodocs/sdk @onodocs/canvas
 ```
+
+The SDK owns document processing. Canvas owns painting, views, selection and HTML attachments. Backend analysis or image/PDF export needs only the SDK; a frontend displaying prepared pages needs only Canvas.
 
 ```ts
 import { openDocument } from "@onodocs/sdk/browser";
+import { createDocument } from "@onodocs/canvas";
 
-const doc = await openDocument(file, {
-  container: document.querySelector<HTMLElement>("#pages")!,
-  viewOptions: { zoom: "fit-width" }
-});
-await doc.view!.whenRendered();
+const doc = await openDocument(file);
+const canvasDocument = createDocument(doc);
+const view = canvasDocument.mount(document.querySelector<HTMLElement>("#pages")!, { zoom: "fit-width" });
+await view.whenRendered();
 ```
 
 Here `file` is a browser `File` from your application's file picker. The
@@ -81,8 +80,7 @@ Here `file` is a browser `File` from your application's file picker. The
 cancellation and disposal. For JavaScript, remove the generic type and non-null
 assertions, or use [main.js](examples/docx-viewer/main.js).
 
-During preview the SDK is distributed as release archives, not through public
-npm. Supported Word package types include DOCX, DOCM, DOTX and DOTM; VBA does not
+The packages are also available as [release archives](https://github.com/onodocs/onodocs/releases). Supported Word package types include DOCX, DOCM, DOTX and DOTM; VBA does not
 execute. Older DOC/RTF files and general Word editing or DOCX round-trip saving
 are not supported. Fonts affect rendering. PDF exports are image-based.
 

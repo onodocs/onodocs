@@ -1,4 +1,5 @@
 import { openDocument } from "@onodocs/sdk/browser";
+import { createDocument } from "@onodocs/canvas";
 import sample from "../view-document/sample.docx";
 const pages = document.querySelector("#pages");
 const status = document.querySelector("#status");
@@ -11,34 +12,32 @@ async function open(source) {
   const controller = new AbortController();
   const { signal } = controller;
   let doc;
-  let view;
+  let canvasDocument;
   stop = () => {
     controller.abort();
-    view?.dispose();
+    canvasDocument?.dispose();
     doc?.dispose();
   };
   status.textContent = "Opening document\u2026";
   cancel.disabled = false;
   try {
     doc = await openDocument(source, {
-      container: pages,
       signal,
-      viewOptions: { zoom: "fit-width" },
       onProgress(progress) {
         if (signal.aborted) return;
-        view = progress.view;
-        status.textContent = progress.pages.length ? `Loading\u2026 ${progress.pages.length} ${progress.pages.length === 1 ? "page" : "pages"} available` : `Loading: ${progress.stage}\u2026`;
+        canvasDocument ??= createDocument(progress.document, { container: pages, viewOptions: { zoom: "fit-width" } });
+        const count = progress.document.pages.length;
+        status.textContent = count ? `Loading\u2026 ${count} ${count === 1 ? "page" : "pages"} available` : `Loading: ${progress.stage}\u2026`;
       }
     });
     if (signal.aborted) {
       doc.dispose();
       return;
     }
-    view = doc.view;
-    await view.whenRendered();
+    await canvasDocument.view.whenRendered();
     if (!signal.aborted) status.textContent = `Ready \xB7 ${doc.pages.length} ${doc.pages.length === 1 ? "page" : "pages"}. Select text to copy it.`;
   } catch (error) {
-    view?.dispose();
+    canvasDocument?.dispose();
     doc?.dispose();
     if (!signal.aborted) status.textContent = `Unable to open document. ${error instanceof Error ? error.message : "Try another Word file."}`;
   } finally {
