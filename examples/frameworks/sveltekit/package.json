@@ -1,0 +1,25 @@
+{
+  "name": "onodocs-sveltekit-sample",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": "^24.15.0"
+  },
+  "scripts": {
+    "prestart": "node ../prepare.mjs static",
+    "start": "vite --host 127.0.0.1 --port 5194 --strictPort",
+    "prebuild": "node ../prepare.mjs static",
+    "build": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json && vite build"
+  },
+  "dependencies": {
+    "svelte": "5.57.2"
+  },
+  "devDependencies": {
+    "vite": "8.3.3",
+    "@sveltejs/kit": "3.0.1",
+    "@sveltejs/adapter-node": "6.0.0",
+    "@sveltejs/vite-plugin-svelte": "7.3.1",
+    "typescript": "6.0.3",
+    "svelte-check": "4.7.6"
+  }
+}

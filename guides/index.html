@@ -94,109 +94,291 @@ if (fragment) view.scrollTo(fragment, { block: "center" });</code></pre><p>See <
 </section>
 <section aria-labelledby="lifecycle"><h2 id="lifecycle">Errors and cleanup</h2>
 <p>Handle rejected SDK promises in your application and check <code>response.ok</code> when fetching documents. Pass an <code>AbortSignal</code> to cancel work when the source changes or the component disappears. Release browser documents when no longer needed. This also removes their views and attachments. Analysis-only documents need no disposal.</p>
-<p>This shared application helper handles fetching, errors, cancellation, and cleanup. Save it as <code>mount.ts</code> for the framework examples below. It logs errors by default; pass a third argument to display them in your application.</p>
-<details><summary>Shared mount helper</summary><pre><code>import { openDocument, type BrowserDocument } from "@onodocs/sdk/browser";
-import { createDocument, type CanvasDocument } from "@onodocs/canvas";
+<p>This shared application helper handles fetching, errors, cancellation, and cleanup. It is included in every framework project below as <code>examples/sdk/mount.ts</code>. The third argument handles errors and the fourth receives loading status.</p>
+<details><summary>Shared mount helper</summary><pre><code>import type { BrowserDocument } from "@onodocs/sdk/browser";
+import type { CanvasDocument } from "@onodocs/canvas";
 
-export function mountDocument(container: HTMLElement, url: string, onError: (error: unknown) =&gt; void = console.error) {
+export function mountDocument(container: HTMLElement, source: string | File, onError: (error: unknown) =&gt; void = console.error, onStatus: (status: string) =&gt; void = () =&gt; {}) {
   const controller = new AbortController();
   let document: BrowserDocument | undefined;
   let canvasDocument: CanvasDocument | undefined;
+  onStatus("Opening document…");
   void (async () =&gt; {
     try {
-      const response = await fetch(url, { signal: controller.signal, credentials: "same-origin" });
-      if (!response.ok) throw new Error(`Document request failed (${response.status})`);
-      document = await openDocument(await response.arrayBuffer(), { signal: controller.signal, onProgress(progress) {
+      const [{ openDocument }, { createDocument }] = await Promise.all([import("@onodocs/sdk/browser"), import("@onodocs/canvas")]);
+      controller.signal.throwIfAborted();
+      let input: File | ArrayBuffer;
+      if (typeof source === "string") {
+        const response = await fetch(source, { signal: controller.signal, credentials: "same-origin" });
+        if (!response.ok) throw new Error(`Document request failed (${response.status})`);
+        input = await response.arrayBuffer();
+      } else input = source;
+      document = await openDocument(input, { signal: controller.signal, onProgress(progress) {
+        if (controller.signal.aborted) return;
         canvasDocument ??= createDocument(progress.document, { container, viewOptions: { zoom: "fit-width" } });
+        onStatus(`Loading… ${progress.document.pages.length} pages available`);
       } });
-      if (controller.signal.aborted) document.dispose();
+      if (controller.signal.aborted) { document.dispose(); return; }
+      await canvasDocument!.view!.whenRendered();
+      if (!controller.signal.aborted) onStatus(`Ready. ${document.pages.length} pages. Select text to copy it.`);
     } catch (error) {
+      canvasDocument?.dispose();
       document?.dispose();
       if (!controller.signal.aborted) onError(error);
     }
   })();
   return () =&gt; { controller.abort(); canvasDocument?.dispose(); document?.dispose(); };
 }
-</code></pre></details><pre><code>const stop = mountDocument(container, "/sample.docx", showError);</code></pre><p>Call the returned <code>stop()</code> when replacing the document or removing its container. Framework examples connect this to their lifecycle hooks. For server rendering, dispose documents in <code>finally</code>, and dispose the renderer when the service or job ends. The server example below includes this cleanup.</p>
+</code></pre></details><pre><code>const stop = mountDocument(container, "/sample.docx", console.error, console.log);</code></pre><p>Call the returned <code>stop()</code> when replacing the document or removing its container. Framework examples connect this to their lifecycle hooks. For server rendering, dispose documents in <code>finally</code>, and dispose the renderer when the service or job ends. The server example below includes this cleanup.</p>
 </section>
-<section aria-labelledby="frameworks"><h2 id="frameworks">Use your framework</h2>
-<p>Use the <a href="#lifecycle">shared mount helper</a> above. These integration snippets assume an existing application and its bundler. They connect the helper to each framework’s lifecycle hooks. Put <code>sample.docx</code> in the application’s public assets folder, or pass an existing document URL. The React guide below provides a complete runnable project.</p><h3 id="react">React / Next.js</h3><p>Follow the complete <a href="https://onodocs.com/developers/react-docx-viewer/">React and TypeScript Word viewer guide</a> for a runnable component with progress, cancellation, replacement and Strict Mode cleanup.</p><p>In Next.js, use a client component.</p><pre><code>"use client";
-import { useEffect, useRef } from "react";
-import { mountDocument } from "./mount";
+<section aria-labelledby="frameworks"><h2 id="frameworks">Run a framework sample</h2>
+<p>Each project includes its application shell, dependencies, a Word document and controls for opening files, cancelling loading and hiding the viewer. Selected files are processed in the browser. The samples use evaluation mode and need no license key.</p>
+<p>Install Node.js 24 LTS (24.15 or later) and Git. Razor Pages and Blazor also require the .NET 10 SDK. Clone the whole repository so the shared helper, styles and sample document are available:</p>
+<pre><code>git clone https://github.com/onodocs/onodocs.git
+cd onodocs
+npm run setup</code></pre>
+<p>Choose one project below. Run its commands from the repository root. <code>npm start</code> prepares the included assets and starts the application. Stop it with Ctrl+C. Run <code>npm run build</code> in the same project directory to build the application.</p>
+<h3 id="react">React</h3><p>The <a href="https://onodocs.com/developers/react-docx-viewer/">React and TypeScript viewer guide</a> includes a runnable application, typed component and Strict Mode cleanup. From the repository root, run <code>npm start</code> and open <a href="http://127.0.0.1:5174/react-docx-viewer/">http://127.0.0.1:5174/react-docx-viewer/</a>.</p>
+<h3 id="nextjs">Next.js</h3><p>The page is a Client Component. Its effect opens the document after mounting and releases it on replacement or unmount. Server rendering stays enabled for the initial page.</p>
+<pre><code>cd examples/frameworks/next
+npm ci
+npm start</code></pre>
+<p>Open <a href="http://127.0.0.1:5196/">http://127.0.0.1:5196</a>. <a href="https://github.com/onodocs/onodocs/tree/main/examples/frameworks/next">Complete Next.js project on GitHub</a>.</p>
+<details><summary>next/app/page.tsx</summary><pre><code>"use client";
+import { useEffect, useRef, useState } from "react";
+import { mountDocument } from "../../../sdk/mount";
 
-export function Document({ src }: { src: string }) {
+function Viewer({ source }: { source: string | File }) {
   const host = useRef&lt;HTMLDivElement&gt;(null);
-  useEffect(() =&gt; mountDocument(host.current!, src), [src]);
-  return &lt;div ref={host} /&gt;;
-}</code></pre><h3 id="vue">Vue / Nuxt</h3><p>Watch the source after mounting; each replacement disposes the previous document.</p><pre><code>&lt;script setup lang="ts"&gt;
+  const stop = useRef(() =&gt; {});
+  const [status, setStatus] = useState("Opening document…");
+  useEffect(() =&gt; {
+    const dispose = mountDocument(host.current!, source, error =&gt; setStatus(String(error)), setStatus);
+    stop.current = dispose;
+    return dispose;
+  }, [source]);
+  return &lt;section&gt;
+    &lt;button type="button" onClick={() =&gt; { stop.current(); setStatus("Loading cancelled. Open another document to continue."); }}&gt;Cancel loading&lt;/button&gt;
+    &lt;output role="status"&gt;{status}&lt;/output&gt;
+    &lt;div className="viewport"&gt;&lt;div ref={host} className="pages" /&gt;&lt;/div&gt;
+  &lt;/section&gt;;
+}
+
+export default function Page() {
+  const [document, setDocument] = useState&lt;{ source: string | File; revision: number }&gt;({ source: "/sample.docx", revision: 0 });
+  const [visible, setVisible] = useState(true);
+  function open(source: string | File) { setDocument(previous =&gt; ({ source, revision: previous.revision + 1 })); setVisible(true); }
+  return &lt;main&gt;
+    &lt;h1&gt;Word document viewer&lt;/h1&gt;
+    &lt;p&gt;Open a local Word file or the included sample. Selected files stay in your browser.&lt;/p&gt;
+    &lt;a href="https://github.com/onodocs/onodocs/tree/main/examples/frameworks/next"&gt;Source on GitHub&lt;/a&gt;
+    &lt;div className="toolbar"&gt;
+      &lt;label&gt;Open Word file &lt;input type="file" accept=".docx,.docm,.dotx,.dotm" onChange={event =&gt; { const file = event.currentTarget.files?.[0]; event.currentTarget.value = ""; if (file) open(file); }} /&gt;&lt;/label&gt;
+      &lt;button type="button" onClick={() =&gt; open('/sample.docx')}&gt;Open sample&lt;/button&gt;
+      &lt;button type="button" onClick={() =&gt; setVisible(!visible)}&gt;{visible ? "Hide viewer" : "Show viewer"}&lt;/button&gt;
+    &lt;/div&gt;
+    {visible &amp;&amp; &lt;Viewer key={document.revision} source={document.source} /&gt;}
+  &lt;/main&gt;;
+}
+</code></pre></details>
+<h3 id="vue">Vue</h3><p>The component watches its source after mounting and releases the document when its source changes or the component unmounts.</p>
+<pre><code>cd examples/frameworks/vue
+npm ci
+npm start</code></pre>
+<p>Open <a href="http://127.0.0.1:5191/">http://127.0.0.1:5191</a>. <a href="https://github.com/onodocs/onodocs/tree/main/examples/frameworks/vue">Complete Vue project on GitHub</a>.</p>
+<details><summary>vue/Viewer.vue</summary><pre><code>&lt;script setup lang="ts"&gt;
 import { ref, onMounted, onUnmounted, watch } from "vue";
-import { mountDocument } from "./mount";
+import { mountDocument } from "../../sdk/mount";
 
-const props = defineProps&lt;{ src: string }&gt;();
+const props = defineProps&lt;{ source: string | File }&gt;();
 const host = ref&lt;HTMLElement&gt;();
-let stop: (() =&gt; void) | undefined;
-
+const status = ref("Opening document…");
+let stop = () =&gt; {};
+let unwatch: (() =&gt; void) | undefined;
 onMounted(() =&gt; {
-  stop = watch(() =&gt; props.src, (src, _, onCleanup) =&gt; {
-    onCleanup(mountDocument(host.value!, src));
+  unwatch = watch(() =&gt; props.source, source =&gt; {
+    stop();
+    stop = mountDocument(host.value!, source, error =&gt; { status.value = String(error); }, value =&gt; { status.value = value; });
   }, { immediate: true });
 });
-onUnmounted(() =&gt; stop?.());
+onUnmounted(() =&gt; { unwatch?.(); stop(); });
+function cancel() { stop(); status.value = "Loading cancelled. Open another document to continue."; }
 &lt;/script&gt;
-&lt;template&gt;&lt;div ref="host" /&gt;&lt;/template&gt;</code></pre><h3 id="svelte">Svelte / SvelteKit</h3><p>For a fixed document URL, return cleanup from a synchronous onMount callback.</p><pre><code>&lt;script lang="ts"&gt;
-import { onMount } from "svelte";
-import { mountDocument } from "./mount";
-
-let host: HTMLDivElement;
-onMount(() =&gt; mountDocument(host, "/sample.docx"));
+&lt;template&gt;
+  &lt;button type="button" @click="cancel"&gt;Cancel loading&lt;/button&gt;
+  &lt;output role="status"&gt;{{ status }}&lt;/output&gt;
+  &lt;div class="viewport"&gt;&lt;div ref="host" class="pages" /&gt;&lt;/div&gt;
+&lt;/template&gt;
+</code></pre></details>
+<h3 id="nuxt">Nuxt</h3><p>This Nuxt application reuses the Vue components. The page shell renders on the server, and document loading starts in the browser after mounting.</p>
+<pre><code>cd examples/frameworks/nuxt
+npm ci
+npm start</code></pre>
+<p>Open <a href="http://127.0.0.1:5192/">http://127.0.0.1:5192</a>. <a href="https://github.com/onodocs/onodocs/tree/main/examples/frameworks/nuxt">Complete Nuxt project on GitHub</a>.</p>
+<details><summary>nuxt/app/app.vue</summary><pre><code>&lt;script setup lang="ts"&gt;
+import ViewerApp from "../../vue/App.vue";
 &lt;/script&gt;
-&lt;div bind:this={host}&gt;&lt;/div&gt;</code></pre><h3 id="angular">Angular</h3><pre><code>import { Component, ElementRef, DestroyRef, afterNextRender, inject, viewChild } from "@angular/core";
-import { mountDocument } from "./mount";
+&lt;template&gt;&lt;ViewerApp /&gt;&lt;/template&gt;
+</code></pre></details>
+<h3 id="svelte">Svelte</h3><p>The component effect opens the selected document and returns its cleanup function. Replacing the source or removing the viewer stops pending work.</p>
+<pre><code>cd examples/frameworks/svelte
+npm ci
+npm start</code></pre>
+<p>Open <a href="http://127.0.0.1:5193/">http://127.0.0.1:5193</a>. <a href="https://github.com/onodocs/onodocs/tree/main/examples/frameworks/svelte">Complete Svelte project on GitHub</a>.</p>
+<details><summary>svelte/Viewer.svelte</summary><pre><code>&lt;script lang="ts"&gt;
+  import { mountDocument } from "../../sdk/mount";
+  let { source }: { source: string | File } = $props();
+  let host: HTMLDivElement;
+  let status = $state("Opening document…");
+  let stop = () =&gt; {};
+  $effect(() =&gt; {
+    stop = mountDocument(host, source, error =&gt; { status = String(error); }, value =&gt; { status = value; });
+    return () =&gt; stop();
+  });
+  function cancel() { stop(); status = "Loading cancelled. Open another document to continue."; }
+&lt;/script&gt;
+&lt;button type="button" onclick={cancel}&gt;Cancel loading&lt;/button&gt;
+&lt;output role="status"&gt;{status}&lt;/output&gt;
+&lt;div class="viewport"&gt;&lt;div bind:this={host} class="pages"&gt;&lt;/div&gt;&lt;/div&gt;
+</code></pre></details>
+<h3 id="sveltekit">SvelteKit</h3><p>This SvelteKit route keeps server rendering enabled. The effect runs only in the browser.</p>
+<pre><code>cd examples/frameworks/sveltekit
+npm ci
+npm start</code></pre>
+<p>Open <a href="http://127.0.0.1:5194/">http://127.0.0.1:5194</a>. <a href="https://github.com/onodocs/onodocs/tree/main/examples/frameworks/sveltekit">Complete SvelteKit project on GitHub</a>.</p>
+<details><summary>sveltekit/src/routes/Viewer.svelte</summary><pre><code>&lt;script lang="ts"&gt;
+  import { mountDocument } from "../../../../sdk/mount";
+  let { source }: { source: string | File } = $props();
+  let host: HTMLDivElement;
+  let status = $state("Opening document…");
+  let stop = () =&gt; {};
+  $effect(() =&gt; {
+    stop = mountDocument(host, source, error =&gt; { status = String(error); }, value =&gt; { status = value; });
+    return () =&gt; stop();
+  });
+  function cancel() { stop(); status = "Loading cancelled. Open another document to continue."; }
+&lt;/script&gt;
+&lt;button type="button" onclick={cancel}&gt;Cancel loading&lt;/button&gt;
+&lt;output role="status"&gt;{status}&lt;/output&gt;
+&lt;div class="viewport"&gt;&lt;div bind:this={host} class="pages"&gt;&lt;/div&gt;&lt;/div&gt;
+</code></pre></details>
+<h3 id="angular">Angular</h3><p>The standalone application mounts the document after the host element exists. DestroyRef releases it when the viewer is replaced or hidden.</p>
+<pre><code>cd examples/frameworks/angular
+npm ci
+npm start</code></pre>
+<p>Open <a href="http://127.0.0.1:5195/">http://127.0.0.1:5195</a>. <a href="https://github.com/onodocs/onodocs/tree/main/examples/frameworks/angular">Complete Angular project on GitHub</a>.</p>
+<details><summary>angular/main.ts</summary><pre><code>import { bootstrapApplication } from "@angular/platform-browser";
+import { Component, ElementRef, DestroyRef, afterNextRender, inject, input, signal, viewChild } from "@angular/core";
+import { mountDocument } from "../../sdk/mount";
 
-@Component({ selector: "app-document", standalone: true, template: "&lt;div #host&gt;&lt;/div&gt;" })
-export class DocumentComponent {
+@Component({ selector: "document-viewer", template: `&lt;button type="button" (click)="cancel()"&gt;Cancel loading&lt;/button&gt;&lt;output role="status"&gt;{{ status() }}&lt;/output&gt;&lt;div class="viewport"&gt;&lt;div #host class="pages"&gt;&lt;/div&gt;&lt;/div&gt;` })
+class DocumentViewer {
+  source = input.required&lt;string | File&gt;();
   host = viewChild.required&lt;ElementRef&lt;HTMLElement&gt;&gt;("host");
-
+  status = signal("Opening document…");
+  private _stop = () =&gt; {};
   constructor() {
     const destroy = inject(DestroyRef);
     afterNextRender(() =&gt; {
-      destroy.onDestroy(mountDocument(this.host().nativeElement, "/sample.docx"));
+      this._stop = mountDocument(this.host().nativeElement, this.source(), error =&gt; this.status.set(String(error)), value =&gt; this.status.set(value));
     });
+    destroy.onDestroy(() =&gt; this._stop());
   }
-}</code></pre><h3 id="aspnet">ASP.NET Core / Razor Pages</h3><p>Bundle the JavaScript into <code>wwwroot/js/document.js</code> and load it from your Razor page. Put <code>sample.docx</code> in <code>wwwroot</code> to serve the URL used below. An existing authorized document endpoint can be used instead.</p><pre><code>&lt;div id="pages"&gt;&lt;/div&gt;
-&lt;script type="module" src="~/js/document.js"&gt;&lt;/script&gt;</code></pre><pre><code>import { mountDocument } from "./mount";
+  cancel() { this._stop(); this.status.set("Loading cancelled. Open another document to continue."); }
+}
 
-const stop = mountDocument(document.querySelector("#pages")!, "/sample.docx");
-window.addEventListener("pagehide", event =&gt; { if (!event.persisted) stop(); });</code></pre><h3 id="blazor">Blazor</h3><p>Bundle this module into <code>wwwroot/js/blazor-document.js</code>. Observe removal of the host so document cleanup also works after a circuit disconnects.</p><pre><code>import { mountDocument } from "./mount";
-
-export function mount(host: HTMLElement, url: string) {
-  const stop = mountDocument(host, url);
-  const observer = new MutationObserver(() =&gt; {
-    if (!host.isConnected) { stop(); observer.disconnect(); }
-  });
-  observer.observe(document.body, { childList: true, subtree: true });
-}</code></pre><p>Put <code>sample.docx</code> in <code>wwwroot</code>, enable interactive rendering and add <code>Microsoft.JSInterop</code> to your Razor imports. The disconnect catch below is specific to Blazor module disposal.</p><pre><code>@implements IAsyncDisposable
+@Component({ selector: "app-root", imports: [DocumentViewer], template: `
+  &lt;main&gt;&lt;h1&gt;Word document viewer&lt;/h1&gt;
+  &lt;p&gt;Open a local Word file or the included sample. Selected files stay in your browser.&lt;/p&gt;
+  &lt;a href="https://github.com/onodocs/onodocs/tree/main/examples/frameworks/angular"&gt;Source on GitHub&lt;/a&gt;
+  &lt;div class="toolbar"&gt;
+    &lt;label&gt;Open Word file &lt;input type="file" accept=".docx,.docm,.dotx,.dotm" (change)="choose($event)"&gt;&lt;/label&gt;
+    &lt;button type="button" (click)="open('/sample.docx')"&gt;Open sample&lt;/button&gt;
+    &lt;button type="button" (click)="visible.set(!visible())"&gt;{{ visible() ? 'Hide viewer' : 'Show viewer' }}&lt;/button&gt;
+  &lt;/div&gt;
+  @if (visible()) { @for (entry of documents(); track entry) { &lt;document-viewer [source]="entry.source" /&gt; } }
+  &lt;/main&gt;` })
+class App {
+  visible = signal(true);
+  documents = signal([{ source: "/sample.docx" as string | File }]);
+  open(source: string | File) { this.documents.set([{ source }]); this.visible.set(true); }
+  choose(event: Event) {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    input.value = "";
+    if (file) this.open(file);
+  }
+}
+bootstrapApplication(App).catch(console.error);
+</code></pre></details>
+<h3 id="aspnet">ASP.NET Core Razor Pages</h3><p>The project includes the Razor page, static-file configuration and JavaScript bundling. Word document processing runs in the browser. The .NET server serves the application and included sample.</p>
+<pre><code>cd examples/frameworks/razor
+npm ci
+npm start</code></pre>
+<p>Open <a href="http://127.0.0.1:5197/">http://127.0.0.1:5197</a>. <a href="https://github.com/onodocs/onodocs/tree/main/examples/frameworks/razor">Complete ASP.NET Core Razor Pages project on GitHub</a>.</p>
+<details><summary>razor/Pages/Index.cshtml</summary><pre><code>@page
+&lt;!doctype html&gt;&lt;html lang="en"&gt;&lt;head&gt;&lt;meta charset="utf-8"&gt;&lt;meta name="viewport" content="width=device-width,initial-scale=1"&gt;&lt;title&gt;OnoDocs Razor Pages viewer&lt;/title&gt;&lt;link rel="stylesheet" href="/style.css"&gt;&lt;/head&gt;&lt;body&gt;&lt;main&gt;&lt;h1&gt;Word document viewer&lt;/h1&gt;&lt;p&gt;Open a local Word file or the included sample. Selected files stay in your browser.&lt;/p&gt;&lt;a href="https://github.com/onodocs/onodocs/tree/main/examples/frameworks/razor"&gt;Source on GitHub&lt;/a&gt;&lt;div class="toolbar"&gt;&lt;button id="toggle" type="button"&gt;Hide viewer&lt;/button&gt;&lt;/div&gt;&lt;div id="viewer"&gt;&lt;/div&gt;&lt;template id="viewer-template"&gt;&lt;section&gt;&lt;div class="toolbar"&gt;&lt;label&gt;Open Word file &lt;input type="file" accept=".docx,.docm,.dotx,.dotm"&gt;&lt;/label&gt;&lt;button type="button" data-open&gt;Open sample&lt;/button&gt;&lt;button type="button" data-cancel&gt;Cancel loading&lt;/button&gt;&lt;/div&gt;&lt;output role="status"&gt;Opening document…&lt;/output&gt;&lt;div class="viewport"&gt;&lt;div class="pages"&gt;&lt;/div&gt;&lt;/div&gt;&lt;/section&gt;&lt;/template&gt;&lt;/main&gt;&lt;script type="module" src="/viewer.js"&gt;&lt;/script&gt;&lt;/body&gt;&lt;/html&gt;
+</code></pre></details>
+<h3 id="blazor">Blazor</h3><p>The project uses interactive server rendering and JavaScript interop. The file picker passes local files directly to the browser SDK without uploading them through the Blazor circuit. Removing the host releases the document. The .NET application must keep running for Blazor interactions.</p>
+<pre><code>cd examples/frameworks/blazor
+npm ci
+npm start</code></pre>
+<p>Open <a href="http://127.0.0.1:5198/">http://127.0.0.1:5198</a>. <a href="https://github.com/onodocs/onodocs/tree/main/examples/frameworks/blazor">Complete Blazor project on GitHub</a>.</p>
+<details><summary>blazor/Components/DocumentViewer.razor</summary><pre><code>@implements IAsyncDisposable
 @inject IJSRuntime JS
-&lt;div @ref="_host"&gt;&lt;/div&gt;
-
+&lt;section @ref="_host"&gt;&lt;div class="toolbar"&gt;&lt;label&gt;Open Word file &lt;input type="file" accept=".docx,.docm,.dotx,.dotm"&gt;&lt;/label&gt;&lt;button type="button" data-open&gt;Open sample&lt;/button&gt;&lt;button type="button" data-cancel&gt;Cancel loading&lt;/button&gt;&lt;/div&gt;&lt;output role="status"&gt;Opening document…&lt;/output&gt;&lt;div class="viewport"&gt;&lt;div class="pages"&gt;&lt;/div&gt;&lt;/div&gt;&lt;/section&gt;
 @code {
     private ElementReference _host;
     private IJSObjectReference? _module;
+    private bool _disposed;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (!firstRender) return;
-        _module = await JS.InvokeAsync&lt;IJSObjectReference&gt;("import", "./js/blazor-document.js");
-        await _module.InvokeVoidAsync("mount", _host, "./sample.docx");
+        var module = await JS.InvokeAsync&lt;IJSObjectReference&gt;("import", "/viewer.js");
+        if (_disposed) { await module.DisposeAsync(); return; }
+        _module = module;
+        await module.InvokeVoidAsync("mount", _host);
     }
 
     public async ValueTask DisposeAsync()
     {
+        _disposed = true;
         if (_module is null) return;
         try { await _module.DisposeAsync(); }
         catch (JSDisconnectedException) { }
     }
-}</code></pre>
+}
+</code></pre></details>
+<p>All projects use the <a href="#lifecycle">shared loading helper</a>. The helper accepts a local <code>File</code> or a document URL, reports progress and errors, and returns a function that cancels loading and releases the view. For protected documents, provide an authorized URL from your application. Same-origin cookies accompany requests; your server owns access control and cross-origin policy.</p>
+<p>Try opening a file, selecting text to copy, cancelling a load, and hiding and showing the viewer. Opening an invalid file displays an error, after which you can open another document.</p>
+<details><summary>Shared browser controls for Razor Pages and Blazor</summary><pre><code>import { mountDocument } from "../sdk/mount";
+
+export function mount(host: HTMLElement) {
+  const pages = host.querySelector&lt;HTMLElement&gt;(".pages")!;
+  const status = host.querySelector&lt;HTMLOutputElement&gt;("output")!;
+  const events = new AbortController();
+  const options = { signal: events.signal };
+  let stop = () =&gt; {};
+  function open(source: string | File) {
+    stop();
+    stop = mountDocument(pages, source, error =&gt; { status.textContent = String(error); }, value =&gt; { status.textContent = value; });
+  }
+  host.querySelector&lt;HTMLInputElement&gt;('input[type="file"]')!.addEventListener("change", event =&gt; {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    input.value = "";
+    if (file) open(file);
+  }, options);
+  host.querySelector("[data-open]")!.addEventListener("click", () =&gt; open("/sample.docx"), options);
+  host.querySelector("[data-cancel]")!.addEventListener("click", () =&gt; { stop(); status.textContent = "Loading cancelled. Open another document to continue."; }, options);
+  const observer = new MutationObserver(() =&gt; { if (!host.isConnected) dispose(); });
+  observer.observe(document.body, { childList: true, subtree: true });
+  function dispose() { stop(); events.abort(); observer.disconnect(); }
+  window.addEventListener("pagehide", event =&gt; { if (!event.persisted) dispose(); }, options);
+  open("/sample.docx");
+}
+</code></pre></details>
 </section>
 <section aria-labelledby="node"><h2 id="node">Analyze in Node</h2>
 <p>Save as <code>analyze.mjs</code> and run <code>node analyze.mjs document.docx</code>. No browser is required.</p><pre><code>import { readFile } from "node:fs/promises";

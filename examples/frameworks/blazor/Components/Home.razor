@@ -1,0 +1,5 @@
+@page "/"
+<main><h1>Word document viewer</h1><p>Open a local Word file or the included sample. Selected files stay in your browser.</p><a href="https://github.com/onodocs/onodocs/tree/main/examples/frameworks/blazor">Source on GitHub</a><div class="toolbar"><button type="button" @onclick="() => _visible = !_visible">@(_visible ? "Hide viewer" : "Show viewer")</button></div>
+@if (_visible) { <DocumentViewer /> }
+</main>
+@code { private bool _visible = true; }

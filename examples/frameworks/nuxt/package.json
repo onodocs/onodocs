@@ -1,0 +1,21 @@
+{
+  "name": "onodocs-nuxt-sample",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": "^24.15.0"
+  },
+  "scripts": {
+    "prestart": "node ../prepare.mjs",
+    "start": "nuxt dev --host 127.0.0.1 --port 5192",
+    "prebuild": "node ../prepare.mjs",
+    "build": "nuxt build"
+  },
+  "dependencies": {
+    "nuxt": "4.5.2",
+    "vue": "3.5.43"
+  },
+  "devDependencies": {
+    "typescript": "6.0.3"
+  }
+}

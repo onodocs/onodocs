@@ -1,0 +1,15 @@
+node_modules/
+dist/
+build/
+bin/
+obj/
+.nuxt/
+.output/
+.next/
+.angular/
+.svelte-kit/
+public/
+static/
+wwwroot/
+next-env.d.ts
+*.tsbuildinfo

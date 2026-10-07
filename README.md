@@ -33,6 +33,7 @@ Open **http://127.0.0.1:5174/samples.html**. Setup installs matching SDK and Can
 | DOCX viewer in TypeScript | [main.ts](examples/docx-viewer/main.ts) | Local files, progressive loading, selection, cancellation and cleanup |
 | DOCX viewer in JavaScript | [main.js](examples/docx-viewer/main.js) | The same complete example in plain JavaScript |
 | React and TypeScript Word viewer | [DocxViewer.tsx](examples/react-docx-viewer/DocxViewer.tsx) | Typed component, progress, cancellation, replacement, unmounting and Strict Mode |
+| Framework applications | [Projects and setup](docs/samples.md#framework-applications) | Vue, Nuxt, Svelte, SvelteKit, Angular, Next.js, Razor Pages and Blazor |
 | Viewer, custom forms and templates | [document.ts](examples/sdk/document.ts) | Document viewing, PNG/PDF export, anchored inputs and tagged template fields |
 | Text and table extraction | [extract.ts](examples/docx-extraction/extract.ts) | Browser and Node.js text, tables and JSON, with complete JavaScript equivalents |
 | Document workflows | [workflows.ts](examples/sdk/workflows.ts) | Tables, document tree, ASCII output and a locally simulated email draft |
@@ -40,6 +41,8 @@ Open **http://127.0.0.1:5174/samples.html**. Setup installs matching SDK and Can
 | Node.js analysis | [analyze.ts](examples/analyze.ts) | Read document content without a browser |
 
 The browser file-picker samples keep selected documents in the browser. The backend viewer reads a file on your server and sends prepared pages to the frontend. The samples do not call an AI service or send emails. See [sample setup and commands](docs/samples.md).
+
+Framework projects require Node.js 24 LTS (24.15 or later). Razor Pages and Blazor also need the .NET 10 SDK. Each project includes its application shell, document, startup commands and cleanup. See the [framework setup instructions](docs/samples.md#framework-applications).
 
 ## Run the backend viewer
 

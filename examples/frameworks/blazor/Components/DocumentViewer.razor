@@ -1,0 +1,25 @@
+@implements IAsyncDisposable
+@inject IJSRuntime JS
+<section @ref="_host"><div class="toolbar"><label>Open Word file <input type="file" accept=".docx,.docm,.dotx,.dotm"></label><button type="button" data-open>Open sample</button><button type="button" data-cancel>Cancel loading</button></div><output role="status">Opening document…</output><div class="viewport"><div class="pages"></div></div></section>
+@code {
+    private ElementReference _host;
+    private IJSObjectReference? _module;
+    private bool _disposed;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender) return;
+        var module = await JS.InvokeAsync<IJSObjectReference>("import", "/viewer.js");
+        if (_disposed) { await module.DisposeAsync(); return; }
+        _module = module;
+        await module.InvokeVoidAsync("mount", _host);
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        _disposed = true;
+        if (_module is null) return;
+        try { await _module.DisposeAsync(); }
+        catch (JSDisconnectedException) { }
+    }
+}

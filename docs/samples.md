@@ -96,3 +96,32 @@ node --env-file=.env examples/sdk/draft-email.mjs examples/view-document/sample.
 ```
 
 The command sends the selected delivery table to OpenAI and prints a draft. API usage is billed separately. It does not send email. The file must contain one table with the first-row headers Deliverable, Owner and Due, as the included brief does. See the [OpenAI text generation guide](https://developers.openai.com/api/docs/guides/text) for API setup.
+
+## Framework applications
+
+Complete projects are available for Vue, Nuxt, Svelte, SvelteKit, Angular, Next.js, ASP.NET Core Razor Pages and Blazor. Use Node.js 24 LTS (24.15 or later). Razor Pages and Blazor also require the .NET 10 SDK. Clone this whole repository and run `npm run setup` at its root before selecting a project.
+
+| Framework | Project directory | Local URL |
+| --- | --- | --- |
+| Vue | [examples/frameworks/vue](../examples/frameworks/vue/) | http://127.0.0.1:5191 |
+| Nuxt | [examples/frameworks/nuxt](../examples/frameworks/nuxt/) | http://127.0.0.1:5192 |
+| Svelte | [examples/frameworks/svelte](../examples/frameworks/svelte/) | http://127.0.0.1:5193 |
+| SvelteKit | [examples/frameworks/sveltekit](../examples/frameworks/sveltekit/) | http://127.0.0.1:5194 |
+| Angular | [examples/frameworks/angular](../examples/frameworks/angular/) | http://127.0.0.1:5195 |
+| Next.js | [examples/frameworks/next](../examples/frameworks/next/) | http://127.0.0.1:5196 |
+| Razor Pages | [examples/frameworks/razor](../examples/frameworks/razor/) | http://127.0.0.1:5197 |
+| Blazor | [examples/frameworks/blazor](../examples/frameworks/blazor/) | http://127.0.0.1:5198 |
+
+For example, run the Vue project from the repository root:
+
+```sh
+cd examples/frameworks/vue
+npm ci
+npm start
+```
+
+Use the corresponding directory from the table for another framework. Every project supports these commands. `npm start` prepares its assets and starts the application. Stop it with Ctrl+C. Run `npm run build` in the project directory to build the application.
+
+Each application includes a Word document, local file selection, loading status, error recovery, cancellation, text selection and copying, and Hide viewer / Show viewer controls. Files chosen in the browser are not uploaded. Nuxt, SvelteKit and Next.js render the initial page on the server and open the document after mounting in the browser. Blazor uses an interactive server circuit for its component controls while JavaScript processes the local document.
+
+The applications share [mount.ts](../examples/sdk/mount.ts), [styles](../examples/frameworks/style.css) and the included document. Nuxt reuses the Vue components. Keep the repository directory structure when running these examples. See the [framework guide](https://onodocs.com/developers/#frameworks) for integration code and per-project commands.

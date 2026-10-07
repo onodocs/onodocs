@@ -1,0 +1,25 @@
+{
+  "name": "onodocs-next-sample",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": "^24.15.0"
+  },
+  "scripts": {
+    "prestart": "node ../prepare.mjs",
+    "start": "next dev --hostname 127.0.0.1 --port 5196 --webpack",
+    "prebuild": "node ../prepare.mjs",
+    "build": "next build --webpack"
+  },
+  "dependencies": {
+    "next": "16.4.0",
+    "react": "19.3.0",
+    "react-dom": "19.3.0"
+  },
+  "devDependencies": {
+    "typescript": "6.0.3",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "@types/node": "^24.0.0"
+  }
+}

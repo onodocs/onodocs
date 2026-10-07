@@ -1,16 +1,12 @@
 {
   "compilerOptions": {
     "target": "ES2022",
-    "jsx": "react-jsx",
     "module": "ESNext",
     "moduleResolution": "Bundler",
     "strict": true,
-    "noEmit": true,
     "skipLibCheck": true,
     "allowImportingTsExtensions": true,
-    "types": [
-      "node"
-    ],
+    "noEmit": true,
     "lib": [
       "ES2022",
       "DOM",
@@ -18,10 +14,9 @@
     ]
   },
   "include": [
-    "examples/**/*.ts",
-    "examples/**/*.tsx"
-  ],
-  "exclude": [
-    "examples/frameworks"
+    "*.ts",
+    "*.vue",
+    "*.svelte",
+    "../../sdk/mount.ts"
   ]
 }

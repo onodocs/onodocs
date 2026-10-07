@@ -1,0 +1,23 @@
+{
+  "name": "onodocs-vue-sample",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": "^24.15.0"
+  },
+  "scripts": {
+    "prestart": "node ../prepare.mjs",
+    "start": "vite --host 127.0.0.1 --port 5191 --strictPort",
+    "prebuild": "node ../prepare.mjs",
+    "build": "vue-tsc --noEmit && vite build"
+  },
+  "dependencies": {
+    "vue": "3.5.43"
+  },
+  "devDependencies": {
+    "vite": "8.3.3",
+    "@vitejs/plugin-vue": "6.0.9",
+    "vue-tsc": "3.3.12",
+    "typescript": "6.0.3"
+  }
+}
