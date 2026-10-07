@@ -1,0 +1,12 @@
+{
+  "name": "onodocs-backend-viewer",
+  "private": true,
+  "type": "module",
+  "scripts": { "start": "node server.mjs" },
+  "engines": { "node": ">=22.18" },
+  "dependencies": {
+    "@onodocs/sdk": "^0.2.1",
+    "@onodocs/canvas": "^0.2.1",
+    "esbuild": "^0.28.2"
+  }
+}

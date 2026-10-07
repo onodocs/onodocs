@@ -195,27 +195,126 @@ try {
   } finally { await doc.dispose(); }
 } finally { await renderer.dispose(); }</code></pre><p>Reuse a renderer across requests in a service. PDFs contain page images, without searchable text or accessibility tags. See <a href="https://onodocs.com/developers/api/#server">server options and lifecycle</a>.</p>
 </section>
-<section aria-labelledby="combined"><h2 id="combined">Process on the backend, display in the frontend</h2><p>The server renderer publishes a manifest and immutable pages. Expose them through authenticated routes in your application. Use <code>encode</code> and <code>decode</code> from Canvas to preserve bigint coordinates and byte arrays.</p><pre><code>import { createRenderer } from "@onodocs/sdk/server";
-import { encode } from "@onodocs/canvas";
+<section aria-labelledby="combined"><h2 id="combined">Process on the backend, display in the frontend</h2>
+<p>This sample opens a DOCX in Node.js and displays its pages in a browser. The server runs document processing in headless Chrome. The frontend uses only Canvas, with selection, copying and zoom.</p>
+<p>Install Node.js 22.18 or newer and Google Chrome, then run the <a href="https://github.com/onodocs/onodocs/tree/main/examples/backend-viewer">complete sample from GitHub</a>:</p>
+<pre><code>git clone https://github.com/onodocs/onodocs.git
+cd onodocs/examples/backend-viewer
+npm install
+npm start</code></pre>
+<p>Open <a href="http://127.0.0.1:5175/">http://127.0.0.1:5175</a>. An included sample document is ready to view. To open your own server-side file, run <code>npm start -- /path/to/document.docx</code>. Stop the server with Ctrl+C. Evaluation works without a licence key.</p>
+<h3>Define the endpoints</h3>
+<p><code>server.mjs</code> serves the frontend and two document endpoints from one origin. <code>GET /document</code> returns the page list; <code>GET /document/pages/0</code> returns the first page. Page numbers start at zero. The SDK prepares the response bodies when you request <code>format: "json"</code>.</p>
+<pre><code>import { createServer } from "node:http";
+import { readFile } from "node:fs/promises";
+import { build } from "esbuild";
+import { createRenderer } from "@onodocs/sdk/server";
 
+const directory = import.meta.dirname;
+const html = await readFile(new URL("./index.html", import.meta.url));
+const client = await build({ absWorkingDir: directory, entryPoints: ["client.js"], bundle: true, format: "esm", platform: "browser", write: false });
 const renderer = await createRenderer({ channel: "chrome" });
-const doc = await renderer.openDocument(bytes, { fonts });
-const manifestResponse = encode(await doc.manifest());
-const firstPageResponse = encode(await doc.page(0));</code></pre><p>The frontend needs only Canvas. This example assumes your application supplies the routes below.</p><pre><code>import { createDocument, decode } from "@onodocs/canvas";
-
-const response = await fetch("/document/manifest");
-if (!response.ok) throw new Error("Document is unavailable.");
-const manifest = decode(await response.text());
-const canvasDocument = createDocument({
-  pages: manifest.pages.map(page =&gt; ({
-    ...page,
-    async load(signal) {
-      const response = await fetch(`/document/pages/${page.index}`, { signal });
-      if (!response.ok) throw new Error("Page is unavailable.");
-      return decode(await response.text());
+try {
+  const input = process.argv[2] ?? new URL("./sample.docx", import.meta.url);
+  const doc = await renderer.openDocument(await readFile(input));
+  const server = createServer(async (request, response) =&gt; {
+    try {
+      if (request.method !== "GET") {
+        response.writeHead(405, { Allow: "GET" }).end();
+        return;
+      }
+      const path = new URL(request.url, "http://localhost").pathname;
+      let body, type;
+      if (path === "/") {
+        body = html;
+        type = "text/html; charset=utf-8";
+      } else if (path === "/client.js") {
+        body = client.outputFiles[0].contents;
+        type = "text/javascript; charset=utf-8";
+      } else if (path === "/document") {
+        body = await doc.manifest({ format: "json" });
+        type = "application/json";
+      } else {
+        const match = /^\/document\/pages\/(\d+)$/.exec(path);
+        const index = match ? Number(match[1]) : -1;
+        if (!Number.isSafeInteger(index) || index &lt; 0 || index &gt;= doc.pages.length) {
+          response.writeHead(404).end("Not found");
+          return;
+        }
+        body = await doc.page(index, { format: "json" });
+        type = "application/json";
+      }
+      response.writeHead(200, { "Content-Type": type, "Cache-Control": "no-store" });
+      response.end(body);
+    } catch (error) {
+      console.error(error);
+      response.writeHead(500).end("Unable to load the document.");
     }
-  }))
-}, { container });</code></pre><p>Queries and updates stay on the backend. After an update, replace the manifest and page set together and dispose the previous Canvas document. Keep server documents alive while their page routes are in use, then dispose them and the renderer. Published pages contain visible text and resource bytes. Supply font files for consistent results across hosts; installed server fonts must also be available to the client. Use matching SDK and Canvas versions.</p></section>
+  });
+  const port = Number(process.env.PORT ?? 5175);
+  await new Promise((resolve, reject) =&gt; {
+    server.once("error", reject);
+    server.listen(port, "127.0.0.1", resolve);
+  });
+  console.log(`Backend viewer: http://127.0.0.1:${server.address().port}`);
+  await new Promise(resolve =&gt; {
+    process.once("SIGINT", resolve);
+    process.once("SIGTERM", resolve);
+  });
+  server.closeAllConnections();
+  await new Promise(resolve =&gt; server.close(resolve));
+} finally {
+  await renderer.dispose();
+}
+</code></pre>
+<h3>Open the document in the frontend</h3>
+<p><code>client.js</code> opens the document URL. Canvas loads the page list and requests pages as they become visible.</p>
+<pre><code>import { openDocument } from "@onodocs/canvas";
+
+const status = document.querySelector("#status");
+let doc;
+try {
+  doc = await openDocument("/document", {
+    container: document.querySelector("#pages"),
+    viewOptions: { zoom: "fit-width" }
+  });
+  window.addEventListener("pagehide", () =&gt; doc.dispose(), { once: true });
+  await doc.view.whenRendered();
+  status.textContent = `${doc.pages.length} pages. Select text to copy it.`;
+} catch (error) {
+  doc?.dispose();
+  status.textContent = error.message;
+}
+</code></pre>
+<details><summary>Complete index.html</summary><pre><code>&lt;!doctype html&gt;
+&lt;html lang="en"&gt;
+&lt;head&gt;
+  &lt;meta charset="utf-8"&gt;
+  &lt;meta name="viewport" content="width=device-width, initial-scale=1"&gt;
+  &lt;title&gt;OnoDocs backend viewer&lt;/title&gt;
+  &lt;style&gt;
+    body { margin: 0; padding: 24px; font: 16px system-ui; background: #eee; color: #222; }
+    header, #pages { max-width: 900px; margin: auto; }
+    #pages { height: 75vh; }
+  &lt;/style&gt;
+&lt;/head&gt;
+&lt;body&gt;
+  &lt;header&gt;
+    &lt;h1&gt;Backend document viewer&lt;/h1&gt;
+    &lt;p&gt;&lt;a href="https://onodocs.com/developers/#combined"&gt;Guide&lt;/a&gt; · &lt;a href="https://github.com/onodocs/onodocs/tree/main/examples/backend-viewer"&gt;Source on GitHub&lt;/a&gt;&lt;/p&gt;
+    &lt;p id="status" role="status"&gt;Loading document…&lt;/p&gt;
+  &lt;/header&gt;
+  &lt;main id="pages" aria-label="Document pages"&gt;&lt;/main&gt;
+  &lt;script type="module" src="/client.js"&gt;&lt;/script&gt;
+&lt;/body&gt;
+&lt;/html&gt;
+</code></pre></details>
+<p>The sample includes its package configuration and document. To use these files in a new project, install <code>@onodocs/sdk</code>, <code>@onodocs/canvas</code> and <code>esbuild</code>, then put a <code>sample.docx</code> beside them and run <code>node server.mjs</code>. Use matching SDK and Canvas releases.</p>
+<h3>Use it in your application</h3>
+<p>The sample listens only on your computer. In production, apply your application's document authorization to both endpoints. Same-origin session cookies work with the default client. For bearer tokens or cross-origin cookies, pass <code>request: { headers, credentials }</code> to Canvas <code>openDocument</code>; those options apply to the page list and every page request.</p>
+<p>Keep the server document open while its endpoints are in use. For changing documents, give each completed version its own URL and reopen the frontend view after an update. Dispose the previous Canvas document. This keeps the page list and page content from different versions separate.</p>
+<p>The original DOCX stays on the backend; the frontend receives the content needed to display and select its pages. Supply font files for consistent results across hosts, or ensure the required fonts are installed on both machines. See <a href="https://onodocs.com/developers/api/#server">server options</a> and <a href="https://onodocs.com/developers/api/#views">Canvas options</a>.</p>
+</section>
 <section aria-labelledby="fonts"><h2 id="fonts">Fonts and deployment</h2>
 <p>Fonts affect line breaks and page count. Embedded document fonts load automatically. Provide additional fonts to match your documents.</p><pre><code>const doc = await openDocument(file, {
   fonts: { "Example Sans": "/fonts/example-sans.woff2" }

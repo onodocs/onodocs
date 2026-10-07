@@ -74,3 +74,15 @@ TypeScript and JavaScript extraction samples. Copy or download body text, all
 body tables, or delivery records selected by exact first-row headers. The
 [extraction guide](https://onodocs.com/developers/extract-docx-text-tables/) explains
 story scope, missing or repeated tables, merged cells and the shared Node.js CLI.
+
+## Backend viewer
+
+The [backend viewer](../examples/backend-viewer/) includes the server, frontend and an authored DOCX. It requires Google Chrome on the rendering host. From the repository root:
+
+```sh
+cd examples/backend-viewer
+npm install
+npm start
+```
+
+Open http://127.0.0.1:5175. Use `npm start -- /path/to/document.docx` to read your own server-side file. The server binds to localhost and serves the page list at `/document` and page content at `/document/pages/:index`. The browser uses only Canvas. Ctrl+C closes the renderer. See the [complete backend/frontend guide](https://onodocs.com/developers/#combined).

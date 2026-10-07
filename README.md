@@ -36,10 +36,22 @@ Open **http://127.0.0.1:5174/samples.html**. Setup installs matching SDK and Can
 | Viewer, custom forms and templates | [document.ts](examples/sdk/document.ts) | Document viewing, PNG/PDF export, anchored inputs and tagged template fields |
 | Text and table extraction | [extract.ts](examples/docx-extraction/extract.ts) | Browser and Node.js text, tables and JSON, with complete JavaScript equivalents |
 | Document workflows | [workflows.ts](examples/sdk/workflows.ts) | Tables, document tree, ASCII output and a locally simulated email draft |
+| Backend processing and frontend display | [server.mjs](examples/backend-viewer/server.mjs) | Real HTTP endpoints, prepared pages and a Canvas-only frontend |
 | Node.js analysis | [analyze.ts](examples/analyze.ts) | Read document content without a browser |
 
-Selected documents stay in your browser. The samples do not upload document
-contents, call an AI service or send emails. See [sample setup and commands](docs/samples.md).
+The browser file-picker samples keep selected documents in the browser. The backend viewer reads a file on your server and sends prepared pages to the frontend. The samples do not call an AI service or send emails. See [sample setup and commands](docs/samples.md).
+
+## Run the backend viewer
+
+Install Google Chrome, then run:
+
+```sh
+cd examples/backend-viewer
+npm install
+npm start
+```
+
+Open http://127.0.0.1:5175. The included document is ready to view. To open your own server-side file, use `npm start -- /path/to/document.docx`. Ctrl+C stops the server and its renderer. The [complete guide](https://onodocs.com/developers/#combined) explains both endpoints and includes every source file.
 
 ## Guides
 

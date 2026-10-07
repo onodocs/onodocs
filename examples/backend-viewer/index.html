@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OnoDocs backend viewer</title>
+  <style>
+    body { margin: 0; padding: 24px; font: 16px system-ui; background: #eee; color: #222; }
+    header, #pages { max-width: 900px; margin: auto; }
+    #pages { height: 75vh; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Backend document viewer</h1>
+    <p><a href="https://onodocs.com/developers/#combined">Guide</a> · <a href="https://github.com/onodocs/onodocs/tree/main/examples/backend-viewer">Source on GitHub</a></p>
+    <p id="status" role="status">Loading document…</p>
+  </header>
+  <main id="pages" aria-label="Document pages"></main>
+  <script type="module" src="/client.js"></script>
+</body>
+</html>
