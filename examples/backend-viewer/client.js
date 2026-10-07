@@ -7,7 +7,7 @@ try {
     container: document.querySelector("#pages"),
     viewOptions: { zoom: "fit-width" }
   });
-  window.addEventListener("pagehide", () => doc.dispose(), { once: true });
+  window.addEventListener("pagehide", event => { if (!event.persisted) doc.dispose(); });
   await doc.view.whenRendered();
   status.textContent = `${doc.pages.length} pages. Select text to copy it.`;
 } catch (error) {

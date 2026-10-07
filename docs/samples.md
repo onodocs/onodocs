@@ -2,7 +2,7 @@
 
 OnoDocs renders Word documents in the browser and exposes document structure,
 queries, text updates, selection, and geometry for application workflows.
-Rendering requires no backend. Document analysis also runs in Node.js.
+Browser rendering requires no backend. Node.js supports document analysis and, with Chrome installed, page rendering and PDF export.
 
 The [public repository](https://github.com/onodocs/onodocs) contains JavaScript
 and TypeScript samples and the published guides. You need Node.js 22.18 or newer
@@ -46,7 +46,7 @@ draft step is simulated locally; it makes no AI request and sends no email.
 
 Samples intentionally use evaluation mode, which adds a watermark. For a
 watermark-free trial or commercial use, pass your issued `licenseKey` to
-`openDocument`. Customer licenses verify offline; never embed a signing key.
+`openDocument`. Customer licenses verify offline. Browser verification requires HTTPS or localhost.
 
 Sample code and authored documents are MIT-licensed. The SDK is separately
 licensed: unrestricted-duration non-production evaluation, an optional 30-day
@@ -59,8 +59,7 @@ watermark-free trial, or a perpetual commercial application license.
 
 The complete [viewer guide](https://onodocs.com/developers/javascript-docx-viewer/)
 and [all guide sources](../guides/) are included in this repository. Browser
-samples link directly to their GitHub source. The published samples use an
-evaluation-only licence adapter; they do not contact the website licensing API.
+samples link directly to their GitHub source. The published samples run in evaluation mode without contacting a licensing service.
 
 Open http://127.0.0.1:5174/react-docx-viewer/ for the React sample. Its development
 build keeps Strict Mode enabled. Try Hide viewer during loading, Show viewer,
@@ -86,3 +85,14 @@ npm start
 ```
 
 Open http://127.0.0.1:5175. Use `npm start -- /path/to/document.docx` to read your own server-side file. The server binds to localhost and serves the page list at `/document` and page content at `/document/pages/:index`. The browser uses only Canvas. Ctrl+C closes the renderer. See the [complete backend/frontend guide](https://onodocs.com/developers/#combined).
+
+## Optional AI email draft
+
+The browser workflow demo simulates a draft locally. To send a real request, use [draft-email.mjs](../examples/sdk/draft-email.mjs) in a Node.js project with `@onodocs/sdk` and `openai` installed. Put `OPENAI_API_KEY=your-api-key` and `OPENAI_MODEL=your-model-id` on separate lines in a private `.env` file, replacing the placeholders with your API key and a model available to your account. Keep that file out of source control.
+
+```sh
+npm install openai
+node --env-file=.env examples/sdk/draft-email.mjs examples/view-document/sample.docx
+```
+
+The command sends the selected delivery table to OpenAI and prints a draft. API usage is billed separately. It does not send email. The file must contain one table with the first-row headers Deliverable, Owner and Due, as the included brief does. See the [OpenAI text generation guide](https://developers.openai.com/api/docs/guides/text) for API setup.
