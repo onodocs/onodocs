@@ -1,121 +1,35 @@
 <!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>React DOCX Viewer with TypeScript and Next.js | OnoDocs</title><meta name="description" content="Build a React Word document viewer with TypeScript. Runnable DOCX sample with local files, progress, cancellation, Strict Mode cleanup and Next.js guidance."><link rel="canonical" href="https://onodocs.com/developers/react-docx-viewer/"><meta property="og:type" content="article"><meta property="og:site_name" content="OnoDocs"><meta property="og:title" content="Build a React Word viewer with TypeScript"><meta property="og:description" content="A reusable DOCX viewer component with loading, cancellation, cleanup and Next.js integration."><meta property="og:url" content="https://onodocs.com/developers/react-docx-viewer/"><link rel="stylesheet" href="https://onodocs.com/style.css"><link rel="icon" type="image/svg+xml" href="https://onodocs.com/brand-mark.svg"><meta name="referrer" content="strict-origin"></head>
 <body><a class="skip-link" href="#main">Skip to content</a><header class="site-header"><a class="brand" href="https://onodocs.com/" aria-label="OnoDocs home"><img class="brand-mark" src="https://onodocs.com/brand-mark.svg" width="28" height="28" alt="O">noDocs</a><nav aria-label="Main"><a href="https://onodocs.com/examples/">Demos</a><a href="https://onodocs.com/developers/" aria-current="page">Docs</a><a href="https://onodocs.com/pricing/">Pricing</a><a href="https://onodocs.com/support/">Support</a><a class="github-link" href="https://github.com/onodocs/onodocs" target="_blank" rel="noopener" aria-label="OnoDocs on GitHub" title="OnoDocs on GitHub"><img src="https://onodocs.com/github-mark.svg" width="18" height="18" alt=""></a></nav></header>
 <main id="main"><section class="page-intro"><p class="eyebrow">Developer guide · React integration</p><h1>Build a React Word document viewer with TypeScript</h1><p>Embed DOCX pages in a React application with a reusable, typed component. Open local files, show loading progress, select and copy text, and clean up when the document changes or the component unmounts.</p><p><a href="https://github.com/onodocs/onodocs/tree/main/examples/react-docx-viewer">Get the React sample on GitHub</a> · <a href="https://github.com/onodocs/onodocs/blob/main/guides/react-docx-viewer/index.html">Guide source</a> · <a href="https://onodocs.com/samples/react-docx-viewer/sample.docx" download="">Download the Word sample</a></p></section>
-<div class="doc-layout"><nav class="doc-nav" aria-label="Guide sections"><a href="#try-it">Try the React viewer</a><a href="#setup">Run locally</a><a href="#component">Typed component</a><a href="#application">File picker and sample</a><a href="#lifecycle">Replacement and cleanup</a><a href="#strict-mode">React Strict Mode</a><a href="#nextjs">Next.js integration</a><a href="#privacy">Privacy and licensing</a><a href="#troubleshooting">Troubleshooting</a><a href="#next">Next steps</a></nav><article class="prose">
-<section id="try-it"><h2>Try the React DOCX viewer</h2><p>Open a local Word file, or use the included project brief. Try replacing a document during loading, cancelling a large file, and hiding then showing the viewer. Drag over text to select it and use Ctrl+C or Command+C to copy. This example uses evaluation mode with the SDK watermark.</p><iframe class="guide-demo" src="https://onodocs.com/samples/react-docx-viewer/" title="React and TypeScript Word document viewer" loading="lazy"></iframe><p><a href="https://onodocs.com/samples/react-docx-viewer/" target="_blank" rel="noopener">Open the React viewer in a full tab</a>. This demo uses the source code below.</p></section>
-<section id="setup"><h2>Run the React and TypeScript sample</h2><p>Install Node.js 22.18 or newer and npm. Clone the <a href="https://github.com/onodocs/onodocs">public OnoDocs repository</a>, or <a href="https://github.com/onodocs/onodocs/archive/refs/heads/main.zip">download the source ZIP</a>.</p><pre><code>git clone https://github.com/onodocs/onodocs.git
-cd onodocs
-npm run setup
-npm start</code></pre><p>Open <code>http://127.0.0.1:5174/react-docx-viewer/</code>. Setup installs matching SDK and Canvas releases from npm, plus React, React DOM and TypeScript dependencies. No GitHub sign-in or license key is required for evaluation. Run <code>npm run typecheck</code> and <code>npm run build</code> to check and bundle the samples.</p><p>Install from npm in an existing application. <a href="https://www.npmjs.com/package/@onodocs/sdk">SDK on npm</a> · <a href="https://github.com/onodocs/onodocs/releases">Release archives</a></p><pre><code>npm install @onodocs/sdk @onodocs/canvas</code></pre><p>Install matching versions of the SDK and Canvas packages from npm. The SDK includes TypeScript declarations. Use your project's existing React dependencies and bundler. The supplied sample uses the automatic JSX transform.</p></section>
-<section id="component"><h2>A reusable, typed viewer component</h2><p><code>DocxViewer</code> accepts a <code>File</code>, <code>ArrayBuffer</code> or <code>Uint8Array</code> and an optional signed <code>licenseKey</code>. Keep the source object stable until you intend to open another document. Use React for controls and status messages. Leave the host element empty for the SDK to fill.</p><details open=""><summary>DocxViewer.tsx · complete component</summary><pre><code>"use client";
+<div class="doc-layout"><nav class="doc-nav" aria-label="Guide sections"><a href="#try-it">Try the React viewer</a><a href="#setup">Install</a><a href="#component">Typed component</a><a href="#application">File picker</a><a href="#lifecycle">Replacement and cleanup</a><a href="#strict-mode">React Strict Mode</a><a href="#nextjs">Next.js integration</a><a href="#privacy">Privacy and licensing</a><a href="#troubleshooting">Troubleshooting</a><a href="#next">Next steps</a></nav><article class="prose">
+<section id="try-it"><h2>Try the React DOCX viewer</h2><p>Open a local Word file, or use the included project brief. Try replacing a document during loading, cancelling a large file, and hiding then showing the viewer. Drag over text to select it and use Ctrl+C or Command+C to copy. This example uses evaluation mode with the SDK watermark.</p><iframe class="guide-demo" src="https://onodocs.com/samples/react-docx-viewer/" title="React and TypeScript Word document viewer" loading="lazy"></iframe><p><a href="https://onodocs.com/samples/react-docx-viewer/" target="_blank" rel="noopener">Open the React viewer in a full tab</a>. The complete source is linked below.</p></section>
+<section id="setup"><h2>Install the SDK</h2><pre><code>npm install @onodocs/sdk @onodocs/canvas</code></pre><p>Use matching SDK and Canvas releases with your React dependencies and bundler. TypeScript declarations are included. The <a href="https://github.com/onodocs/onodocs/tree/main/examples/react-docx-viewer">complete React sample</a> includes dependencies, styles and <a href="https://github.com/onodocs/onodocs/blob/main/docs/samples.md">run instructions</a>. Evaluation needs no license key. <a href="https://www.npmjs.com/package/@onodocs/sdk">SDK on npm</a> · <a href="https://github.com/onodocs/onodocs/releases">Release archives</a>.</p></section>
+<section id="component"><h2>Use the viewer component</h2><p>Copy <a href="https://github.com/onodocs/onodocs/blob/main/examples/react-docx-viewer/DocxViewer.tsx">DocxViewer.tsx</a> and its <a href="https://github.com/onodocs/onodocs/blob/main/examples/react-docx-viewer/style.css">styles</a> into your application. The component accepts a <code>File</code>, <code>ArrayBuffer</code> or <code>Uint8Array</code> and an optional <code>licenseKey</code>.</p><pre><code>import { DocxViewer } from "./DocxViewer";
 
-import { useEffect, useRef, useState } from "react";
-import type { BrowserDocument } from "@onodocs/sdk/browser";
-import type { CanvasDocument } from "@onodocs/canvas";
-
-export interface DocxViewerProps {
-  source: File | ArrayBuffer | Uint8Array;
-  licenseKey?: string;
-}
-
-export function DocxViewer({ source, licenseKey = "" }: DocxViewerProps) {
-  const host = useRef&lt;HTMLDivElement&gt;(null);
-  const cancel = useRef&lt;() =&gt; void&gt;(() =&gt; {});
-  const [status, setStatus] = useState("Opening document…");
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() =&gt; {
-    const container = host.current!;
-    const controller = new AbortController();
-    const { signal } = controller;
-    let doc: BrowserDocument | undefined;
-    let canvasDocument: CanvasDocument | undefined;
-    const stop = () =&gt; { controller.abort(); canvasDocument?.dispose(); doc?.dispose(); };
-    cancel.current = () =&gt; {
-      stop();
-      setLoading(false);
-      setStatus("Loading cancelled. Choose another file or open the sample.");
-    };
-    setLoading(true);
-    setStatus("Opening document…");
-
-    async function open() {
-      try {
-        const { openDocument } = await import("@onodocs/sdk/browser");
-        const { createDocument } = await import("@onodocs/canvas");
-        if (signal.aborted) return;
-        doc = await openDocument(source, {
-          signal,
-          licenseKey,
-          onProgress(progress) {
-            if (signal.aborted) return;
-            canvasDocument ??= createDocument(progress.document, { container, viewOptions: { zoom: "fit-width" } });
-            const count = progress.document.pages.length;
-            setStatus(count ? `Loading… ${count} ${count === 1 ? "page" : "pages"} available` : `Loading: ${progress.stage}…`);
-          }
-        });
-        if (signal.aborted) { doc.dispose(); return; }
-        await canvasDocument!.view!.whenRendered();
-        if (!signal.aborted) setStatus(`Ready · ${doc.pages.length} ${doc.pages.length === 1 ? "page" : "pages"}. Select text to copy it.`);
-      } catch (error) {
-        canvasDocument?.dispose();
-        doc?.dispose();
-        if (!signal.aborted) setStatus(`Unable to open document. ${error instanceof Error ? error.message : "Try another Word file."}`);
-      } finally {
-        if (!signal.aborted) setLoading(false);
-      }
-    }
-
-    void open();
-    return stop;
-  }, [source, licenseKey]);
-
-  return &lt;section className="docx-viewer" aria-label="Word viewer"&gt;
-    &lt;div className="viewer-status"&gt;&lt;output aria-live="polite"&gt;{status}&lt;/output&gt;&lt;button type="button" disabled={!loading} onClick={() =&gt; cancel.current()}&gt;Cancel loading&lt;/button&gt;&lt;/div&gt;
-    &lt;div className="viewer-viewport"&gt;&lt;div ref={host} /&gt;&lt;/div&gt;
-  &lt;/section&gt;;
-}
-</code></pre></details><p>The effect imports the browser SDK only after mounting. Opening receives an abort signal and a container, so provisional pages can appear during layout. The ready state waits for <code>whenRendered()</code> to finish painting the current viewport. Other pages paint as you scroll. Use this component with the CSS below.</p></section>
-<section id="application"><h2>Connect a file picker and sample document</h2><p>The application stores the selected file in state and passes it to the viewer. The sample button supplies a fresh byte array to reopen the built-in document even after cancellation. Hide viewer unmounts the component; Show viewer mounts it again.</p><details><summary>App.tsx · file picker and lifecycle controls</summary><pre><code>"use client";
-
-import { useState } from "react";
+&lt;DocxViewer source={file} /&gt;</code></pre><p><code>file</code> is the selected document. The component opens it after mounting, reports progress and errors, and releases it on replacement or unmount. Keep the source object stable until you intend to open another document. The <a href="https://github.com/onodocs/onodocs/tree/main/examples/frameworks/next">Next.js sample</a> shows a smaller component using the shared mount helper.</p></section>
+<section id="application"><h2>Connect a file picker</h2><pre><code>import { useState } from "react";
 import { DocxViewer } from "./DocxViewer";
-import sample from "../view-document/sample.docx";
+import "./style.css";
 
 export function App() {
-  const [source, setSource] = useState&lt;File | Uint8Array&gt;(sample);
-  const [visible, setVisible] = useState(true);
-
+  const [file, setFile] = useState&lt;File | null&gt;(null);
   return &lt;&gt;
-    &lt;header&gt;
-      &lt;label&gt;Open Word file &lt;input type="file" accept=".docx,.docm,.dotx,.dotm" onChange={event =&gt; {
-        const file = event.currentTarget.files?.[0];
-        event.currentTarget.value = "";
-        if (file) { setSource(file); setVisible(true); }
-      }} /&gt;&lt;/label&gt;
-      &lt;button type="button" onClick={() =&gt; { setSource(sample.slice()); setVisible(true); }}&gt;Open sample&lt;/button&gt;
-      &lt;button type="button" onClick={() =&gt; setVisible(value =&gt; !value)}&gt;{visible ? "Hide viewer" : "Show viewer"}&lt;/button&gt;
-      &lt;a className="source-link" href="https://github.com/onodocs/onodocs/tree/main/examples/react-docx-viewer" target="_blank" rel="noopener" aria-label="Source on GitHub" title="Source on GitHub"&gt;&lt;svg aria-hidden="true" focusable="false" width="18" height="18" viewBox="0 0 16 16"&gt;&lt;path d="M6.766 11.328c-2.063-.25-3.516-1.734-3.516-3.656 0-.781.281-1.625.75-2.188-.203-.515-.172-1.609.063-2.062.625-.078 1.468.25 1.968.703.594-.187 1.219-.281 1.985-.281.765 0 1.39.094 1.953.265.484-.437 1.344-.765 1.969-.687.218.422.25 1.515.046 2.047.5.593.766 1.39.766 2.203 0 1.922-1.453 3.375-3.547 3.64.531.344.89 1.094.89 1.954v1.625c0 .468.391.734.86.547C13.781 14.359 16 11.53 16 8.03 16 3.61 12.406 0 7.984 0 3.563 0 0 3.61 0 8.031a7.88 7.88 0 0 0 5.172 7.422c.422.156.828-.125.828-.547v-1.25c-.219.094-.5.156-.75.156-1.031 0-1.64-.562-2.078-1.609-.172-.422-.36-.672-.719-.719-.187-.015-.25-.093-.25-.187 0-.188.313-.328.625-.328.453 0 .844.281 1.25.86.313.452.64.655 1.031.655s.641-.14 1-.5c.266-.265.47-.5.657-.656"/&gt;&lt;/svg&gt;&lt;/a&gt;
-    &lt;/header&gt;
-    {visible ? &lt;DocxViewer source={source} /&gt; : &lt;p className="closed-message"&gt;Viewer closed. Show it again to reopen the document.&lt;/p&gt;}
+    &lt;header&gt;&lt;label&gt;Open Word file &lt;input type="file" accept=".docx" onChange={event =&gt; {
+      const selected = event.currentTarget.files?.[0];
+      event.currentTarget.value = "";
+      if (selected) setFile(selected);
+    }} /&gt;&lt;/label&gt;&lt;/header&gt;
+    {file &amp;&amp; &lt;DocxViewer source={file} /&gt;}
   &lt;/&gt;;
-}
-</code></pre></details><details><summary>main.tsx · React entry point</summary><pre><code>import { StrictMode } from "react";
-import { createRoot } from "react-dom/client";
-import { App } from "./App";
-
-createRoot(document.getElementById("root")!).render(&lt;StrictMode&gt;&lt;App /&gt;&lt;/StrictMode&gt;);
-</code></pre></details><details><summary>index.html · application shell</summary><pre><code>&lt;!doctype html&gt;
-&lt;html lang="en"&gt;&lt;head&gt;&lt;meta charset="utf-8"&gt;&lt;meta name="viewport" content="width=device-width,initial-scale=1"&gt;&lt;meta name="robots" content="noindex"&gt;&lt;title&gt;React and TypeScript Word viewer | OnoDocs&lt;/title&gt;&lt;link rel="stylesheet" href="./style.css"&gt;&lt;/head&gt;&lt;body&gt;&lt;div id="root"&gt;&lt;/div&gt;&lt;script type="module" src="./main.js"&gt;&lt;/script&gt;&lt;/body&gt;&lt;/html&gt;
-</code></pre></details><details><summary>style.css · viewport and controls</summary><pre><code>:root{font:16px/1.5 system-ui,sans-serif;color:#302820;background:#f2ede5}*{box-sizing:border-box}html,body,#root{height:100%;margin:0}#root{display:flex;flex-direction:column}header{display:flex;flex-wrap:wrap;align-items:center;gap:12px;padding:12px;background:#fbf9f5;border-bottom:1px solid #ded8cf}label{display:flex;flex-wrap:wrap;align-items:center;gap:8px}input{max-width:230px}button,input{font:inherit}button{padding:6px 10px;cursor:pointer}button:disabled{cursor:default}a{color:#942d21}.docx-viewer{display:flex;flex:1;flex-direction:column;min-height:0}.viewer-status{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 12px}.viewer-viewport{flex:1;min-height:0;overflow:auto}.closed-message{padding:12px}button:focus-visible,input:focus-visible,a:focus-visible{outline:2px solid #942d21;outline-offset:3px}@media(max-width:480px){.viewer-status{align-items:flex-start;flex-direction:column}}
-
-.source-link{display:inline-flex;align-items:center;justify-content:center;flex:none;width:32px;height:32px;margin-left:auto;border-radius:4px;color:#63584e}.source-link svg{width:18px;height:18px;fill:currentColor;stroke:none}.source-link:hover{background:#eee7de;color:#2b211d}.source-link:focus-visible{outline:2px solid #b43829;outline-offset:0}
-</code></pre></details><p>The repository build embeds <code>../view-document/sample.docx</code> through its bundler's binary loader. Clone the sample repository to run the demo. In another application, copy <code>DocxViewer.tsx</code> and its styles, and supply a file from your own picker. Local files need no DOCX loader configuration. JavaScript applications can remove the type declarations and use the same lifecycle.</p><p><a href="https://github.com/onodocs/onodocs/tree/main/examples/react-docx-viewer">Browse every sample file on GitHub</a>.</p></section>
+}</code></pre><p>Changing <code>file</code> replaces the document. The <a href="https://github.com/onodocs/onodocs/blob/main/examples/react-docx-viewer/App.tsx">complete application</a> also includes a sample document and controls for hiding and showing the viewer. Local files need no document loader or upload endpoint.</p></section>
 <section id="lifecycle"><h2>Handle replacement, cancellation and unmounting</h2><p>Each effect invocation creates a separate abort controller and keeps references to its preview view and completed document. When <code>source</code> or <code>licenseKey</code> changes, cleanup aborts the previous operation and releases its resources. Cleanup also runs on unmount. A document that completes after cancellation is disposed immediately, and aborted operations cannot overwrite the current status.</p><p>The Cancel button uses that same cleanup function and leaves the controls available for another file. A rejected load displays an error and releases any preview. The user can then choose another document.</p><p>Progress reports stages and available pages, not a percentage. Early page boundaries can change as layout settles. The completed viewer retains canvases near the viewport, but the document model still consumes memory proportional to the content. Mobile devices can take longer to open large documents.</p></section>
 <section id="strict-mode"><h2>Keep React Strict Mode enabled</h2><p>React runs an extra effect setup and cleanup cycle in development when Strict Mode is enabled. Each effect invocation has its own abort controller, so cleanup cancels only that invocation’s load. A “run once” ref that suppresses the second setup can leave the viewer empty after cleanup.</p><p>The public sample wraps its root in <code>StrictMode</code>. The local development build runs this extra cycle. The production demo uses React's production build. See React's documentation for <a href="https://react.dev/reference/react/useEffect">effect dependencies and cleanup</a> and <a href="https://react.dev/reference/react/StrictMode">Strict Mode</a>.</p></section>
-<section id="nextjs"><h2>Run the Next.js application</h2><p>The repository includes a complete Next.js application with a file picker, included document, loading status, errors, cancellation and cleanup. Use Node.js 24 LTS (24.15 or later). After cloning the repository and running <code>npm run setup</code> as described above, run these commands from its root:</p><pre><code>cd examples/frameworks/next
-npm ci
-npm start</code></pre><p>Open <a href="http://127.0.0.1:5196/">http://127.0.0.1:5196</a>. Run <code>npm run build</code> in the same directory for a production build. <a href="https://github.com/onodocs/onodocs/tree/main/examples/frameworks/next">Browse the complete Next.js project</a>.</p><p>The page begins with <code>"use client"</code>. Its effect calls the shared loading helper, which imports the browser SDK after mounting. The initial page can still render on the server. Keep local <code>File</code> values in client state. A document URL is fetched with cancellation and same-origin credentials. Your server handles access control and CORS.</p><p>The existing <code>DocxViewer.tsx</code> component above also works in a Next.js client page when passed local files or stable bytes. Neither integration needs to disable server rendering. See the <a href="https://onodocs.com/developers/#nextjs">Next.js sample code</a>.</p></section>
+<section id="nextjs"><h2>Use the component in Next.js</h2><p>The viewer begins with <code>"use client"</code> and imports the browser SDK inside its effect. Document loading starts after mounting, while Next.js can still render the initial page on the server. Keep local <code>File</code> values in client state.</p><pre><code>"use client";
+import { DocxViewer } from "./DocxViewer";
+
+export function Preview({ file }: { file: File }) {
+  return &lt;DocxViewer source={file} /&gt;;
+}</code></pre><p>See the <a href="https://github.com/onodocs/onodocs/tree/main/examples/frameworks/next">complete Next.js application</a> and <a href="https://onodocs.com/developers/#nextjs">helper-based integration</a>. For a remote document, fetch its authorized URL with cancellation and pass the bytes, or use the shared mount helper. Your server owns access control and CORS.</p></section>
 <section id="privacy"><h2>Local processing, evaluation and commercial use</h2><p>Selected documents are parsed, laid out and rendered in the browser. This sample does not upload contents or filenames, send analytics, or call an AI service. Loading the app still downloads JavaScript and CSS. Remote documents and fonts require separate requests. Cache all required assets if your application must work offline.</p><p>Evaluation is registration-free and adds a watermark. Supply an issued signed token through <code>licenseKey</code> for a trial or licensed application. Verification happens offline. The license key issued by OnoDocs can be included in your application bundle. Browser verification requires HTTPS or localhost. Sample code and authored documents are MIT-licensed. The SDK has separate <a href="https://onodocs.com/terms/">license terms</a>.</p></section>
 <section id="troubleshooting"><h2>Common React integration problems</h2><dl><dt>The document keeps reopening</dt><dd>Do not create a new source byte array in every render. Store it in state, keep a module-level sample, or memoize it from stable inputs. The effect reloads whenever its source identity or license changes.</dd><dt>The viewer is blank or cannot scroll</dt><dd>Give its parent a height and allow the viewport to shrink with <code>min-height: 0</code>. Keep the SDK host empty in your JSX; do not render React children into it.</dd><dt>The layout differs from Word</dt><dd>Check the document's fonts. See <a href="https://onodocs.com/developers/#fonts">font setup and deployment</a>. Rendering can differ from Word. Report differences with minimal fictional examples in <a href="https://github.com/onodocs/onodocs/issues">GitHub Issues</a>.</dd><dt>A file fails to load</dt><dd>Supported packages include DOCX, DOCM, DOTX and DOTM. Macros are not executed. Password-protected documents and older DOC or RTF files need to be unlocked or converted first. General Word editing and saving changes back to DOCX are not supported.</dd></dl></section>
 <section id="extraction"><h2>Read content without rendering</h2><p>Use the <a href="https://onodocs.com/developers/extract-docx-text-tables/">JavaScript and TypeScript text and table extraction guide</a> to produce JSON from Word content in the browser or Node.js.</p></section>

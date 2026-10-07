@@ -1,12 +1,9 @@
 <!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Extract DOCX Text and Tables in JavaScript &amp; TypeScript | OnoDocs</title><meta name="description" content="Extract text, paragraphs and tables from Word documents in JavaScript, TypeScript or Node.js. Runnable DOCX-to-JSON sample with local files and no page rendering."><link rel="canonical" href="https://onodocs.com/developers/extract-docx-text-tables/"><meta property="og:type" content="article"><meta property="og:site_name" content="OnoDocs"><meta property="og:title" content="Extract DOCX text and tables in JavaScript and TypeScript"><meta property="og:description" content="Read Word content, select tables by headers and export JSON in the browser or Node.js."><meta property="og:url" content="https://onodocs.com/developers/extract-docx-text-tables/"><link rel="stylesheet" href="https://onodocs.com/style.css"><link rel="icon" type="image/svg+xml" href="https://onodocs.com/brand-mark.svg"><meta name="referrer" content="strict-origin"></head>
 <body><a class="skip-link" href="#main">Skip to content</a><header class="site-header"><a class="brand" href="https://onodocs.com/" aria-label="OnoDocs home"><img class="brand-mark" src="https://onodocs.com/brand-mark.svg" width="28" height="28" alt="O">noDocs</a><nav aria-label="Main"><a href="https://onodocs.com/examples/">Demos</a><a href="https://onodocs.com/developers/" aria-current="page">Docs</a><a href="https://onodocs.com/pricing/">Pricing</a><a href="https://onodocs.com/support/">Support</a><a class="github-link" href="https://github.com/onodocs/onodocs" target="_blank" rel="noopener" aria-label="OnoDocs on GitHub" title="OnoDocs on GitHub"><img src="https://onodocs.com/github-mark.svg" width="18" height="18" alt=""></a></nav></header>
 <main id="main"><section class="page-intro"><p class="eyebrow">Developer guide · Document extraction</p><h1>Extract text and tables from DOCX in JavaScript and TypeScript</h1><p>Turn Word content into plain text and JSON for search, application records or AI input. Use the same typed query API in the browser and Node.js, without rendering pages or starting a headless browser.</p><p><a href="https://github.com/onodocs/onodocs/tree/main/examples/docx-extraction">Get the extraction sample on GitHub</a> · <a href="https://github.com/onodocs/onodocs/blob/main/guides/extract-docx-text-tables/index.html">Guide source</a> · <a href="https://onodocs.com/samples/docx-extraction/sample.docx" download="">Download the Word sample</a></p></section>
-<div class="doc-layout"><nav class="doc-nav" aria-label="Guide sections"><a href="#try-it">Try extraction</a><a href="#setup">Run locally</a><a href="#text">Read text and paragraphs</a><a href="#tables">Extract table rows</a><a href="#records">Select tables by headers</a><a href="#implementation">Complete browser sample</a><a href="#node">Run in Node.js</a><a href="#queries">Scope and search</a><a href="#limits">Limits and privacy</a><a href="#next">Next steps</a></nav><article class="prose">
+<div class="doc-layout"><nav class="doc-nav" aria-label="Guide sections"><a href="#try-it">Try extraction</a><a href="#setup">Install</a><a href="#text">Read text and paragraphs</a><a href="#tables">Extract table rows</a><a href="#records">Select tables by headers</a><a href="#implementation">Shared extraction function</a><a href="#node">Run in Node.js</a><a href="#queries">Scope and search</a><a href="#limits">Limits and privacy</a><a href="#next">Next steps</a></nav><article class="prose">
 <section id="try-it"><h2>Try DOCX-to-text and DOCX-to-JSON extraction</h2><p>The included project brief has two tables. Choose Body text, All body tables, or Delivery records. Open your own Word file to use the same queries, then copy or download the result. The delivery query returns an empty array when a document has no matching table.</p><iframe class="guide-demo" src="https://onodocs.com/samples/docx-extraction/" title="JavaScript and TypeScript DOCX extraction demo" loading="lazy"></iframe><p><a href="https://onodocs.com/samples/docx-extraction/" target="_blank" rel="noopener">Open the extraction demo in a full tab</a>. The demo processes selected files locally without uploading them or calling an AI service.</p></section>
-<section id="setup"><h2>Run the JavaScript or TypeScript sample</h2><p>Install Node.js 22.18 or newer and npm, then clone the <a href="https://github.com/onodocs/onodocs">public OnoDocs repository</a> or <a href="https://github.com/onodocs/onodocs/archive/refs/heads/main.zip">download the source ZIP</a>.</p><pre><code>git clone https://github.com/onodocs/onodocs.git
-cd onodocs
-npm run setup
-npm start</code></pre><p>Open <code>http://127.0.0.1:5174/docx-extraction/</code> for TypeScript or <code>http://127.0.0.1:5174/javascript-extraction/</code> for JavaScript. Both use the same extraction logic. Setup installs the SDK and sample dependencies from npm. No GitHub sign-in or license key is required. Run <code>npm run typecheck</code> and <code>npm run build</code> to check and bundle the examples.</p><p>Install from npm in an existing application. <a href="https://www.npmjs.com/package/@onodocs/sdk">SDK on npm</a> · <a href="https://github.com/onodocs/onodocs/releases">Release archives</a></p><pre><code>npm install @onodocs/sdk</code></pre><p>Install the SDK from npm for document analysis. TypeScript declarations are included. Use the analysis entry point <code>@onodocs/sdk</code>; the <code>/browser</code> entry point is for page rendering.</p></section>
+<section id="setup"><h2>Install the SDK</h2><pre><code>npm install @onodocs/sdk</code></pre><p>Use the analysis entry point <code>@onodocs/sdk</code> to read document content without rendering pages. TypeScript declarations are included. The <a href="https://github.com/onodocs/onodocs/tree/main/examples/docx-extraction">complete extraction sample</a> contains browser and Node.js applications in JavaScript and TypeScript, with <a href="https://github.com/onodocs/onodocs/blob/main/docs/samples.md">setup instructions</a>. Evaluation needs no license key. <a href="https://www.npmjs.com/package/@onodocs/sdk">SDK on npm</a> · <a href="https://github.com/onodocs/onodocs/releases">Release archives</a>.</p></section>
 <section id="text"><h2>Read plain text and typed paragraphs</h2><p>Open a browser <code>File</code>, an <code>ArrayBuffer</code> or a <code>Uint8Array</code>. Query the document’s text and structure without a canvas, fonts or page layout.</p><pre><code>import { openDocument } from "@onodocs/sdk";
 
 const doc = await openDocument(file);
@@ -15,7 +12,7 @@ const text = body.map(story =&gt; story.text).join("\n");
 const paragraphs = body.paragraphs().map(paragraph =&gt; ({
   text: paragraph.text,
   style: paragraph.style
-}));</code></pre><p><code>file</code> is the selected browser <code>File</code>. The complete file picker appears below. Paragraph text joins its runs, so formatting changes do not split a sentence into separate records. Paragraph queries include paragraphs inside tables and content controls.</p><p>Body text includes table-cell text, so appending the tables would duplicate it. Plain text preserves imported text and paragraph boundaries, not the page layout.</p></section>
+}));</code></pre><p><code>file</code> is the selected browser <code>File</code>. The <a href="https://github.com/onodocs/onodocs/blob/main/examples/docx-extraction/main.ts">complete browser sample</a> supplies the file picker. Paragraph text joins its runs, so formatting changes do not split a sentence into separate records. Paragraph queries include paragraphs inside tables and content controls.</p><p>Body text includes table-cell text, so appending the tables would duplicate it. Plain text preserves imported text and paragraph boundaries, not the page layout.</p></section>
 <section id="tables"><h2>Extract tables as arrays of rows and cells</h2><pre><code>const tables = body.tables().map(table =&gt; table.textRows);</code></pre><p>The result is an array of tables containing rows of cell strings. <code>textRows</code> includes the first row. It does not guess whether that row contains headers or convert dates, numbers or currencies. Convert those values in your application if needed.</p><p>For structural access, use <code>table.rows</code>, <code>row.cells</code> and each cell's <code>children</code>. A merged or nested table is not necessarily a rectangular spreadsheet. <code>textRows</code> lists the imported cells without repeating values across merged spans. Nested table text can occur inside an outer cell, while <code>tables()</code> also returns nested tables. Choose the level your application needs before flattening.</p></section>
 <section id="records"><h2>Find a table by its headers and map rows to JSON</h2><p>The sample brief uses the first-row labels Deliverable, Owner and Due. Match those labels in their exact order, then remove the header row and map the remaining cells:</p><pre><code>const matches = body.tables().where({
   headers: ["Deliverable", "Owner", "Due"]
@@ -25,7 +22,7 @@ const deliveryTables = matches.map(table =&gt;
     deliverable, owner, due
   }))
 );</code></pre><p>Header matching compares the complete first row, including case and whitespace. It does not search later rows or infer synonyms.</p><p>The output contains one entry per matching table, or <code>[]</code> if none match. Use <code>one()</code> only when exactly one match is required; it throws for zero or multiple results. <code>optional()</code> allows zero but still throws for multiple matches.</p><p>This record mapping is for the simple three-column sample. Missing cells become empty strings. Additional cells remain available in the raw table output. Validate required values, merged cells and date formats in your application before importing records. Due dates remain as written, such as “Nov 04”. The sample does not infer a year.</p></section>
-<section id="implementation"><h2>The complete browser extraction sample</h2><p>The browser and Node.js samples use the function below to select text and fields for JSON output. Select the text and fields your application needs, then serialize those values as JSON.</p><details open=""><summary>extract.ts · typed extraction function</summary><pre><code>import type { InspectedDocument } from "@onodocs/sdk";
+<section id="implementation"><h2>Share extraction logic between browser and Node.js</h2><p>The same function selects the text, paragraphs and tables for JSON output in both environments:</p><pre><code>import type { InspectedDocument } from "@onodocs/sdk";
 
 export function extractContent(doc: InspectedDocument) {
   const body = doc.query.stories().where({ story: "body" });
@@ -39,197 +36,13 @@ export function extractContent(doc: InspectedDocument) {
     )
   };
 }
-</code></pre></details><details><summary>extract.js · plain JavaScript equivalent</summary><pre><code>function extractContent(doc) {
-  const body = doc.query.stories().where({ story: "body" });
-  const tables = body.tables();
-  return {
-    text: body.map((story) =&gt; story.text).join("\n"),
-    paragraphs: body.paragraphs().map((paragraph) =&gt; ({ text: paragraph.text, style: paragraph.style })),
-    tables: tables.map((table) =&gt; table.textRows),
-    deliveryTables: tables.where({ headers: ["Deliverable", "Owner", "Due"] }).map(
-      (table) =&gt; table.textRows.slice(1).map(([deliverable = "", owner = "", due = ""]) =&gt; ({ deliverable, owner, due }))
-    )
-  };
-}
-export {
-  extractContent
-};
-</code></pre></details><details><summary>main.ts · local files, cancellation, copy and download</summary><pre><code>import { openDocument } from "@onodocs/sdk";
-import { extractContent } from "./extract.ts";
-import sample from "../view-document/sample.docx";
-
-const status = document.querySelector&lt;HTMLOutputElement&gt;("#status")!;
-const file = document.querySelector&lt;HTMLInputElement&gt;("#file")!;
-const format = document.querySelector&lt;HTMLSelectElement&gt;("#format")!;
-const output = document.querySelector&lt;HTMLTextAreaElement&gt;("#output")!;
-const cancel = document.querySelector&lt;HTMLButtonElement&gt;("#cancel")!;
-const copy = document.querySelector&lt;HTMLButtonElement&gt;("#copy")!;
-const download = document.querySelector&lt;HTMLButtonElement&gt;("#download")!;
-let controller: AbortController | undefined;
-let content: ReturnType&lt;typeof extractContent&gt; | undefined;
-
-function showOutput() {
-  output.value = !content ? "" : format.value === "text" ? content.text : JSON.stringify(format.value === "tables" ? content.tables : content.deliveryTables, null, 2);
-}
-
-async function open(source: File | Uint8Array) {
-  controller?.abort();
-  controller = new AbortController();
-  const { signal } = controller;
-  content = undefined;
-  showOutput();
-  copy.disabled = download.disabled = true;
-  cancel.disabled = false;
-  status.textContent = "Extracting document…";
-  try {
-    const doc = await openDocument(source, { signal });
-    if (signal.aborted) return;
-    content = extractContent(doc);
-    showOutput();
-    copy.disabled = download.disabled = false;
-    status.textContent = `Ready · ${content.paragraphs.length} body ${content.paragraphs.length === 1 ? "paragraph" : "paragraphs"} · ${content.tables.length} ${content.tables.length === 1 ? "table" : "tables"} · ${content.deliveryTables.length} delivery ${content.deliveryTables.length === 1 ? "table" : "tables"}. Your file and extracted content stay in this browser.`;
-  } catch (error) {
-    if (!signal.aborted) status.textContent = `Unable to extract document. ${error instanceof Error ? error.message : "Try another Word file."}`;
-  } finally {
-    if (!signal.aborted) cancel.disabled = true;
-  }
-}
-
-file.addEventListener("change", () =&gt; {
-  const selected = file.files?.[0];
-  file.value = "";
-  if (selected) void open(selected);
-});
-document.querySelector("#sample")!.addEventListener("click", () =&gt; { void open(sample); });
-format.addEventListener("change", showOutput);
-cancel.addEventListener("click", () =&gt; {
-  controller?.abort();
-  cancel.disabled = true;
-  status.textContent = "Extraction cancelled. Choose another file or open the sample.";
-});
-copy.addEventListener("click", async () =&gt; {
-  try {
-    await navigator.clipboard.writeText(output.value);
-    status.textContent = "Output copied.";
-  } catch {
-    output.focus();
-    output.select();
-    status.textContent = "The output is selected. Press Ctrl+C or Command+C to copy it.";
-  }
-});
-download.addEventListener("click", () =&gt; {
-  const plain = format.value === "text";
-  const url = URL.createObjectURL(new Blob([output.value], { type: plain ? "text/plain;charset=utf-8" : "application/json" }));
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = plain ? "document-text.txt" : `${format.value}.json`;
-  link.click();
-  setTimeout(() =&gt; URL.revokeObjectURL(url), 1000);
-});
-window.addEventListener("pagehide", event =&gt; { if (!event.persisted) { controller?.abort(); content = undefined; } });
-void open(sample);
-</code></pre></details><details><summary>main.js · complete JavaScript application</summary><pre><code>import { openDocument } from "@onodocs/sdk";
-import { extractContent } from "./extract.js";
-import sample from "../view-document/sample.docx";
-const status = document.querySelector("#status");
-const file = document.querySelector("#file");
-const format = document.querySelector("#format");
-const output = document.querySelector("#output");
-const cancel = document.querySelector("#cancel");
-const copy = document.querySelector("#copy");
-const download = document.querySelector("#download");
-let controller;
-let content;
-function showOutput() {
-  output.value = !content ? "" : format.value === "text" ? content.text : JSON.stringify(format.value === "tables" ? content.tables : content.deliveryTables, null, 2);
-}
-async function open(source) {
-  controller?.abort();
-  controller = new AbortController();
-  const { signal } = controller;
-  content = void 0;
-  showOutput();
-  copy.disabled = download.disabled = true;
-  cancel.disabled = false;
-  status.textContent = "Extracting document\u2026";
-  try {
-    const doc = await openDocument(source, { signal });
-    if (signal.aborted) return;
-    content = extractContent(doc);
-    showOutput();
-    copy.disabled = download.disabled = false;
-    status.textContent = `Ready \xB7 ${content.paragraphs.length} body ${content.paragraphs.length === 1 ? "paragraph" : "paragraphs"} \xB7 ${content.tables.length} ${content.tables.length === 1 ? "table" : "tables"} \xB7 ${content.deliveryTables.length} delivery ${content.deliveryTables.length === 1 ? "table" : "tables"}. Your file and extracted content stay in this browser.`;
-  } catch (error) {
-    if (!signal.aborted) status.textContent = `Unable to extract document. ${error instanceof Error ? error.message : "Try another Word file."}`;
-  } finally {
-    if (!signal.aborted) cancel.disabled = true;
-  }
-}
-file.addEventListener("change", () =&gt; {
-  const selected = file.files?.[0];
-  file.value = "";
-  if (selected) void open(selected);
-});
-document.querySelector("#sample").addEventListener("click", () =&gt; {
-  void open(sample);
-});
-format.addEventListener("change", showOutput);
-cancel.addEventListener("click", () =&gt; {
-  controller?.abort();
-  cancel.disabled = true;
-  status.textContent = "Extraction cancelled. Choose another file or open the sample.";
-});
-copy.addEventListener("click", async () =&gt; {
-  try {
-    await navigator.clipboard.writeText(output.value);
-    status.textContent = "Output copied.";
-  } catch {
-    output.focus();
-    output.select();
-    status.textContent = "The output is selected. Press Ctrl+C or Command+C to copy it.";
-  }
-});
-download.addEventListener("click", () =&gt; {
-  const plain = format.value === "text";
-  const url = URL.createObjectURL(new Blob([output.value], { type: plain ? "text/plain;charset=utf-8" : "application/json" }));
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = plain ? "document-text.txt" : `${format.value}.json`;
-  link.click();
-  setTimeout(() =&gt; URL.revokeObjectURL(url), 1e3);
-});
-window.addEventListener("pagehide", (event) =&gt; {
-  if (!event.persisted) {
-    controller?.abort();
-    content = void 0;
-  }
-});
-void open(sample);
-</code></pre></details><details><summary>index.html · file picker and output controls</summary><pre><code>&lt;!doctype html&gt;
-&lt;html lang="en"&gt;&lt;head&gt;&lt;meta charset="utf-8"&gt;&lt;meta name="viewport" content="width=device-width,initial-scale=1"&gt;&lt;meta name="robots" content="noindex"&gt;&lt;title&gt;Extract DOCX text and tables · OnoDocs&lt;/title&gt;&lt;link rel="stylesheet" href="style.css"&gt;&lt;/head&gt;
-&lt;body&gt;&lt;header&gt;&lt;label&gt;Open Word file &lt;input id="file" type="file" accept=".docx,.docm,.dotx,.dotm"&gt;&lt;/label&gt;&lt;button id="sample" type="button"&gt;Open sample&lt;/button&gt;&lt;button id="cancel" type="button" disabled&gt;Cancel extraction&lt;/button&gt;&lt;a class="source-link" href="https://github.com/onodocs/onodocs/tree/main/examples/docx-extraction" target="_blank" rel="noopener" aria-label="Source on GitHub" title="Source on GitHub"&gt;&lt;svg aria-hidden="true" focusable="false" width="18" height="18" viewBox="0 0 16 16"&gt;&lt;path d="M6.766 11.328c-2.063-.25-3.516-1.734-3.516-3.656 0-.781.281-1.625.75-2.188-.203-.515-.172-1.609.063-2.062.625-.078 1.468.25 1.968.703.594-.187 1.219-.281 1.985-.281.765 0 1.39.094 1.953.265.484-.437 1.344-.765 1.969-.687.218.422.25 1.515.046 2.047.5.593.766 1.39.766 2.203 0 1.922-1.453 3.375-3.547 3.64.531.344.89 1.094.89 1.954v1.625c0 .468.391.734.86.547C13.781 14.359 16 11.53 16 8.03 16 3.61 12.406 0 7.984 0 3.563 0 0 3.61 0 8.031a7.88 7.88 0 0 0 5.172 7.422c.422.156.828-.125.828-.547v-1.25c-.219.094-.5.156-.75.156-1.031 0-1.64-.562-2.078-1.609-.172-.422-.36-.672-.719-.719-.187-.015-.25-.093-.25-.187 0-.188.313-.328.625-.328.453 0 .844.281 1.25.86.313.452.64.655 1.031.655s.641-.14 1-.5c.266-.265.47-.5.657-.656"/&gt;&lt;/svg&gt;&lt;/a&gt;&lt;/header&gt;
-&lt;main&gt;&lt;h1&gt;Text and tables from Word&lt;/h1&gt;&lt;p&gt;Choose plain text or JSON, then copy or download the result. Your file stays on your device.&lt;/p&gt;&lt;output id="status" role="status" aria-live="polite"&gt;Opening sample…&lt;/output&gt;&lt;div class="actions"&gt;&lt;label for="format"&gt;Output&lt;/label&gt;&lt;select id="format"&gt;&lt;option value="text"&gt;Body text&lt;/option&gt;&lt;option value="tables"&gt;All body tables (JSON)&lt;/option&gt;&lt;option value="deliveries"&gt;Delivery records (JSON)&lt;/option&gt;&lt;/select&gt;&lt;button id="copy" type="button" disabled&gt;Copy output&lt;/button&gt;&lt;button id="download" type="button" disabled&gt;Download output&lt;/button&gt;&lt;/div&gt;&lt;label class="result"&gt;Extracted output&lt;textarea id="output" readonly spellcheck="false"&gt;&lt;/textarea&gt;&lt;/label&gt;&lt;p class="note"&gt;Delivery records select tables whose first row is exactly Deliverable / Owner / Due. The JSON contains one entry per matching table, or an empty array if none match.&lt;/p&gt;&lt;/main&gt;&lt;script type="module" src="main.js"&gt;&lt;/script&gt;&lt;/body&gt;&lt;/html&gt;
-</code></pre></details><details><summary>style.css · sample styles</summary><pre><code>:root{font:15px/1.5 system-ui,sans-serif;color:#302820;background:#f2ede5}*{box-sizing:border-box}body{margin:0}header,.actions{display:flex;flex-wrap:wrap;align-items:center;gap:12px}header{padding:12px;background:#fbf9f5;border-bottom:1px solid #ded8cf}label{display:flex;flex-wrap:wrap;align-items:center;gap:8px}input{max-width:230px}button,input,select{font:inherit}button,select{padding:6px 10px}button{cursor:pointer}button:disabled{cursor:default}a{color:#942d21}main{padding:16px;max-width:1100px;margin:auto}h1{font-size:1.4rem;margin:0 0 8px}p{margin:8px 0 16px}output{display:block;margin-bottom:16px}.actions{margin-bottom:12px}.result{display:block}textarea{display:block;width:100%;height:300px;resize:vertical;padding:12px;margin-top:6px;border:1px solid #bdb4a9;background:#fffdf9;color:inherit;font:13px/1.55 ui-monospace,monospace;white-space:pre;overflow:auto}.note{font-size:13px;color:#655b51}button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,a:focus-visible{outline:2px solid #942d21;outline-offset:3px}
-.source-link{display:inline-flex;align-items:center;justify-content:center;flex:none;width:32px;height:32px;margin-left:auto;border-radius:4px;color:#63584e}.source-link svg{width:18px;height:18px;fill:currentColor;stroke:none}.source-link:hover{background:#eee7de;color:#2b211d}.source-link:focus-visible{outline:2px solid #b43829;outline-offset:0}
-</code></pre></details><p>The build embeds <code>../view-document/sample.docx</code> using its DOCX binary loader. Clone the repository to run this example. Applications that open only local files need no DOCX loader. Opening a replacement aborts the previous operation and clears its output. Failed loads leave copy/download disabled until another document succeeds.</p><p>Unlike the rendering document, this inspected document has no <code>dispose()</code> method. Release references when finished. There are no views or page canvases to dispose. Cancellation uses <code>AbortSignal</code>. A synchronous step can finish before cancellation takes effect. Large document models and JSON output still take memory and processing time.</p><p><a href="https://github.com/onodocs/onodocs/tree/main/examples/docx-extraction">Browse all JavaScript and TypeScript source files on GitHub</a>.</p></section>
-<section id="node"><h2>Extract DOCX content in Node.js without a browser</h2><p>The same analysis entry point accepts a Node <code>Buffer</code>, which is a <code>Uint8Array</code>. This command uses the same extraction function and writes JSON to standard output. It prints its source-code link to standard error so you can redirect the JSON output to a file.</p><details open=""><summary>node.ts · complete Node.js command</summary><pre><code>import { readFile } from "node:fs/promises";
-import { openDocument } from "@onodocs/sdk";
-import { extractContent } from "./extract.ts";
-
-const bytes = await readFile(process.argv[2] ?? new URL("../view-document/sample.docx", import.meta.url));
-const doc = await openDocument(bytes);
-console.log(JSON.stringify(extractContent(doc), null, 2));
-console.error("Sample source: https://github.com/onodocs/onodocs/tree/main/examples/docx-extraction");
-</code></pre></details><details><summary>node.js · JavaScript equivalent</summary><pre><code>import { readFile } from "node:fs/promises";
+</code></pre><p>The <a href="https://github.com/onodocs/onodocs/tree/main/examples/docx-extraction">complete sample</a> includes the file picker, replacement, cancellation, copy and download controls, and JavaScript equivalents. An analysis document needs no <code>dispose()</code> call. Release references when finished, and use <code>AbortSignal</code> to cancel pending work.</p></section>
+<section id="node"><h2>Extract content in Node.js</h2><p>Save this as <code>extract.mjs</code> beside the <a href="https://github.com/onodocs/onodocs/blob/main/examples/docx-extraction/extract.js">shared JavaScript extraction function</a>, then run <code>node extract.mjs document.docx</code>:</p><pre><code>import { readFile } from "node:fs/promises";
 import { openDocument } from "@onodocs/sdk";
 import { extractContent } from "./extract.js";
-const bytes = await readFile(process.argv[2] ?? new URL("../view-document/sample.docx", import.meta.url));
-const doc = await openDocument(bytes);
-console.log(JSON.stringify(extractContent(doc), null, 2));
-console.error("Sample source: https://github.com/onodocs/onodocs/tree/main/examples/docx-extraction");
-</code></pre></details><pre><code>npm run extract
-npm run extract -- path/to/document.docx
-node examples/docx-extraction/node.js path/to/document.docx &gt; extracted.json</code></pre><p>With no path the command opens the included brief. Node.js 22.18 or newer runs the supplied TypeScript with its erasable types; JavaScript uses the generated <code>.js</code> files. Neither command launches Chromium or renders pages. If you put extraction behind an upload endpoint, authentication, upload handling, storage and deletion belong to your application.</p></section>
+
+const doc = await openDocument(await readFile(process.argv[2]));
+console.log(JSON.stringify(extractContent(doc), null, 2));</code></pre><p>No browser or page rendering is required. The <a href="https://github.com/onodocs/onodocs/blob/main/examples/docx-extraction/node.js">complete Node.js command</a> includes an authored document and accepts a path to your own file. If you add an upload endpoint, authentication, storage and deletion belong to your application.</p></section>
 <section id="queries"><h2>Scope stories and search paragraph text</h2><p>Body, headers, footers, notes and textboxes are separate stories. Query them deliberately when defining the contents of an export. A header story contains the header once, even when it repeats on several pages.</p><pre><code>const headers = doc.query.stories().where({ story: "header" })
   .paragraphs().map(paragraph =&gt; paragraph.text);
 
