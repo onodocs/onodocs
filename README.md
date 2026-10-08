@@ -38,6 +38,7 @@ Open **http://127.0.0.1:5174/samples.html**. Setup installs matching SDK and Can
 | Text and table extraction | [extract.ts](examples/docx-extraction/extract.ts) | Browser and Node.js text, tables and JSON, with complete JavaScript equivalents |
 | Document workflows | [workflows.ts](examples/sdk/workflows.ts) | Tables, document tree, ASCII output and a locally simulated email draft |
 | Backend processing and frontend display | [server.mjs](examples/backend-viewer/server.mjs) | Real HTTP endpoints, prepared pages and a Canvas-only frontend |
+| Inline Word editor | [main.js](examples/browser-editor/main.js) | Text formatting, paragraph editing, undo/redo and DOCX saving; [setup](docs/samples.md#inline-word-editor) |
 | Node.js analysis | [analyze.ts](examples/analyze.ts) | Read document content without a browser |
 
 The browser file-picker samples keep selected documents in the browser. The backend viewer reads a file on your server and sends prepared pages to the frontend. The samples do not call an AI service or send emails. See [sample setup and commands](docs/samples.md).
@@ -96,8 +97,7 @@ cancellation and disposal. For JavaScript, remove the generic type and non-null
 assertions, or use [main.js](examples/docx-viewer/main.js).
 
 The packages are also available as [release archives](https://github.com/onodocs/onodocs/releases). Supported Word package types include DOCX, DOCM, DOTX and DOTM; VBA does not
-execute. Older DOC/RTF files and general Word editing or DOCX round-trip saving
-are not supported. Fonts affect rendering. PDF exports are image-based.
+execute. Older DOC/RTF files are not supported. The [inline editor sample](docs/samples.md#inline-word-editor) demonstrates basic text and paragraph editing with DOCX saving. Editing complex Word structures remains limited. Fonts affect rendering. PDF exports are image-based.
 
 ## Licensing and support
 

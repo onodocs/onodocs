@@ -1,0 +1,28 @@
+:root { font-family: Arial, sans-serif; color: #202b38; background: #f3f5f7; font-synthesis: none; }
+* { box-sizing: border-box; }
+body { margin: 0; }
+header { display: flex; align-items: center; justify-content: space-between; padding: 22px 32px; background: #fff; border-bottom: 1px solid #dce2e8; gap: 20px; }
+header > div:first-child { display: flex; align-items: center; gap: 24px; }
+.brand { font-weight: 700; color: #15685b; font-size: 21px; }
+h1 { font-size: 19px; font-weight: 500; margin: 0; }
+.files { display: flex; align-items: center; gap: 12px; }
+button, select, input, .file-button { font: inherit; font-size: 14px; }
+button, select, .file-button { border: 1px solid #cad3dc; border-radius: 5px; background: white; padding: 8px 11px; color: inherit; cursor: pointer; }
+button:hover, .file-button:hover { background: #edf5f2; }
+button:disabled { opacity: .4; cursor: default; }
+button[aria-pressed="true"] { background: #d4eee7; border-color: #258573; }
+button:focus-visible, select:focus-visible, input:focus-visible, .file-button:focus-within { outline: 2px solid #258573; outline-offset: 2px; }
+#download { color: white; background: #15685b; border-color: #15685b; }
+.file-button input { position: absolute; width: 1px; height: 1px; opacity: 0; }
+nav { display: flex; align-items: center; flex-wrap: wrap; padding: 12px 32px; gap: 8px; background: #fff; border-bottom: 1px solid #dce2e8; }
+.separator { width: 1px; height: 24px; background: #dce2e8; margin: 0 6px; }
+#size { width: 64px; padding: 8px; border: 1px solid #cad3dc; border-radius: 5px; }
+#color { width: 34px; height: 34px; border: 1px solid #cad3dc; background: white; padding: 3px; border-radius: 5px; }
+.document-heading { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px; margin: 20px auto; padding: 0 24px; max-width: 1060px; font-size: 12px; color: #586879; }
+#preview { max-width: 860px; margin: 24px auto 40px; min-height: 440px; }
+#preview section { box-shadow: 0 2px 12px #172e4618; }
+#editor { position: absolute; width: 1px; min-width: 1px; height: 1px; resize: none; opacity: 0; border: 0; padding: 0; margin: 0; outline: none; overflow: hidden; z-index: 2; }
+#editor.composing { opacity: 1; width: 220px; background: white; }
+footer { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 10px; padding: 12px 32px; font-size: 12px; color: #586879; border-top: 1px solid #dce2e8; background: #fff; }
+#status[data-error="true"] { color: #a62a24; }
+@media (max-width: 900px) { header, nav { padding: 16px; } header { flex-wrap: wrap; } #preview { margin: 16px; } footer { padding: 12px 16px; } }

@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-10-08: Inline browser editor and SDK/Canvas 0.3.0
+
+- Standalone browser editor sample with inline typing, text formatting, paragraph splitting and joining, clipboard, undo/redo and DOCX download.
+- SDK and Canvas 0.3.0 provide the editing, saving and caret APIs used by the sample, available from npm and as GitHub release archives.
+- Saving preserves untouched package content. Editing complex Word structures remains limited.
+
 ## 2026-10-07: SDK and Canvas 0.2.1
 
 - Complete backend viewer sample with real Node.js endpoints, an included DOCX and a Canvas frontend.

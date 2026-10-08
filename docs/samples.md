@@ -74,6 +74,28 @@ body tables, or delivery records selected by exact first-row headers. The
 [extraction guide](https://onodocs.com/developers/extract-docx-text-tables/) explains
 story scope, missing or repeated tables, merged cells and the shared Node.js CLI.
 
+## Inline Word editor
+
+The [browser editor](../examples/browser-editor/) edits text directly on rendered Word pages. It includes a fictional document, file opening, font family and size, bold, italic, underline, strikethrough, text color, paragraph alignment, selection, clipboard operations, undo/redo and Word download.
+
+From the repository root:
+
+```sh
+cd examples/browser-editor
+npm install
+npm start
+```
+
+Open http://127.0.0.1:5190. Click a page to type. Enter splits a paragraph, Shift+Enter inserts a line break, and Backspace at a paragraph's start joins it to the previous paragraph. Select text before applying formatting, or change formatting at the caret for subsequent typing. Download Word saves the edited DOCX; open that file again to continue editing. Stop the local server with Ctrl+C.
+
+This standalone project installs matching SDK and Canvas packages from npm. It does not need the private engine repository or the root sample dependencies. The local server only serves application files; document processing stays in the browser.
+
+The SDK owns edits, layout and DOCX saving. Canvas paints the pages and selection. The [application](../examples/browser-editor/main.js) uses a textarea at the caret to receive keyboard and IME input, and saved document snapshots for undo/redo. It uses exported package APIs throughout.
+
+This is a basic editor sample. Supported ordinary text and paragraph edits preserve untouched package content. Complex structures can be displayed but have editing restrictions; unsupported operations report an error before changing the document. Rich clipboard formatting, table editing, comments and tracked-change authoring are not provided. Each edit rebuilds the document layout, and undo snapshots use memory proportional to document size and edit history. Refreshing loses unsaved changes.
+
+Evaluation pages display a watermark. Saved DOCX files do not carry that visual watermark; the SDK's evaluation and commercial licensing terms still apply.
+
 ## Backend viewer
 
 The [backend viewer](../examples/backend-viewer/) includes the server, frontend and an authored DOCX. It requires Google Chrome on the rendering host. From the repository root:
