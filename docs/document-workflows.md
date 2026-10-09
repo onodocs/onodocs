@@ -12,6 +12,8 @@ node examples/serve-workflow.mjs ai-report
 
 Open the printed local address. Set `PORT` to run several examples at once. The server serves sample assets from your computer; document work runs in the browser. No license is required for watermarked evaluation. Pass your license key in the public document options for licensed use. The public export's `examples/sdk/license.ts` returns an empty evaluation key and makes no licensing request.
 
+One application license covers SDK, Canvas, Editor and the named product's self-hosted backend, background jobs and collaboration, including all deployments, tenants and customer-hosted copies. Backend-only automation counts as an application. Finished editors and custom branding are included. Developer redistribution requires a separately quoted written agreement. Generated DOCX, PDF and extracted data are royalty-free to distribute; preserve evaluation notices. See the [license terms](https://onodocs.com/terms/) for scope and redistribution rights.
+
 The [workflow guide](https://onodocs.com/developers/document-workflows/) contains integration excerpts. Each example directory contains its HTML, CSS and application code. Proposal and agreement samples include their DOCX; the application form also includes its JSON field definition. The report creates its fictional document through the SDK. Form recovery uses `examples/application/recovery.js` and stores one draft per template and definition in this browser.
 
 Proposal generation repeats service rows, then permits wording edits before DOCX/PDF export. It asks before regeneration overwrites those edits. Refreshing starts a new proposal.
@@ -25,3 +27,5 @@ Report review uses predetermined local suggestions for its fictional report. It 
 PDF export includes searchable text, links, bookmarks and supported tagged structure, with vector graphics where supported and rasterized visible text. It is not a PDF/UA certification. Rendering and pagination depend on available fonts. Always test your documents and browser targets before production use.
 
 For React editing, copy `examples/application/Editor.jsx` and its sibling `mount.js` into a client component. The exported source also includes `mount.ts` for TypeScript builds. Give the host a usable height and memoize `options` and `onReady` to avoid replacing an active session during rerenders. `options` accepts the public application editor persistence, recovery and event callbacks. The existing framework viewer projects provide complete bundler and application shells.
+
+For licensed shared sessions, pass `licenseKey` to `createCollaborationService` from `@onodocs/sdk/collaboration` on the server and through the editor's document options in the browser. The Editor package includes the complete collaboration example. The application supplies authentication, roles, transport and atomic storage.

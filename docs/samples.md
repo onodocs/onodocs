@@ -48,9 +48,7 @@ Samples intentionally use evaluation mode, which adds a watermark. For a
 watermark-free trial or commercial use, pass your issued `licenseKey` to
 `openDocument`. Customer licenses verify offline. Browser verification requires HTTPS or localhost.
 
-Sample code and authored documents are MIT-licensed. The SDK is separately
-licensed: unrestricted-duration non-production evaluation, an optional 30-day
-watermark-free trial, or a perpetual commercial application license.
+Sample code and authored documents are MIT-licensed. SDK, Canvas and Editor share a separate application license: unrestricted-duration non-production evaluation, an optional 30-day watermark-free trial, or a perpetual commercial license for covered releases. One named product includes its frontend, backend, background jobs, collaboration and customer-hosted copies. Finished editors and custom branding are included; developer redistribution requires a separately quoted written agreement. Generated DOCX, PDF and extracted data are royalty-free to distribute; preserve evaluation notices. See the [license terms](https://onodocs.com/terms/) for application scope and recipients' use of OnoDocs.
 
 [Documentation](https://onodocs.com/developers/) ·
 [API reference](https://onodocs.com/developers/api/) ·
@@ -64,9 +62,7 @@ samples link directly to their GitHub source. The published samples run in evalu
 Open http://127.0.0.1:5174/react-docx-viewer/ for the React sample. Its development
 build keeps Strict Mode enabled. Try Hide viewer during loading, Show viewer,
 cancellation and replacement. The [React guide](https://onodocs.com/developers/react-docx-viewer/)
-includes the full component, styles and Next.js client-component guidance. Import
-the component and styles in an existing React application and pass a browser
-`File` or stable bytes. Only the sample application uses the bundled DOCX loader.
+shows component usage and Next.js client-component guidance, with links to the full source and styles. Import the component and styles in an existing React application and pass a browser `File` or stable bytes. Only the sample application uses the bundled DOCX loader.
 
 Open http://127.0.0.1:5174/docx-extraction/ or /javascript-extraction/ for the
 TypeScript and JavaScript extraction samples. Copy or download body text, all

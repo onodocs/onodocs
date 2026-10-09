@@ -104,11 +104,11 @@ execute. Older DOC/RTF files are not supported. The [inline editor sample](docs/
 
 ## Licensing and support
 
-The **samples, guides and authored sample documents are MIT-licensed**; see
-[LICENSE](LICENSE). The separately distributed SDK has its own licence:
-unrestricted-duration non-production evaluation with a watermark, optional
-30-day watermark-free trials, and commercial application licences. Signed
-commercial keys are verified offline.
+The samples, guides and authored sample documents are MIT-licensed; see [LICENSE](LICENSE). SDK, Canvas and Editor are separately distributed under the same application license. Free evaluation has no time limit and is for non-production use, with evaluation notices. Optional trial keys remove watermarks for 30 days. Commercial keys verify offline and permit perpetual use of covered releases.
+
+One named application covers the product's frontend, backend, background jobs and collaboration, including self-hosted services, all deployments, tenants and customer-hosted copies. Backend-only automation counts as an application. Shared backends count the independent products they serve. Finished editors and custom branding are included. Reselling a reusable SDK, editor component or general document-processing API to developers, or granting independent downstream development rights, requires a separately quoted written redistribution agreement.
+
+Generated DOCX, PDF and extracted data are royalty-free to distribute. Recipients need no license unless their software runs OnoDocs outside the covered application scope. Preserve evaluation notices.
 
 [Licensing terms](https://onodocs.com/terms/) ·
 [Commercial pricing](https://onodocs.com/pricing/) ·
