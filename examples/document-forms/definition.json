@@ -1,0 +1,69 @@
+{
+  "title": "Equipment request",
+  "fields": [
+    {
+      "id": "reference",
+      "tag": "request.reference",
+      "label": "Request number",
+      "type": "text",
+      "readOnly": true
+    },
+    {
+      "id": "name",
+      "tag": "request.name",
+      "label": "Full name",
+      "type": "text",
+      "required": true,
+      "maxLength": 60
+    },
+    {
+      "id": "email",
+      "tag": "request.email",
+      "label": "Work email",
+      "type": "email",
+      "required": true
+    },
+    {
+      "id": "quantity",
+      "tag": "request.quantity",
+      "label": "Quantity",
+      "type": "number",
+      "min": 1,
+      "max": 10,
+      "required": true
+    },
+    {
+      "id": "date",
+      "tag": "request.date",
+      "label": "Required by",
+      "type": "date",
+      "required": true
+    },
+    {
+      "id": "equipment",
+      "tag": "request.equipment",
+      "label": "Equipment",
+      "type": "choice",
+      "choices": [
+        "Laptop",
+        "Monitor",
+        "Keyboard"
+      ],
+      "required": true
+    },
+    {
+      "id": "notes",
+      "tag": "request.notes",
+      "label": "Additional details",
+      "type": "multiline",
+      "maxLength": 500
+    },
+    {
+      "id": "consent",
+      "tag": "request.consent",
+      "label": "I confirm this request",
+      "type": "checkbox",
+      "required": true
+    }
+  ]
+}

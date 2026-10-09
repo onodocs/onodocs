@@ -133,29 +133,9 @@ document.querySelector("#fill-template")!.addEventListener("click", () => void p
 for (const button of document.querySelectorAll("[data-save-pdf]")) button.addEventListener("click", () => void perform(async (doc, signal) => {
   const filename = `${documentName}.pdf`;
   status.textContent = "Preparing PDF…";
-  const { PDFDocument } = await import("pdf-lib");
-  const pdf = await PDFDocument.create();
-  const canvas = document.createElement("canvas");
-  try {
-    for (const page of canvasDocument!.pages) {
-      signal.throwIfAborted();
-      status.textContent = `Saving PDF… ${page.index + 1} of ${doc.pages.length} pages`;
-      await page.render(canvas, { dpi: 144, signal });
-      const blob = await new Promise<Blob | null>(resolve => canvas.toBlob(resolve));
-      signal.throwIfAborted();
-      if (!blob) throw new Error("Unable to export this page.");
-      const image = await pdf.embedPng(await blob.arrayBuffer());
-      const width = page.size.width / 20;
-      const height = page.size.height / 20;
-      pdf.addPage([width, height]).drawImage(image, { x: 0, y: 0, width, height });
-      await image.embed();
-      await new Promise(resolve => setTimeout(resolve, 0));
-    }
-    status.textContent = "Finishing PDF…";
-    const bytes = await pdf.save();
-    signal.throwIfAborted();
-    saveBlob(new Blob([new Uint8Array(bytes)], { type: "application/pdf" }), filename);
-  } finally { canvas.width = canvas.height = 0; }
+  const bytes = await doc.pdf({ dpi: 144, signal });
+  signal.throwIfAborted();
+  saveBlob(new Blob([new Uint8Array(bytes)], { type: "application/pdf" }), filename);
 }, true));
 const picker = document.querySelector<HTMLInputElement>("#local-file")!;
 document.querySelector("#open-document")!.addEventListener("click", () => picker.click());

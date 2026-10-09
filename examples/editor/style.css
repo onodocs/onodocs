@@ -1,0 +1,5 @@
+body { margin: 0; font-family: "Segoe UI", Arial, sans-serif; background: #eceef1; color: #29313d; }
+header { display: flex; align-items: center; flex-wrap: wrap; gap: 20px; padding: 16px 24px; background: white; border-bottom: 1px solid #e4e7eb; }
+.brand { display: inline-flex; align-items: center; gap: 1px; color: #292f38; font-size: 23px; font-weight: 650; text-decoration: none; letter-spacing: -.7px; }
+h1 { font-size: 14px; font-weight: 400; margin: 0; padding-left: 20px; border-left: 1px solid #dce1e6; color: #66717f; }
+header span { margin-left: auto; color: #586879; font-size: 12px; }

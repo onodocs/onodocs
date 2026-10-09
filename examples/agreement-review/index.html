@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Agreement review | OnoDocs</title><link rel="stylesheet" href="./style.css"><link rel="icon" type="image/svg+xml" href="/brand-mark.svg"></head>
+<body>
+<header><a href="/" class="brand">OnoDocs<span>AGREEMENT REVIEW</span></a><span class="local">Local evaluation · No upload service</span><a class="demo-guide" href="/examples/">All demos</a></header>
+<main>
+  <section class="intro"><div><p class="eyebrow">NORTHLINE STUDIO × HARBOR &amp; PINE</p><h1>Agree on the details.</h1><p>Review a fictional website services agreement, discuss wording, and return a Word file with your decisions.</p></div><div class="identity"><label for="reviewer">Reviewing as</label><select id="reviewer"><option value="alex">Alex Morgan · Harbor &amp; Pine</option><option value="sam">Sam Rivera · Northline Studio</option></select><small>This identity is recorded on your comments and suggestions.</small></div></section>
+  <section class="workflow" aria-label="Review workflow">
+    <div class="steps"><button id="review" aria-pressed="true">1. Review &amp; discuss</button><button id="suggest" aria-pressed="false">2. Suggest wording</button><button id="compare">3. Compare with original</button></div>
+    <div class="exchange"><label class="file-button">Open returned Word file<input id="returned" type="file" accept=".docx"></label><button id="download" class="primary">Download reviewed Word</button></div>
+  </section>
+  <section class="guide"><div><label for="clause">Select a clause</label><select id="clause"></select></div><p id="help">Select a clause, then add a comment in the review panel. Accept or reject pending changes there.</p><button id="reset">Start over</button></section>
+  <form id="suggestion" hidden><label for="wording">Proposed wording<textarea id="wording" rows="3" required></textarea></label><div><p>Suggest a replacement for the selected clause. The original and proposed wording stay in the Word file until a reviewer decides.</p><button class="primary" type="submit">Suggest this wording</button></div></form>
+  <p id="status" role="status" aria-live="polite">Opening agreement…</p>
+  <section id="comparison" aria-label="Comparison with original" hidden><div class="comparison-heading"><h2>Changes from the original</h2><button id="close-comparison">Close comparison</button></div><p>Text and formatting differences in the current draft. Comments and decisions remain in the review panel.</p><div id="differences"></div></section>
+  <div id="document"></div>
+  <footer>Comments, replies and pending tracked text changes are saved in the DOCX. Accepted changes become ordinary text; rejected changes are removed. Session versions stay in this tab. This sample is fictional and is not a contract template.</footer>
+</main>
+<dialog id="reset-dialog"><h2>Start a fresh review?</h2><p>This replaces the current draft and session versions. Download your Word file first if you want to keep it.</p><div><button id="cancel-reset">Keep reviewing</button><button id="confirm-reset" class="primary">Start fresh</button></div></dialog>
+<script type="module" src="./main.js"></script></body></html>
