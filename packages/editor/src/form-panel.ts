@@ -34,10 +34,7 @@ export function createFormPanel(form: DocumentForm, select: (field: FormField) =
     input.addEventListener("change", () => {
       pending = pending.then(flush).catch(error => { if (error instanceof FormValidationError) errors(error.issues); else status.textContent = String(error); });
     });
-    input.addEventListener("focus", () => {
-      select(field);
-      input.focus({ preventScroll: true });
-    });
+    input.addEventListener("focus", () => select(field));
   }
   panel.noValidate = true; panel.append(submit, status);
   const result = {

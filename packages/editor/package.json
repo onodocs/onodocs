@@ -1,6 +1,6 @@
 {
   "name": "@onodocs/editor",
-  "version": "0.5.1",
+  "version": "0.5.2",
   "private": true,
   "description": "Customizable OnoDocs browser editor interface.",
   "license": "MIT",
@@ -42,8 +42,8 @@
     "THIRD-PARTY-NOTICES"
   ],
   "dependencies": {
-    "@onodocs/sdk": "^0.5.1",
-    "@onodocs/canvas": "^0.5.1"
+    "@onodocs/sdk": "^0.5.2",
+    "@onodocs/canvas": "^0.5.2"
   },
   "devDependencies": {
     "typescript": "7.0.2"

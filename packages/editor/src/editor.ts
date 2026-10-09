@@ -62,7 +62,7 @@ export interface WordEditor {
   newDocument(): Promise<void>;
   execute(command: EditorCommand): Promise<void>;
   review(command: import("@onodocs/sdk").DocumentReviewCommand): Promise<void>;
-  select(selection: DocumentSelection): void;
+  select(selection: DocumentSelection, scroll?: boolean): void;
   find(text: string): readonly DocumentSelection[];
   replaceAll(text: string, replacement: string): Promise<void>;
   undo(): Promise<void>;
@@ -176,7 +176,7 @@ dialog{border:1px solid #d7dce2;border-radius:10px;padding:24px;width:380px;max-
     if (input.value !== inputText) input.value = inputText;
     if (input.selectionStart !== inputStart || input.selectionEnd !== inputEnd) input.setSelectionRange(inputStart, inputEnd);
   }
-  function focus(): void { if (selection) canvas?.view?.setSelection(selection); syncInput(); if (mode === "edit") input.focus({ preventScroll: true }); }
+  function focus(scroll = true): void { if (selection) canvas?.view?.setSelection(selection, scroll); syncInput(); if (mode === "edit") input.focus({ preventScroll: true }); }
   function selectInput(): void {
     if (pending || composing || !selection || !inputParagraphs.length || input.value !== inputText || input.selectionStart === inputStart && input.selectionEnd === inputEnd) return;
     const position = (offset: number) => { const p = inputParagraphs.find(p => offset <= p.start + p.length) ?? inputParagraphs.at(-1)!; return { paragraphId: p.id, offset: Math.min(p.length, Math.max(0, offset - p.start)) }; };
@@ -246,7 +246,7 @@ dialog{border:1px solid #d7dce2;border-radius:10px;padding:24px;width:380px;max-
       formPanel = createFormPanel({ ...form, fill: answers => enqueue(() => fill(answers), false), complete: () => result.completeForm(), answers: () => result.answers() }, field => {
         const control = requireDocument().query.contentControls().where({ tag: field.tag }).first();
         const paragraph = control && (requireDocument().query.within(control).paragraphs().first() ?? requireDocument().query.within(control).closest("paragraph").first());
-        if (paragraph) result.select({ start: { paragraphId: paragraph.id, offset: 0 }, end: { paragraphId: paragraph.id, offset: paragraph.text.length } });
+        if (paragraph) result.select({ start: { paragraphId: paragraph.id, offset: 0 }, end: { paragraphId: paragraph.id, offset: paragraph.text.length } }, false);
       }, options.onFormComplete);
       root.append(formPanel.element);
     }
@@ -595,7 +595,7 @@ dialog{border:1px solid #d7dce2;border-radius:10px;padding:24px;width:380px;max-
       if (paragraph) { const caret = { paragraphId: paragraph.id, offset: Math.min(previous.selection.start.offset, paragraph.text.length) }; selection = { start: caret, end: caret }; }
       undo.push(previous); redo.length = 0; focus(); updateToolbar(); await changed({ review: command, paragraphs: before }); await reviewPanel?.refresh();
     }); },
-    select(range) { requireDocument(); selectedImage = undefined; selection = range; focus(); outlineSelection(); updateToolbar(); },
+    select(range, scroll) { requireDocument(); selectedImage = undefined; selection = range; focus(scroll); outlineSelection(); updateToolbar(); },
     find(text) { if (!text) return []; return requireDocument().query.findText(text).map(match => ({ start: { paragraphId: match.paragraph.id, offset: match.start }, end: { paragraphId: match.paragraph.id, offset: match.end } })); },
     replaceAll(text, replacement) { return enqueue(async () => {
       editable(); if (!text) throw new TypeError("Search text must not be empty.");

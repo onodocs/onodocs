@@ -35,7 +35,7 @@ export async function openForm(options: FormOptions): Promise<FormView> {
     panel = createFormPanel(form, field => {
       const doc = application.editor.document!, control = doc.query.contentControls().where({ tag: field.tag }).first();
       const paragraph = control && (doc.query.within(control).paragraphs().first() ?? doc.query.within(control).closest("paragraph").first());
-      if (paragraph) application.editor.select({ start: { paragraphId: paragraph.id, offset: 0 }, end: { paragraphId: paragraph.id, offset: paragraph.text.length } });
+      if (paragraph) application.editor.select({ start: { paragraphId: paragraph.id, offset: 0 }, end: { paragraphId: paragraph.id, offset: paragraph.text.length } }, false);
     }, options.onComplete);
     root.append(panel.element);
   } catch (error) { application.dispose(); shell.remove(); throw error; }
