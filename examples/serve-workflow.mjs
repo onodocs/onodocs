@@ -14,6 +14,12 @@ const server = createServer(async (request, response) => {
     const pathname = new URL(request.url, "http://localhost").pathname;
     if (pathname.startsWith("/developers/") || pathname === "/examples/") { response.writeHead(302, { Location: `https://onodocs.com${request.url}` }).end(); return; }
     if (pathname === `/${entry}`) { response.writeHead(200, { "Content-Type": "text/javascript" }).end(bundle.outputFiles[0].contents); return; }
+    if (name === "document-forms" && pathname.startsWith("/source/") && pathname.endsWith(".txt")) {
+      const file = pathname.slice("/source/".length, -".txt".length);
+      if (!["index.html", "style.css", "main.js", "serve.mjs", "brand-mark.svg", "recovery.js", "LICENSE", "THIRD-PARTY-NOTICES"].includes(file)) { response.writeHead(404).end(); return; }
+      const path = file === "recovery.js" ? resolve(import.meta.dirname, "application/recovery.js") : resolve(root, file);
+      response.writeHead(200, { "Content-Type": "text/plain", "Cache-Control": "no-store" }).end(await readFile(path)); return;
+    }
     const assetRoot = name === "document-modes" && ["/sample.docx", "/definition.json"].includes(pathname) ? resolve(import.meta.dirname, "document-forms") : root;
     const path = resolve(assetRoot, `.${pathname === "/" ? "/index.html" : pathname}`);
     if (!path.startsWith(assetRoot + sep)) { response.writeHead(404).end(); return; }

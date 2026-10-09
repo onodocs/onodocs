@@ -1,0 +1,51 @@
+{
+  "name": "@onodocs/editor",
+  "version": "0.5.0",
+  "private": true,
+  "description": "Customizable OnoDocs browser editor interface.",
+  "license": "MIT",
+  "type": "module",
+  "sideEffects": false,
+  "engines": {
+    "node": ">=22.18"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/onodocs/onodocs.git",
+    "directory": "packages/editor"
+  },
+  "homepage": "https://onodocs.com/developers/",
+  "scripts": {
+    "build": "node build.mjs"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./application": {
+      "types": "./dist/application.d.ts",
+      "import": "./dist/application.js"
+    },
+    "./forms": {
+      "types": "./dist/forms.d.ts",
+      "import": "./dist/forms.js"
+    },
+    "./collaboration": {
+      "types": "./dist/collaboration.d.ts",
+      "import": "./dist/collaboration.js"
+    }
+  },
+  "files": [
+    "dist",
+    "LICENSE",
+    "THIRD-PARTY-NOTICES"
+  ],
+  "dependencies": {
+    "@onodocs/sdk": "^0.5.0",
+    "@onodocs/canvas": "^0.5.0"
+  },
+  "devDependencies": {
+    "typescript": "7.0.2"
+  }
+}

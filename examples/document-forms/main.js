@@ -1,5 +1,6 @@
 import { demoLicense } from "../sdk/license";
 import { createFormDesigner, openForm } from "@onodocs/editor/forms";
+import { zipSync, strToU8 } from "fflate";
 import { recoveryStore } from "../application/recovery.js";
 
 const container = document.querySelector("main"), status = document.querySelector("#status"), outputs = document.querySelector("#outputs"), dialog = document.querySelector("#draft-choice");
@@ -7,7 +8,7 @@ let bytes, definition, designer, filling, recovery, saved, completed, busy = fal
 const lifetime = new AbortController();
 const licenseKey = await demoLicense(lifetime.signal);
 function report(message) { status.textContent = message; }
-function invalidate() { completed = undefined; outputs.hidden = true; }
+function invalidate() { if (completed) report("Answers changed. Complete the form again to download the updated request."); completed = undefined; outputs.hidden = true; }
 function download(data, name, type) { const url = URL.createObjectURL(new Blob([data], { type })), link = document.createElement("a"); link.href = url; link.download = name; link.click(); setTimeout(() => URL.revokeObjectURL(url), 1000); }
 async function run(handler) {
   if (busy) return;
@@ -63,13 +64,31 @@ action("#save", async () => { await filling.save(); report("Draft saved in this 
 action("#draft", async () => { await filling.save(); const data = await filling.application.editor.save(); download(data, "equipment-request-draft.docx", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"); report("Word draft downloaded. Use Open Word draft to continue on this page."); });
 action("#new", async () => { if (!await choose("Start a new request?", "This removes the draft for this form from this browser and clears the current answers. Download a Word draft first if you need to keep them.", "Start new request")) return; filling?.dispose(); filling = undefined; await recovery.remove(); await saved.remove(); await fill(bytes); });
 action("#word", async () => download(completed.bytes, "completed.docx", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"));
+action("#pdf", async () => download(await filling.application.editor.pdf(), "equipment-request.pdf", "application/pdf"));
 action("#answers", async () => download(JSON.stringify(completed.answers, null, 2), "answers.json", "application/json"));
 action("#template", async () => { if (designer) ({ bytes, definition } = await designer.save()); download(bytes, "template.docx", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"); });
+action("#project", async () => {
+  const source = designer ? await designer.save() : { bytes, definition };
+  const files = {};
+  for (const name of ["index.html", "style.css", "main.js", "serve.mjs", "brand-mark.svg", "recovery.js", "LICENSE", "THIRD-PARTY-NOTICES"]) {
+    const response = await fetch(`./source/${name}.txt`);
+    if (!response.ok) throw new Error("Project source could not be loaded. Please retry the export.");
+    files[name === "recovery.js" ? "examples/application/recovery.js" : `examples/document-forms/${name}`] = new Uint8Array(await response.arrayBuffer());
+  }
+  files["LICENSE"] = files["examples/document-forms/LICENSE"];
+  files["THIRD-PARTY-NOTICES"] = files["examples/document-forms/THIRD-PARTY-NOTICES"];
+  files["examples/document-forms/sample.docx"] = source.bytes;
+  files["examples/document-forms/definition.json"] = strToU8(JSON.stringify(source.definition, null, 2));
+  files["examples/sdk/license.ts"] = strToU8('export async function demoLicense(signal: AbortSignal): Promise<string> { signal.throwIfAborted(); return ""; }\n');
+  files["package.json"] = strToU8(JSON.stringify({ name: "onodocs-form-project", private: true, type: "module", scripts: { start: "node examples/document-forms/serve.mjs" }, dependencies: { "@onodocs/sdk": "0.5.0", "@onodocs/canvas": "0.5.0", "@onodocs/editor": "0.5.0", esbuild: "^0.25.0", fflate: "^0.8.2" } }, null, 2));
+  files["START.txt"] = strToU8("Requires Node.js 22 or later.\nRun npm install, then npm start.\nOpen http://127.0.0.1:5192.\nThe Word template and matching form rules are in examples/document-forms.\nSource: https://github.com/onodocs/onodocs/tree/main/examples/document-forms\n");
+  download(zipSync(files), "form-project.zip", "application/zip"); report("Form project downloaded. Extract it and follow START.txt to run your form locally.");
+});
 action("#rules", async () => { if (designer) ({ bytes, definition } = await designer.save()); download(JSON.stringify(definition, null, 2), "form.json", "application/json"); });
 document.querySelector("#resume").addEventListener("change", event => { const file = event.target.files[0]; if (!file) return; void run(async () => { if (!await choose("Open a Word draft?", "This replaces the visible answers. Use a draft downloaded from this form. The same field rules will apply.", "Open draft")) return; await fill(new Uint8Array(await file.arrayBuffer())); await filling.save(); report("Word draft opened and saved in this browser. Review the answers before completing."); }).finally(() => { event.target.value = ""; }); });
 document.querySelector("#document").addEventListener("change", event => { const file = event.target.files[0]; if (!file) return; void run(async () => { filling?.dispose(); filling = undefined; bytes = new Uint8Array(await file.arrayBuffer()); definition = { title: file.name.replace(/\.docx$/i, ""), fields: [] }; await design(); }); });
 document.querySelector("#definition").addEventListener("change", event => { const file = event.target.files[0]; if (!file) return; void run(async () => { const next = JSON.parse(await file.text()); if (designer) ({ bytes } = await designer.save()); if (filling) { await filling.save(); bytes = await filling.application.editor.save(); filling.dispose(); filling = undefined; } definition = next; await design(); }); });
 container.addEventListener("input", invalidate);
-window.addEventListener("pagehide", event => { if (!event.persisted) { lifetime.abort(); designer?.dispose(); filling?.dispose(); } });
+window.addEventListener("pagehide", () => { lifetime.abort(); designer?.dispose(); filling?.dispose(); }, { once: true });
 await run(initialize);
 export { designer, filling };

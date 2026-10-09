@@ -1,6 +1,6 @@
 # Run the document workflows
 
-Install matching released `@onodocs/sdk`, `@onodocs/canvas` and `@onodocs/editor` packages, plus `esbuild`. The SDK owns document operations, Canvas owns presentation, and Editor supplies the ready-made editing, form and application UI. The examples import only their public APIs. From the developer repository, run one of:
+Install matching released `@onodocs/sdk`, `@onodocs/canvas` and `@onodocs/editor` packages, plus `esbuild` and `fflate`. The SDK owns document operations, Canvas owns presentation, and Editor supplies the ready-made editing, form and application UI. The examples import only their public APIs. From the developer repository, run one of:
 
 ```sh
 node examples/serve-workflow.mjs editor
@@ -26,7 +26,7 @@ The [template designer](../examples/template-editor/) starts with an invoice. Ad
 
 Proposal generation repeats service rows, then permits wording edits before DOCX/PDF export. It asks before regeneration overwrites those edits. Refreshing starts a new proposal.
 
-The equipment request validates permitted answers and exports completed Word and JSON from one snapshot. Invalid input remains available for correction. Drafts remain local and no request is submitted to an organization. Definitions control this interface; they do not prevent edits in external software.
+The equipment request validates permitted answers and exports completed Word, PDF and JSON. Word and JSON contain answers from the same completion snapshot. Invalid input remains available for correction. Drafts remain local and no request is submitted to an organization. Definitions control this interface; they do not prevent edits in external software. In Developer tools, use Export form project to download the current Word template, its field definition and a runnable application with the required source and license notices. Extract the ZIP and follow `START.txt`. The exported application starts in watermarked evaluation mode.
 
 Agreement review records comments, replies and tracked text replacements. Use the reviewer selector to try both fictional parties. Accept or reject suggestions, compare the original, download Word, then reopen a Word-edited copy. Reviewer selection is sample identity, not authentication. Versions last for the current tab. Supported exchange has been checked with Word 16; arbitrary Word review structures are not covered.
 
