@@ -1,0 +1,41 @@
+name: Publish npm packages
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: npm-publish
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    if: startsWith(github.event.release.tag_name, 'sdk-v') && !github.event.release.prerelease
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        package: [sdk, canvas, editor]
+    steps:
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38
+        with:
+          node-version: '24'
+          registry-url: https://registry.npmjs.org
+          package-manager-cache: false
+      - run: npm install --global npm@11.21.0
+      - name: Download prepared archive
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+          PACKAGE: ${{ matrix.package }}
+        run: gh release download "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --pattern "onodocs-$PACKAGE-${RELEASE_TAG#sdk-v}.tgz"
+      - name: Publish through npm trusted publishing
+        env:
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+          PACKAGE: ${{ matrix.package }}
+        run: npm publish "onodocs-$PACKAGE-${RELEASE_TAG#sdk-v}.tgz" --access public --tag latest --ignore-scripts
