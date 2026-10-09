@@ -20,7 +20,4 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
-This license covers the sample code, guides and authored sample assets in this
-repository. It does not cover the separately distributed @onodocs/sdk package,
-which retains its own evaluation and commercial license, or third-party
-packages. OnoDocs names and marks are not licensed for endorsement.
+This license covers the Editor source, sample code, guides and authored sample assets in this repository. The separately distributed @onodocs/sdk and @onodocs/canvas packages retain their evaluation and commercial licenses. Third-party packages retain their own licenses. OnoDocs names and marks are not licensed for endorsement.
