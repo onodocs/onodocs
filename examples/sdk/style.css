@@ -10,4 +10,4 @@ dialog[open]{display:flex;flex-direction:column;overflow:hidden}dialog pre{min-h
 .approval-checkbox{accent-color:#b43829}
 #loading{display:flex;align-items:center;flex:none;gap:8px}#cancel-loading{font-size:14px;margin:4px 12px 4px 0}
 
-.source-link{display:inline-flex;align-items:center;justify-content:center;flex:none;width:32px;height:32px;margin-left:auto;border-radius:4px;color:#63584e}.source-link svg{width:18px;height:18px;fill:currentColor;stroke:none}.source-link:hover{background:#eee7de;color:#2b211d}.source-link:focus-visible{outline:2px solid #b43829;outline-offset:0}
+.source-link{box-sizing:border-box;display:inline-flex;align-items:center;justify-content:center;flex:none;width:36px;height:36px;padding:0;margin-left:auto;text-decoration:none;border-radius:4px;color:#63584e}.source-link svg{width:18px;height:18px;fill:currentColor;stroke:none}.source-link:hover{background:#eee7de;color:#2b211d}.source-link:focus-visible{outline:2px solid #b43829;outline-offset:0}
