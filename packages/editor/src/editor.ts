@@ -476,6 +476,12 @@ dialog{border:1px solid #d7dce2;border-radius:10px;padding:24px;width:380px;max-
       tab.type = "button"; tab.textContent = definition.name; tab.id = `ribbon-tab-${id}`; tab.setAttribute("role", "tab"); tab.setAttribute("aria-label", definition.name); tab.setAttribute("aria-controls", `ribbon-panel-${id}`);
       if (definition.context) tab.dataset.context = definition.context;
       panel.id = `ribbon-panel-${id}`; panel.className = "ribbon-panel"; panel.setAttribute("role", "tabpanel"); panel.setAttribute("aria-labelledby", tab.id);
+      panel.addEventListener("focusin", event => {
+        if (!(event.target instanceof HTMLElement)) return;
+        const control = event.target.getBoundingClientRect(), viewport = panel.getBoundingClientRect();
+        if (control.left < viewport.left + 4) panel.scrollLeft += control.left - viewport.left - 4;
+        else if (control.right > viewport.right - 4) panel.scrollLeft += control.right - viewport.right + 4;
+      });
       tab.addEventListener("click", () => selectRibbon(definition.name, true));
       ribbonTabs.set(definition.name, { button: tab, panel, names, ...(definition.context ? { context: definition.context } : {}) });
       tabs.append(tab); toolbar.append(panel);
