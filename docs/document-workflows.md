@@ -1,6 +1,6 @@
 # Run the document workflows
 
-Install matching released `@onodocs/sdk` and `@onodocs/canvas` packages, plus `esbuild`. The examples import only their public APIs. From the developer repository, run one of:
+Install matching released `@onodocs/sdk`, `@onodocs/canvas` and `@onodocs/editor` packages, plus `esbuild`. The SDK owns document operations, Canvas owns presentation, and Editor supplies the ready-made editing, form and application UI. The examples import only their public APIs. From the developer repository, run one of:
 
 ```sh
 node examples/serve-workflow.mjs editor

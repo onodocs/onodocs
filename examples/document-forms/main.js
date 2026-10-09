@@ -1,5 +1,5 @@
 import { demoLicense } from "../sdk/license";
-import { createFormDesigner, openForm } from "@onodocs/sdk/forms/browser";
+import { createFormDesigner, openForm } from "@onodocs/editor/forms";
 import { recoveryStore } from "../application/recovery.js";
 
 const container = document.querySelector("main"), status = document.querySelector("#status"), outputs = document.querySelector("#outputs"), dialog = document.querySelector("#draft-choice");
@@ -70,6 +70,6 @@ document.querySelector("#resume").addEventListener("change", event => { const fi
 document.querySelector("#document").addEventListener("change", event => { const file = event.target.files[0]; if (!file) return; void run(async () => { filling?.dispose(); filling = undefined; bytes = new Uint8Array(await file.arrayBuffer()); definition = { title: file.name.replace(/\.docx$/i, ""), fields: [] }; await design(); }); });
 document.querySelector("#definition").addEventListener("change", event => { const file = event.target.files[0]; if (!file) return; void run(async () => { const next = JSON.parse(await file.text()); if (designer) ({ bytes } = await designer.save()); if (filling) { await filling.save(); bytes = await filling.application.editor.save(); filling.dispose(); filling = undefined; } definition = next; await design(); }); });
 container.addEventListener("input", invalidate);
-window.addEventListener("pagehide", () => { lifetime.abort(); designer?.dispose(); filling?.dispose(); }, { once: true });
+window.addEventListener("pagehide", event => { if (!event.persisted) { lifetime.abort(); designer?.dispose(); filling?.dispose(); } });
 await run(initialize);
 export { designer, filling };

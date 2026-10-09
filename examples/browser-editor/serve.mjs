@@ -7,7 +7,7 @@ import { resolve } from "node:path";
 export async function serveEditor(port = 5190) {
   const root = import.meta.dirname;
   const bundle = await build({ entryPoints: [`${root}/main.js`], bundle: true, format: "esm", platform: "browser", write: false });
-  const files = new Map([["/", ["index.html", "text/html"]], ["/style.css", ["style.css", "text/css"]], ["/sample.docx", ["sample.docx", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"]]]);
+  const files = new Map([["/", ["index.html", "text/html"]], ["/style.css", ["style.css", "text/css"]], ["/brand-mark.svg", ["brand-mark.svg", "image/svg+xml"]], ["/sample.docx", ["sample.docx", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"]]]);
   const server = createServer(async (request, response) => {
     try {
       const pathname = new URL(request.url, "http://localhost").pathname;

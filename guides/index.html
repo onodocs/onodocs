@@ -183,7 +183,7 @@ console.log(paragraphs);
 console.log(`${doc.query.tables().count()} tables`);</code></pre><p>The same query API works in the browser. For source facts and document structure, use <code>doc.source</code> and <code>doc.semantic</code>. See <a href="https://onodocs.com/developers/api/#documents">document properties</a>.</p>
 </section>
 <section aria-labelledby="server"><h2 id="server">Render on the server</h2>
-<p>Install Chrome separately. Save as <code>render.mjs</code> and run <code>node render.mjs document.docx</code>.</p><pre><code>import { readFile, writeFile } from "node:fs/promises";
+<p>Server rendering requires <code>playwright-core</code> and a separately installed Chrome or Chromium:</p><pre><code>npm install @onodocs/sdk playwright-core</code></pre><p>Save as <code>render.mjs</code> and run <code>node render.mjs document.docx</code>.</p><pre><code>import { readFile, writeFile } from "node:fs/promises";
 import { createRenderer } from "@onodocs/sdk/server";
 
 const renderer = await createRenderer({ channel: "chrome" });
@@ -197,7 +197,7 @@ try {
 </section>
 <section aria-labelledby="combined"><h2 id="combined">Process on the backend, display in the frontend</h2>
 <p>This sample opens a DOCX in Node.js and displays its pages in a browser. The server runs document processing in headless Chrome. The frontend uses only Canvas, with selection, copying and zoom.</p>
-<p>The <a href="https://github.com/onodocs/onodocs/tree/main/examples/backend-viewer">complete backend viewer on GitHub</a> includes the server, frontend, a Word document and <a href="https://github.com/onodocs/onodocs/blob/main/docs/samples.md#backend-viewer">setup instructions</a>. The server requires Node.js and Google Chrome. Evaluation needs no licence key.</p>
+<p>The <a href="https://github.com/onodocs/onodocs/tree/main/examples/backend-viewer">complete backend viewer on GitHub</a> includes the server, frontend, a Word document and <a href="https://github.com/onodocs/onodocs/blob/main/docs/samples.md#backend-viewer">setup instructions</a>. The server requires Node.js, Google Chrome and <code>playwright-core</code>, which the sample includes in its dependencies. Evaluation needs no licence key.</p>
 <h3>Define the endpoints</h3>
 <p><code>server.mjs</code> serves the frontend and two document endpoints from one origin. <code>GET /document</code> returns the page list; <code>GET /document/pages/0</code> returns the first page. Page numbers start at zero. The SDK prepares the response bodies when you request <code>format: "json"</code>.</p>
 <p>This is the document request handler. <code>createServer</code> comes from <code>node:http</code>, and <code>doc</code> is the opened server document. The full sample also serves the frontend assets and shuts down the renderer.</p><pre><code>const server = createServer(async (request, response) =&gt; {

@@ -1,6 +1,6 @@
 import { demoLicense } from "../sdk/license";
 import { openTemplate } from "@onodocs/sdk/browser";
-import { createEditor } from "@onodocs/sdk/editor";
+import { createEditor } from "@onodocs/editor";
 import { sample, proposalData } from "./data.js";
 
 const app = document.querySelector("#app");
@@ -77,7 +77,7 @@ for (const type of ["word", "pdf"]) app.querySelector(`#${type}`).addEventListen
 app.querySelector("#json").addEventListener("click", () => download(JSON.stringify(values(), null, 2), "application/json", "proposal-data.json"));
 for (const key of ["client", "contact", "project", "date", "summary", "timeline"]) form.elements.namedItem(key).value = sample[key];
 sample.items.forEach(row); changed();
-window.addEventListener("pagehide", () => { disposed = true; lifetime.abort(); template?.dispose(); editor.dispose(); }, { once: true });
+window.addEventListener("pagehide", event => { if (!event.persisted) { disposed = true; lifetime.abort(); template?.dispose(); editor.dispose(); } });
 const initialPosition = { left: window.scrollX, top: window.scrollY };
 await run(generate);
 window.scrollTo(initialPosition);

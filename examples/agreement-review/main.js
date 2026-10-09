@@ -1,5 +1,5 @@
 import { demoLicense } from "../sdk/license";
-import { createEditor } from "@onodocs/sdk/editor";
+import { createEditor } from "@onodocs/editor";
 import { compareDocuments } from "@onodocs/sdk";
 
 const status = document.querySelector("#status"), clause = document.querySelector("#clause"), wording = document.querySelector("#wording"), versions = new Map();
@@ -97,7 +97,7 @@ document.querySelector("#reset").onclick = () => document.querySelector("#reset-
 document.querySelector("#cancel-reset").onclick = () => document.querySelector("#reset-dialog").close();
 document.querySelector("#confirm-reset").onclick = () => { document.querySelector("#reset-dialog").close(); void run(start); };
 document.querySelector("#reviewer").onchange = () => report(`New comments and suggestions will be recorded as ${identity().author}.`);
-window.addEventListener("pagehide", () => { lifetime.abort(); editor.dispose(); }, { once: true });
+window.addEventListener("pagehide", event => { if (!event.persisted) { lifetime.abort(); editor.dispose(); } });
 const initialPosition = { left: window.scrollX, top: window.scrollY };
 await run(start);
 window.scrollTo(initialPosition);

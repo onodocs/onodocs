@@ -3,25 +3,14 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>OnoDocs editor sample</title>
-  <link rel="stylesheet" href="/style.css">
+  <title>OnoDocs Word editor</title>
+  <link rel="stylesheet" href="./style.css">
+  <link rel="icon" type="image/svg+xml" href="./brand-mark.svg">
 </head>
 <body>
-  <header><div><span class="brand">OnoDocs</span><h1>Document editor</h1></div><div class="files"><label class="file-button">Open Word file<input id="file" type="file" accept=".docx"></label><button id="download">Download Word</button></div></header>
-  <nav aria-label="Text formatting">
-    <button id="undo" title="Undo (Ctrl+Z)">Undo</button><button id="redo" title="Redo (Ctrl+Shift+Z)">Redo</button>
-    <span class="separator"></span>
-    <select id="font" aria-label="Font family"><option>Arial</option><option>Calibri</option><option>Times New Roman</option><option>Georgia</option><option>Verdana</option><option>Courier New</option></select>
-    <input id="size" type="number" min="0.5" step="0.5" value="12" aria-label="Font size" title="Font size in points">
-    <button data-format="bold" aria-label="Bold" aria-pressed="false"><b>B</b></button><button data-format="italic" aria-label="Italic" aria-pressed="false"><i>I</i></button><button data-format="underline" aria-label="Underline" aria-pressed="false"><u>U</u></button><button data-format="strike" aria-label="Strikethrough" aria-pressed="false"><s>S</s></button>
-    <input id="color" type="color" value="#202b38" aria-label="Text color">
-    <span class="separator"></span>
-    <select id="alignment" aria-label="Paragraph alignment"><option value="left">Align left</option><option value="center">Center</option><option value="right">Align right</option><option value="both">Justify</option></select>
-  </nav>
-  <div class="document-heading"><span id="filename">Sample document</span><span>Click the page to edit. Enter starts a paragraph. Shift+Enter adds a line break.</span><span id="pages"></span></div>
-  <main id="preview" aria-label="Word document"></main>
-  <textarea id="editor" aria-label="Document text" aria-multiline="true" spellcheck="false" autocomplete="off" autocapitalize="off"></textarea>
-  <footer><span id="status" role="status">Opening sample…</span><span>Files stay in this browser. Editing complex Word structures is limited.</span></footer>
-  <script type="module" src="/main.js"></script>
+  <header><a class="brand" href="https://onodocs.com" aria-label="OnoDocs home"><img src="./brand-mark.svg" width="28" height="28" alt="O">noDocs</a><h1>Word editor</h1><span>Files stay in your browser.</span><a href="https://onodocs.com/developers/document-workflows/#editor">Integration guide</a></header>
+  <p id="status" role="status"></p>
+  <div id="app"></div>
+  <script type="module" src="./main.js"></script>
 </body>
 </html>

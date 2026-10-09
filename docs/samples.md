@@ -15,7 +15,7 @@ npm run setup
 npm start
 ```
 
-Open http://127.0.0.1:5174/samples.html. Setup installs matching SDK and Canvas packages from npm and the other sample dependencies.
+Open http://127.0.0.1:5174/samples.html. Setup installs matching SDK, Canvas and Editor packages from npm and the other sample dependencies.
 
 | Sample | Entry point | Demonstrates |
 | --- | --- | --- |
@@ -76,7 +76,7 @@ story scope, missing or repeated tables, merged cells and the shared Node.js CLI
 
 ## Inline Word editor
 
-The [browser editor](../examples/browser-editor/) edits text directly on rendered Word pages. It includes a fictional document, file opening, font family and size, bold, italic, underline, strikethrough, text color, paragraph alignment, selection, clipboard operations, undo/redo and Word download.
+The [browser editor](../examples/browser-editor/) uses the ready-made `@onodocs/editor` component. It includes a fictional document, local file opening, text formatting, regular tables, inline images, comments, tracked replacements, undo/redo and Word/PDF downloads.
 
 From the repository root:
 
@@ -86,19 +86,19 @@ npm install
 npm start
 ```
 
-Open http://127.0.0.1:5190. Click a page to type. Enter splits a paragraph, Shift+Enter inserts a line break, and Backspace at a paragraph's start joins it to the previous paragraph. Select text before applying formatting, or change formatting at the caret for subsequent typing. Download Word saves the edited DOCX; open that file again to continue editing. Stop the local server with Ctrl+C.
+Open http://127.0.0.1:5190. Click a page to type and use Open Word to select your own document. Download Word saves the current edits; Download PDF produces searchable output. Stop the local server with Ctrl+C. The sample installs Editor and its matching SDK/Canvas dependencies from npm without the private engine repository or root sample dependencies.
 
-This standalone project installs matching SDK and Canvas packages from npm. It does not need the private engine repository or the root sample dependencies. The local server only serves application files; document processing stays in the browser.
+The SDK owns document operations and saving, Canvas provides presentation, and Editor supplies the toolbar, input handling and history. The sample imports the public editor component and releases it when leaving. Selected documents stay in the browser; refreshing loses unsaved changes.
 
-The SDK owns edits, layout and DOCX saving. Canvas paints the pages and selection. The [application](../examples/browser-editor/main.js) uses a textarea at the caret to receive keyboard and IME input, and saved document snapshots for undo/redo. It uses exported package APIs throughout.
+Rich paste preserves common text formatting, links and lists. Tables and images paste as readable text with a notice. Floating-image manipulation and merged-table restructuring remain limited. Tracked text replacements stay within a paragraph; structural changes require tracking disabled. Imported paragraph-mark and table-row revision decisions require Word. See the [integration guide](https://onodocs.com/developers/document-workflows/#editor) for supported workflows and application callbacks.
 
-This is a basic editor sample. Supported ordinary text and paragraph edits preserve untouched package content. Complex structures can be displayed but have editing restrictions; unsupported operations report an error before changing the document. Rich clipboard formatting, table editing, comments and tracked-change authoring are not provided. Each edit rebuilds the document layout, and undo snapshots use memory proportional to document size and edit history. Refreshing loses unsaved changes.
+Evaluation rendering includes a watermark. Saved DOCX files do not carry that visual watermark; the evaluation and commercial licensing terms still apply.
 
-Evaluation pages display a watermark. Saved DOCX files do not carry that visual watermark; the SDK's evaluation and commercial licensing terms still apply.
+The [complete workflow samples](document-workflows.md) cover proposal generation, controlled forms, agreement review and source-linked report review.
 
 ## Backend viewer
 
-The [backend viewer](../examples/backend-viewer/) includes the server, frontend and an authored DOCX. It requires Google Chrome on the rendering host. From the repository root:
+The [backend viewer](../examples/backend-viewer/) includes the server, frontend and an authored DOCX. It requires Google Chrome on the rendering host and installs the SDK’s optional `playwright-core` server dependency explicitly. From the repository root:
 
 ```sh
 cd examples/backend-viewer

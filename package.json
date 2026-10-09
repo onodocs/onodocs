@@ -15,11 +15,13 @@
     "extract": "node examples/docx-extraction/node.ts"
   },
   "dependencies": {
-    "@onodocs/canvas": "0.2.1",
-    "@onodocs/sdk": "0.2.1",
+    "@onodocs/canvas": "0.5.0",
+    "@onodocs/sdk": "0.5.0",
     "pdf-lib": "1.17.1",
     "react": "19.3.0",
-    "react-dom": "19.3.0"
+    "react-dom": "19.3.0",
+    "@onodocs/editor": "0.5.0",
+    "playwright-core": "1.62.1"
   },
   "devDependencies": {
     "@types/node": "^25.9.9",

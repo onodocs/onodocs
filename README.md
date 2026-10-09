@@ -1,11 +1,8 @@
 # OnoDocs
 
-**A JavaScript and TypeScript SDK for rendering Word documents inside your application.**
+**Word document rendering, editing and workflows for JavaScript and TypeScript applications.**
 
-OnoDocs renders DOCX pages in the browser, lets users select and copy text, and
-provides typed APIs for reading document content and adding application controls.
-Local document processing requires no backend. Document analysis also runs in
-Node.js; server image and PDF rendering uses headless Chromium.
+OnoDocs renders and edits Word documents in the browser, generates documents from templates and provides typed APIs for document content, forms and review. Local document processing requires no backend. Document analysis and generation also run in Node.js; server page and PDF output uses headless Chromium.
 
 This is the public home for **guides, runnable samples, SDK release downloads,
 and issue reports**. The rendering engine's source repository is private.
@@ -26,7 +23,7 @@ npm run setup
 npm start
 ```
 
-Open **http://127.0.0.1:5174/samples.html**. Setup installs matching SDK and Canvas packages from npm and the other dependencies. No GitHub sign-in or licence key is required. You can also [download the source ZIP](https://github.com/onodocs/onodocs/archive/refs/heads/main.zip).
+Open **http://127.0.0.1:5174/samples.html**. Setup installs matching SDK, Canvas and Editor packages from npm and the other dependencies. No GitHub sign-in or licence key is required. You can also [download the source ZIP](https://github.com/onodocs/onodocs/archive/refs/heads/main.zip).
 
 | Sample | Source | What it demonstrates |
 | --- | --- | --- |
@@ -38,10 +35,14 @@ Open **http://127.0.0.1:5174/samples.html**. Setup installs matching SDK and Can
 | Text and table extraction | [extract.ts](examples/docx-extraction/extract.ts) | Browser and Node.js text, tables and JSON, with complete JavaScript equivalents |
 | Document workflows | [workflows.ts](examples/sdk/workflows.ts) | Tables, document tree, ASCII output and a locally simulated email draft |
 | Backend processing and frontend display | [server.mjs](examples/backend-viewer/server.mjs) | Real HTTP endpoints, prepared pages and a Canvas-only frontend |
-| Inline Word editor | [main.js](examples/browser-editor/main.js) | Text formatting, paragraph editing, undo/redo and DOCX saving; [setup](docs/samples.md#inline-word-editor) |
+| Inline Word editor | [main.js](examples/browser-editor/main.js) | Ready-made editor, formatting, review and Word/PDF downloads; [setup](docs/samples.md#inline-word-editor) |
+| Proposal generation | [main.js](examples/proposal/main.js) | Generate a proposal, refine its wording and export Word/PDF |
+| Document forms | [main.js](examples/document-forms/main.js) | Validate answers, restore local drafts and export matching Word/JSON |
+| Agreement review | [main.js](examples/agreement-review/main.js) | Comments, tracked replacements and Word exchange |
+| Report review | [main.js](examples/ai-report/main.js) | Show source evidence and approve predetermined local suggestions |
 | Node.js analysis | [analyze.ts](examples/analyze.ts) | Read document content without a browser |
 
-The browser file-picker samples keep selected documents in the browser. The backend viewer reads a file on your server and sends prepared pages to the frontend. The samples do not call an AI service or send emails. See [sample setup and commands](docs/samples.md).
+The browser file-picker samples keep selected documents in the browser. The backend viewer reads a file on your server and sends prepared pages to the frontend. The samples do not call an AI service or send emails. See [sample setup and commands](docs/samples.md) and [document workflow setup](docs/document-workflows.md).
 
 Framework projects require Node.js 24 LTS (24.15 or later). Razor Pages and Blazor also need the .NET 10 SDK. Each project includes its application shell, document, startup commands and cleanup. See the [framework setup instructions](docs/samples.md#framework-applications).
 
@@ -55,9 +56,11 @@ npm install
 npm start
 ```
 
-Open http://127.0.0.1:5175. The included document is ready to view. To open your own server-side file, use `npm start -- /path/to/document.docx`. Ctrl+C stops the server and its renderer. The [complete guide](https://onodocs.com/developers/#combined) explains both endpoints and includes every source file.
+Open http://127.0.0.1:5175. The included document is ready to view. To open your own server-side file, use `npm start -- /path/to/document.docx`. Ctrl+C stops the server and its renderer. The [complete guide](https://onodocs.com/developers/#combined) explains both endpoints and links the complete source.
 
 ## Guides
+
+- [Editing, generation, forms and review workflows](https://onodocs.com/developers/document-workflows/) ([guide source](guides/document-workflows/index.html))
 
 - [Extract DOCX text and tables in JavaScript and TypeScript](https://onodocs.com/developers/extract-docx-text-tables/) — [guide source](guides/extract-docx-text-tables/index.html)
 
@@ -79,7 +82,7 @@ Install matching SDK and Canvas packages from npm:
 npm install @onodocs/sdk @onodocs/canvas
 ```
 
-The SDK owns document processing. Canvas owns painting, views, selection and HTML attachments. Backend analysis or image/PDF export needs only the SDK; a frontend displaying prepared pages needs only Canvas.
+The SDK owns document processing. Canvas owns painting, views, selection and HTML attachments. Backend analysis needs only the SDK; a frontend displaying prepared pages needs only Canvas. Server page and PDF output also requires `playwright-core` and installed Chrome or Chromium. Install `@onodocs/editor` for the ready-made editor, form UI and application session helpers; it depends on matching SDK and Canvas packages.
 
 ```ts
 import { openDocument } from "@onodocs/sdk/browser";
@@ -97,7 +100,7 @@ cancellation and disposal. For JavaScript, remove the generic type and non-null
 assertions, or use [main.js](examples/docx-viewer/main.js).
 
 The packages are also available as [release archives](https://github.com/onodocs/onodocs/releases). Supported Word package types include DOCX, DOCM, DOTX and DOTM; VBA does not
-execute. Older DOC/RTF files are not supported. The [inline editor sample](docs/samples.md#inline-word-editor) demonstrates basic text and paragraph editing with DOCX saving. Editing complex Word structures remains limited. Fonts affect rendering. PDF exports are image-based.
+execute. Older DOC/RTF files are not supported. The [inline editor sample](docs/samples.md#inline-word-editor) demonstrates editing, review and DOCX/PDF saving. Editing complex Word structures remains limited. Fonts affect rendering. PDF exports contain searchable text, links and supported tagged structure; visible native text is rasterized. PDF/UA certification is not claimed.
 
 ## Licensing and support
 

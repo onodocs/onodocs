@@ -1,4 +1,4 @@
-import { createEditor } from "@onodocs/sdk/editor";
+import { createEditor } from "@onodocs/editor";
 import { demoLicense } from "../sdk/license";
 
 const lifetime = new AbortController();
@@ -12,4 +12,4 @@ try {
   if (!response.ok) throw new Error("The sample could not be loaded. Use Open Word to choose your own document.");
   await editor.open(await response.arrayBuffer(), "sample.docx");
 } catch (error) { status.textContent = error.message; }
-window.addEventListener("pagehide", () => { lifetime.abort(); editor.dispose(); }, { once: true });
+window.addEventListener("pagehide", event => { if (!event.persisted) { lifetime.abort(); editor.dispose(); } });

@@ -1,9 +1,9 @@
-import type { ApplicationEditor, ApplicationOptions } from "@onodocs/sdk/application";
+import type { ApplicationEditor, ApplicationOptions } from "@onodocs/editor/application";
 
 export function mountEditor(container: HTMLElement, options: Omit<ApplicationOptions, "container" | "signal">, onReady: (application: ApplicationEditor) => void = () => {}) {
   const lifetime = new AbortController();
   let application: ApplicationEditor | undefined;
-  void import("@onodocs/sdk/application").then(async ({ openApplicationEditor }) => {
+  void import("@onodocs/editor/application").then(async ({ openApplicationEditor }) => {
     lifetime.signal.throwIfAborted();
     application = await openApplicationEditor({ ...options, container, signal: lifetime.signal });
     if (lifetime.signal.aborted) application.dispose();

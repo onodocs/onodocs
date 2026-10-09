@@ -2,7 +2,7 @@ function mountEditor(container, options, onReady = () => {
 }) {
   const lifetime = new AbortController();
   let application;
-  void import("@onodocs/sdk/application").then(async ({ openApplicationEditor }) => {
+  void import("@onodocs/editor/application").then(async ({ openApplicationEditor }) => {
     lifetime.signal.throwIfAborted();
     application = await openApplicationEditor({ ...options, container, signal: lifetime.signal });
     if (lifetime.signal.aborted) application.dispose();
