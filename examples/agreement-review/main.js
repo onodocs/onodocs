@@ -12,7 +12,7 @@ const original = new Uint8Array(await response.arrayBuffer());
 const licenseKey = await demoLicense(lifetime.signal);
 let busy = false, dirty = false, selectedText = "";
 export const editor = createEditor({
-  container: document.querySelector("#document"), document: { licenseKey, signal: lifetime.signal }, mode: "review", allowedModes: ["edit", "review"], toolbar: ["undo", "redo"],
+  container: document.querySelector("#document"), document: { licenseKey, signal: lifetime.signal }, mode: "review", allowedModes: ["edit", "review"], toolbar: ["undo", "redo", "review"],
   review: { identity, history: {
     async list() { return [...versions.values()].map(value => value.version); },
     async load(id) { const value = versions.get(id); if (!value) throw new Error("This session version is unavailable."); return value.bytes.slice(); },

@@ -32,7 +32,7 @@ async function fill(input) {
     if (event.type === "change") invalidate();
     if (event.type === "error") report("Your draft could not be saved in this browser. Keep this page open, allow browser storage and retry Save draft.");
   }, onComplete(result) { completed = result; outputs.hidden = false; report("Request complete. Download the Word document and structured answers below. Nothing has been submitted to a purchasing team."); outputs.scrollIntoView({ block: "nearest" }); } });
-  designer?.dispose(); designer = undefined; filling?.dispose(); filling = next; invalidate();
+  designer?.dispose(); designer = undefined; filling?.dispose(); filling = next; invalidate(); document.querySelector("#project").hidden = false;
   document.querySelector("#draft-actions").hidden = false;
   report("Fill the answer fields beside the document. Valid changes are saved in this browser after you leave a field.");
 }
@@ -48,7 +48,8 @@ async function preview() {
 async function design() {
   if (filling) { await filling.save(); bytes = await filling.application.editor.save(); filling.dispose(); filling = undefined; }
   designer?.dispose(); invalidate(); document.querySelector("#draft-actions").hidden = true;
-  designer = createFormDesigner({ container, document: { licenseKey }, onError(error) { report(error.message); } });
+  designer = createFormDesigner({ container, document: { licenseKey }, onPreview: () => run(preview), onExportProject: () => run(exportProject), onError(error) { report(error.message); } });
+  document.querySelector("#project").hidden = true;
   await designer.open(bytes, definition); report("Authoring mode. Define permitted fields, then choose Fill form to try the result.");
 }
 async function initialize() {
@@ -67,7 +68,7 @@ action("#word", async () => download(completed.bytes, "completed.docx", "applica
 action("#pdf", async () => download(await filling.application.editor.pdf(), "equipment-request.pdf", "application/pdf"));
 action("#answers", async () => download(JSON.stringify(completed.answers, null, 2), "answers.json", "application/json"));
 action("#template", async () => { if (designer) ({ bytes, definition } = await designer.save()); download(bytes, "template.docx", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"); });
-action("#project", async () => {
+async function exportProject() {
   const source = designer ? await designer.save() : { bytes, definition };
   const files = {};
   for (const name of ["index.html", "style.css", "main.js", "serve.mjs", "brand-mark.svg", "recovery.js", "LICENSE", "THIRD-PARTY-NOTICES"]) {
@@ -83,7 +84,8 @@ action("#project", async () => {
   files["package.json"] = strToU8(JSON.stringify({ name: "onodocs-form-project", private: true, type: "module", scripts: { start: "node examples/document-forms/serve.mjs" }, dependencies: { "@onodocs/sdk": "0.5.0", "@onodocs/canvas": "0.5.0", "@onodocs/editor": "0.5.0", esbuild: "^0.25.0", fflate: "^0.8.2" } }, null, 2));
   files["START.txt"] = strToU8("Requires Node.js 22 or later.\nRun npm install, then npm start.\nOpen http://127.0.0.1:5192.\nThe Word template and matching form rules are in examples/document-forms.\nSource: https://github.com/onodocs/onodocs/tree/main/examples/document-forms\n");
   download(zipSync(files), "form-project.zip", "application/zip"); report("Form project downloaded. Extract it and follow START.txt to run your form locally.");
-});
+}
+action("#project", exportProject);
 action("#rules", async () => { if (designer) ({ bytes, definition } = await designer.save()); download(JSON.stringify(definition, null, 2), "form.json", "application/json"); });
 document.querySelector("#resume").addEventListener("change", event => { const file = event.target.files[0]; if (!file) return; void run(async () => { if (!await choose("Open a Word draft?", "This replaces the visible answers. Use a draft downloaded from this form. The same field rules will apply.", "Open draft")) return; await fill(new Uint8Array(await file.arrayBuffer())); await filling.save(); report("Word draft opened and saved in this browser. Review the answers before completing."); }).finally(() => { event.target.value = ""; }); });
 document.querySelector("#document").addEventListener("change", event => { const file = event.target.files[0]; if (!file) return; void run(async () => { filling?.dispose(); filling = undefined; bytes = new Uint8Array(await file.arrayBuffer()); definition = { title: file.name.replace(/\.docx$/i, ""), fields: [] }; await design(); }); });

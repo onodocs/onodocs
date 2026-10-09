@@ -60,6 +60,9 @@ export interface FormDesigner {
 export interface FormDesignerOptions {
   readonly container: HTMLElement;
   readonly document?: EditorOptions["document"];
+  readonly ribbon?: boolean;
+  readonly onPreview?: (designer: FormDesigner) => void | Promise<void>;
+  readonly onExportProject?: (designer: FormDesigner) => void | Promise<void>;
   readonly onChange?: (designer: FormDesigner) => void;
   readonly onError?: (error: unknown) => void;
 }
@@ -67,9 +70,27 @@ export function createFormDesigner(options: FormDesignerOptions): FormDesigner {
   const shell = document.createElement("section"), root = shell.attachShadow({ mode: "open" });
   const preview = document.createElement("div"), panel = document.createElement("aside"), heading = document.createElement("h2"), title = document.createElement("input"), list = document.createElement("div"), settings = document.createElement("form"), status = document.createElement("p");
   heading.textContent = "Form designer"; title.value = "New form"; title.setAttribute("aria-label", "Form title"); status.setAttribute("role", "status");
+  panel.setAttribute("aria-label", "Form fields");
   panel.append(heading, title, list, settings, status); root.append(styles(), preview, panel); options.container.append(shell);
   let fields: FormField[] = [];
-  const editor = createEditor({ container: preview, ...(options.document ? { document: options.document } : {}), toolbar: ["undo", "redo", "bold", "italic", "underline", "font", "size", "alignment", "table", "tableTools"], onError(error) { status.textContent = String(error); options.onError?.(error); } });
+  const commands: NonNullable<EditorOptions["commands"]> = options.ribbon === false ? [] : [
+    { id: "form:add", label: "Add field", ribbon: { tab: "Forms", group: "Fields", icon: "new" }, execute() { settings.reset(); (controls.get("insert") as HTMLInputElement).checked = true; showSettings(); controls.get("id")!.focus(); } },
+    { id: "form:settings", label: "Field settings", ribbon: { tab: "Forms", group: "Fields", icon: "review:tracking" }, execute() {
+      const position = editor.selection?.start, definitions = new Map(fields.map(field => [field.tag, field]));
+      const control = editor.document!.query.contentControls().all().find(control => {
+        if (!position || !control.tag || !definitions.has(control.tag)) return false;
+        const scope = editor.document!.query.within(control), ranges = scope.findText(/[\s\S]+/).all();
+        return ranges.length ? ranges.some(range => range.paragraph.id === position.paragraphId && range.start <= position.offset && position.offset <= range.end) : scope.paragraphs().all().some(paragraph => paragraph.id === position.paragraphId);
+      });
+      const field = control?.tag ? definitions.get(control.tag) : undefined;
+      if (field) editField(field);
+      else { status.textContent = "Select a field in the document or choose one from the field list."; list.querySelector("button")?.focus(); }
+    } },
+    { id: "form:fields", label: "Show fields", ribbon: { tab: "Forms", group: "Fields", icon: "list" }, execute() { (list.querySelector("button") ?? title).focus(); } },
+    ...options.onPreview ? [{ id: "form:preview", label: "Preview form", ribbon: { tab: "Forms", group: "Preview", icon: "find" }, execute: async () => options.onPreview!(result) }] : [],
+    ...options.onExportProject ? [{ id: "form:export", label: "Export form project", ribbon: { tab: "Forms", group: "Export", icon: "save" }, execute: async () => options.onExportProject!(result) }] : [],
+  ];
+  const editor = createEditor({ container: preview, ...(options.document ? { document: options.document } : {}), commands, toolbar: ["undo", "redo", "bold", "italic", "underline", "font", "size", "alignment", "table", "tableTools", ...commands.map(command => command.id)], onError(error) { status.textContent = String(error); options.onError?.(error); } });
   const controls = new Map<string, HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>();
   for (const [name, caption, type] of [["id", "Field ID", "text"], ["label", "Field label", "text"], ["tag", "Word tag (optional)", "text"], ["type", "Field type", "select"], ["choices", "Choices (one per line)", "textarea"], ["required", "Required", "checkbox"], ["readOnly", "Read-only field", "checkbox"], ["min", "Minimum number", "number"], ["max", "Maximum number", "number"], ["maxLength", "Maximum characters", "number"], ["help", "Help text", "text"], ["insert", "Insert after selected paragraph", "checkbox"]]) {
     const label = document.createElement("label"); label.textContent = caption!;
@@ -85,11 +106,18 @@ export function createFormDesigner(options: FormDesignerOptions): FormDesigner {
     for (const name of ["choices", "min", "max", "maxLength"]) controls.get(name)!.parentElement!.hidden = name === "choices" ? type !== "choice" : name === "maxLength" ? !["text", "email", "multiline"].includes(type) : type !== "number";
   }
   controls.get("type")!.addEventListener("change", showSettings); showSettings();
+  function editField(field: FormField): void {
+    for (const [name, input] of controls) { if (name === "insert") continue; const entry = field[name as keyof FormField]; if (input instanceof HTMLInputElement && input.type === "checkbox") input.checked = entry === true; else input.value = name === "choices" ? field.choices?.join("\n") ?? "" : entry === undefined ? "" : String(entry); }
+    const control = editor.document!.query.contentControls().where({ tag: field.tag }).first();
+    const scope = control && editor.document!.query.within(control), range = scope?.findText(/[\s\S]+/).first(), paragraph = range?.paragraph ?? scope?.paragraphs().first();
+    if (paragraph) editor.select({ start: { paragraphId: paragraph.id, offset: range?.start ?? 0 }, end: { paragraphId: paragraph.id, offset: range?.end ?? paragraph.text.length } });
+    showSettings(); controls.get("label")!.focus();
+  }
   function render(): void {
     list.replaceChildren();
     for (const field of fields) {
       const row = document.createElement("p"), edit = document.createElement("button"), remove = document.createElement("button"); edit.textContent = field.label; remove.textContent = "Remove"; remove.setAttribute("aria-label", `Remove ${field.label}`); row.className = "field-row";
-      edit.addEventListener("click", () => { for (const [name, input] of controls) { if (name === "insert") continue; const entry = field[name as keyof FormField]; if (input instanceof HTMLInputElement && input.type === "checkbox") input.checked = entry === true; else input.value = name === "choices" ? field.choices?.join("\n") ?? "" : entry === undefined ? "" : String(entry); } showSettings(); });
+      edit.addEventListener("click", () => editField(field));
       remove.addEventListener("click", () => result.removeField(field.id)); row.append(edit, remove); list.append(row);
     }
   }
