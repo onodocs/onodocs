@@ -83,7 +83,7 @@ export function createFormDesigner(options: FormDesignerOptions): FormDesigner {
         return ranges.length ? ranges.some(range => range.paragraph.id === position.paragraphId && range.start <= position.offset && position.offset <= range.end) : scope.paragraphs().all().some(paragraph => paragraph.id === position.paragraphId);
       });
       const field = control?.tag ? definitions.get(control.tag) : undefined;
-      if (field) editField(field);
+      if (field) editField(field, false);
       else { status.textContent = "Select a field in the document or choose one from the field list."; list.querySelector("button")?.focus(); }
     } },
     { id: "form:fields", label: "Show fields", ribbon: { tab: "Forms", group: "Fields", icon: "list" }, execute() { (list.querySelector("button") ?? title).focus(); } },
@@ -106,11 +106,11 @@ export function createFormDesigner(options: FormDesignerOptions): FormDesigner {
     for (const name of ["choices", "min", "max", "maxLength"]) controls.get(name)!.parentElement!.hidden = name === "choices" ? type !== "choice" : name === "maxLength" ? !["text", "email", "multiline"].includes(type) : type !== "number";
   }
   controls.get("type")!.addEventListener("change", showSettings); showSettings();
-  function editField(field: FormField): void {
+  function editField(field: FormField, select = true): void {
     for (const [name, input] of controls) { if (name === "insert") continue; const entry = field[name as keyof FormField]; if (input instanceof HTMLInputElement && input.type === "checkbox") input.checked = entry === true; else input.value = name === "choices" ? field.choices?.join("\n") ?? "" : entry === undefined ? "" : String(entry); }
     const control = editor.document!.query.contentControls().where({ tag: field.tag }).first();
     const scope = control && editor.document!.query.within(control), range = scope?.findText(/[\s\S]+/).first(), paragraph = range?.paragraph ?? scope?.paragraphs().first();
-    if (paragraph) editor.select({ start: { paragraphId: paragraph.id, offset: range?.start ?? 0 }, end: { paragraphId: paragraph.id, offset: range?.end ?? paragraph.text.length } });
+    if (select && paragraph) editor.select({ start: { paragraphId: paragraph.id, offset: range?.start ?? 0 }, end: { paragraphId: paragraph.id, offset: range?.end ?? paragraph.text.length } });
     showSettings(); controls.get("label")!.focus();
   }
   function render(): void {
