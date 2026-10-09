@@ -2,6 +2,7 @@ import { demoLicense } from "../sdk/license";
 import { createFormDesigner, openForm } from "@onodocs/editor/forms";
 import { zipSync, strToU8 } from "fflate";
 import { recoveryStore } from "../application/recovery.js";
+import projectPackage from "../../package.json" with { type: "json" };
 
 const container = document.querySelector("main"), status = document.querySelector("#status"), outputs = document.querySelector("#outputs"), dialog = document.querySelector("#draft-choice");
 let bytes, definition, designer, filling, recovery, saved, completed, busy = false;
@@ -94,7 +95,7 @@ async function exportProject() {
   files["examples/document-forms/sample.docx"] = source.bytes;
   files["examples/document-forms/definition.json"] = strToU8(JSON.stringify(source.definition, null, 2));
   files["examples/sdk/license.ts"] = strToU8('export async function demoLicense(signal: AbortSignal): Promise<string> { signal.throwIfAborted(); return ""; }\n');
-  files["package.json"] = strToU8(JSON.stringify({ name: "onodocs-form-project", private: true, type: "module", scripts: { start: "node examples/document-forms/serve.mjs" }, dependencies: { "@onodocs/sdk": "0.5.0", "@onodocs/canvas": "0.5.0", "@onodocs/editor": "0.5.0", esbuild: "^0.25.0", fflate: "^0.8.2" } }, null, 2));
+  files["package.json"] = strToU8(JSON.stringify({ name: "onodocs-form-project", private: true, type: "module", scripts: { start: "node examples/document-forms/serve.mjs" }, dependencies: Object.fromEntries(["@onodocs/sdk", "@onodocs/canvas", "@onodocs/editor", "esbuild", "fflate"].map(name => [name, projectPackage.dependencies[name] ?? projectPackage.devDependencies[name]])) }, null, 2));
   files["START.txt"] = strToU8("Requires Node.js 22 or later.\nRun npm install, then npm start.\nOpen http://127.0.0.1:5192.\nThe Word template and matching form rules are in examples/document-forms.\nSource: https://github.com/onodocs/onodocs/tree/main/examples/document-forms\n");
   download(zipSync(files), "form-project.zip", "application/zip"); report("Form project downloaded. Extract it and follow START.txt to run your form locally.");
 }

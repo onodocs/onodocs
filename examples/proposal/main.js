@@ -102,7 +102,7 @@ async function generate() {
   let bytes;
   try { bytes = await template.generate({ ...data, logo }, { locale: "en-US", signal: lifetime.signal }); }
   finally { template.dispose(); }
-  if (!editor) editor = createEditor({ container: app.querySelector("#document"), mode: "edit", allowedModes: ["view", "edit"], document: documentOptions, onChange() { window.dispatchEvent(new CustomEvent("onodocs-demo-outcome", { detail: "demo_edit" })); report("Document updated. These edits are included in Word and PDF downloads; your reusable template is unchanged."); }, onError(error) { report(error instanceof Error ? error.message : String(error), true); } });
+  if (!editor) editor = createEditor({ container: app.querySelector("#document"), mode: "edit", allowedModes: ["view", "edit"], toolbar: ["save", "pdf", "undo", "redo", "bold", "italic", "underline", "strike", "color", "font", "size", "alignment", "style", "list", "table", "tableTools", "image", "imageTools", "link", "find", "replace", "page", "header", "footer", "mode"], document: documentOptions, onChange() { window.dispatchEvent(new CustomEvent("onodocs-demo-outcome", { detail: "demo_edit" })); report("Document updated. These edits are included in Word and PDF downloads; your reusable template is unchanged."); }, onError(error) { report(error instanceof Error ? error.message : String(error), true); } });
   await showStep("document");
   await editor.open(bytes, "proposal.docx");
   window.dispatchEvent(new CustomEvent("onodocs-demo-outcome", { detail: "demo_generate" }));
