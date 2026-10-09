@@ -1,3 +1,4 @@
+/** Spec: spec/features/template-authoring.md */
 interface DataField {
   readonly element: HTMLElement;
   read(): unknown;

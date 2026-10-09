@@ -1,3 +1,5 @@
+/** Spec: spec/features/document-modes.md */
+/** Spec: spec/features/document-forms.md */
 import { createEditor, type EditorOptions, type WordEditor } from "./editor.js";
 import { openApplicationEditor, type ApplicationOptions, type ApplicationEditor } from "./application.js";
 import { createForm, type DocumentForm, type FormAnswers, type FormDefinition, type FormField } from "@onodocs/sdk/forms";

@@ -1,3 +1,5 @@
+/** Spec: spec/features/document-modes.md */
+/** Spec: spec/features/document-review.md */
 import type { WordEditor } from "./editor.js";
 import type { DocumentReview, ReviewIdentity } from "@onodocs/sdk";
 import { compareDocuments, type DocumentDifference, type RevisionHistoryStore } from "@onodocs/sdk";

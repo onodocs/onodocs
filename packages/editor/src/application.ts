@@ -1,3 +1,5 @@
+/** Spec: spec/features/application-integration.md */
+/** Spec: spec/features/document-review.md */
 import { createEditor, type EditorOptions, type WordEditor } from "./editor.js";
 
 export interface RecoveryStore {

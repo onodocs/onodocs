@@ -1,3 +1,4 @@
+/** Spec: spec/features/document-modes.md */
 import { FormValidationError, type DocumentForm, type FormAnswers, type FormField, type FormIssue, type FormValue } from "@onodocs/sdk/forms";
 
 export function createFormPanel(form: DocumentForm, select: (field: FormField) => void, completed?: (result: Awaited<ReturnType<DocumentForm["complete"]>>) => void | Promise<void>) {
@@ -16,7 +17,6 @@ export function createFormPanel(form: DocumentForm, select: (field: FormField) =
     if (!Object.keys(changed).length) return;
     await form.fill(changed);
     for (const [id, value] of Object.entries(changed)) if (edits.get(id) === value) edits.delete(id);
-    errors([]);
   }
   for (const field of form.definition.fields) {
     const label = document.createElement("label"), title = document.createElement("span"), message = document.createElement("small");
@@ -30,7 +30,7 @@ export function createFormPanel(form: DocumentForm, select: (field: FormField) =
     const help = document.createElement("small"); help.textContent = field.help ?? "";
     message.id = `error-${inputs.size}`; input.setAttribute("aria-describedby", message.id); message.setAttribute("role", "alert");
     label.append(title, input, help, message); panel.append(label); inputs.set(field.id, input); messages.set(field.id, message);
-    input.addEventListener("input", () => { status.textContent = ""; edits.set(field.id, field.type === "checkbox" ? (input as HTMLInputElement).checked : input.value === "" ? null : field.type === "number" ? Number(input.value) : input.value); });
+    input.addEventListener("input", () => { status.textContent = ""; message.textContent = ""; input.setAttribute("aria-invalid", "false"); edits.set(field.id, field.type === "checkbox" ? (input as HTMLInputElement).checked : input.value === "" ? null : field.type === "number" ? Number(input.value) : input.value); });
     input.addEventListener("change", () => {
       pending = pending.then(flush).catch(error => { if (error instanceof FormValidationError) errors(error.issues); else status.textContent = String(error); });
     });

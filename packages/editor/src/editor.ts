@@ -1,3 +1,7 @@
+/** Spec: spec/features/document-collaboration.md */
+/** Spec: spec/features/document-modes.md */
+/** Spec: spec/features/browser-editor.md */
+/** Spec: spec/features/document-review.md */
 import { openDocument, type BrowserDocument, type BrowserOptions } from "@onodocs/sdk/browser";
 import { createDocument, type CanvasDocument, type DocumentView, type DocumentAttachment } from "@onodocs/canvas";
 import type { DocumentEdit, DocumentSelection, TextFormatting } from "@onodocs/sdk";
@@ -31,6 +35,8 @@ export interface EditorOptions {
   readonly commands?: readonly Readonly<{ id: string; label: string; modes?: readonly EditorMode[]; ribbon?: Readonly<{ tab: string; group: string; icon?: string }>; execute: (editor: WordEditor) => void | Promise<void> }>[];
 }
 export interface EditorChange {
+  readonly bytes?: Uint8Array<ArrayBuffer>;
+  readonly history?: "undo" | "redo";
   readonly edit?: DocumentEdit;
   readonly review?: import("@onodocs/sdk").DocumentReviewCommand;
   readonly paragraphs?: readonly Readonly<{ id: string; text: string }>[];
@@ -115,6 +121,8 @@ dialog{border:1px solid #d7dce2;border-radius:10px;padding:24px;width:380px;max-
   let formPanel: ReturnType<typeof createFormPanel> | undefined;
   let selectedImage: string | undefined;
   let reviewPanel: ReturnType<typeof createReviewPanel> | undefined;
+  let navigating = false;
+  let changeNotifications: Promise<void>[] = [];
   let typing: { text: string } | undefined;
   let inputText = "", inputStart = 0, inputEnd = 0;
   let inputParagraphs: { id: string; start: number; length: number }[] = [];
@@ -126,12 +134,34 @@ dialog{border:1px solid #d7dce2;border-radius:10px;padding:24px;width:380px;max-
   function requireDocument(): BrowserDocument { if (disposed) throw new Error("Editor is disposed."); if (!doc) throw new Error("Open a document first."); return doc; }
   function requireSelection(): DocumentSelection { requireDocument(); if (!selection) throw new Error("Select document text first."); return selection; }
   function editable(): void { requireDocument(); if (mode !== "edit") throw new Error("Editing is unavailable in this document mode."); }
-  function enqueue<T>(action: () => Promise<T>): Promise<T> {
+  function enqueue<T>(action: () => Promise<T>, notify = true): Promise<T> {
     typing = undefined;
     pending++; input.setAttribute("aria-busy", "true");
-    const result = queue.then(async () => { if (disposed) throw new Error("Editor is disposed."); return action(); });
-    queue = result.then(() => {}, error => { if (!disposed) { report(error instanceof Error ? error.message : String(error), true); options.onError?.(error); } }).finally(() => { pending--; if (!disposed) { input.setAttribute("aria-busy", String(pending > 0)); updateToolbar(); } });
-    return result;
+    const notifications: Promise<void>[] = [];
+    const operation = queue.then(async () => {
+      if (disposed) throw new Error("Editor is disposed.");
+      changeNotifications = notifications;
+      return action();
+    });
+    const failed = (error: unknown) => { if (!disposed) { report(error instanceof Error ? error.message : String(error), true); options.onError?.(error); } };
+    queue = operation.then(() => {}, failed).finally(() => { pending--; if (!disposed) { input.setAttribute("aria-busy", String(pending > 0)); updateToolbar(); } });
+    const completed = operation.then(async value => { try { await Promise.all(notifications); } catch (error) { failed(error); throw error; } return value; });
+    if (notify) return completed;
+    void completed.catch(() => {});
+    return operation;
+  }
+  async function fill(answers: FormAnswers): Promise<void> {
+    if (mode !== "form" || !options.form) throw new Error("Answers can only be changed in form mode.");
+    const previous = await snapshot();
+    await createForm(requireDocument(), options.form).fill(answers, { signal: lifetime.signal });
+    undo.push(previous); redo.length = 0; formPanel?.refresh(); await changed({});
+  }
+  async function changed(change: EditorChange): Promise<void> {
+    if (!options.onChange) return;
+    const bytes = await requireDocument().save({ fields: "preserve" });
+    const notification = Promise.resolve().then(() => options.onChange!(result, { ...change, bytes }));
+    void notification.catch(() => {});
+    changeNotifications.push(notification);
   }
   function event(action: () => Promise<unknown>): void { void action().catch(error => { if (!disposed) report(error instanceof Error ? error.message : String(error), true); }); }
   function syncInput(): void {
@@ -209,11 +239,11 @@ dialog{border:1px solid #d7dce2;border-radius:10px;padding:24px;width:380px;max-
     if (disposed) { next.dispose(); throw new Error("Editor is disposed."); }
     for (const outline of objectOutlines.splice(0)) outline.dispose(); selectedImage = undefined;
     canvas?.dispose(); doc?.dispose(); doc = next;
-    canvas = createDocument(doc, { container: preview, viewOptions: { zoom: "fit-width", input, onSelectionChange(next) { if (pending || composing) return; if (JSON.stringify(next) !== JSON.stringify(selection)) formatting = {}; selection = next; selectedImage = undefined; syncInput(); outlineSelection(); updateToolbar(); } } });
+    canvas = createDocument(doc, { container: preview, viewOptions: { zoom: "fit-width", input, onSelectionChange(next) { if (pending && !navigating || composing) return; if (JSON.stringify(next) !== JSON.stringify(selection)) formatting = {}; selection = next; selectedImage = undefined; syncInput(); outlineSelection(); updateToolbar(); } } });
     formPanel?.element.remove(); formPanel = undefined;
     if (options.form) {
       const form = createForm(next, options.form);
-      formPanel = createFormPanel({ ...form, fill: answers => result.fill(answers), complete: () => result.completeForm(), answers: () => result.answers() }, field => {
+      formPanel = createFormPanel({ ...form, fill: answers => enqueue(() => fill(answers), false), complete: () => result.completeForm(), answers: () => result.answers() }, field => {
         const control = requireDocument().query.contentControls().where({ tag: field.tag }).first();
         const paragraph = control && (requireDocument().query.within(control).paragraphs().first() ?? requireDocument().query.within(control).closest("paragraph").first());
         if (paragraph) result.select({ start: { paragraphId: paragraph.id, offset: 0 }, end: { paragraphId: paragraph.id, offset: paragraph.text.length } });
@@ -236,13 +266,13 @@ dialog{border:1px solid #d7dce2;border-radius:10px;padding:24px;width:380px;max-
       selection = { start: { ...range.start, paragraphId: paragraphs()[index]!.id }, end: { ...range.end, paragraphId: paragraphs()[endIndex]!.id } };
     } else if (review && command.kind === "replace" && (review.tracking || review.comments.length || review.revisions.length)) {
       const range = requireSelection(), index = paragraphs().findIndex(p => p.id === range.start.paragraphId);
-      await requireDocument().review(review.tracking ? { kind: "trackedReplace", selection: range, text: command.text, identity: options.review!.identity() } : { kind: "replaceText", selection: range, text: command.text });
-      const caret = { paragraphId: paragraphs()[index]!.id, offset: range.start.offset + command.text.length }; selection = { start: caret, end: caret };
+      await requireDocument().review(review.tracking ? { kind: "trackedReplace", selection: range, text: command.text, identity: options.review!.identity() } : { kind: "replaceText", selection: range, text: command.text, paragraphBreaks: command.paragraphBreaks !== false });
+      const lines = !review.tracking && command.paragraphBreaks !== false ? command.text.split("\n") : [command.text], caret = { paragraphId: paragraphs()[index + lines.length - 1]!.id, offset: (lines.length === 1 ? range.start.offset : 0) + lines.at(-1)!.length }; selection = { start: caret, end: caret };
     } else selection = await requireDocument().edit({ ...command, selection: requireSelection() } as DocumentEdit);
     if (command.kind === "replace" || command.kind === "paste") formatting = {};
     selectedImage = command.kind === "imageProperties" && !command.remove ? requireDocument().query.images().at(imageIndex)?.id : undefined;
     outlineSelection();
-    undo.push(previous); redo.length = 0; focus(); updateToolbar(); report("Document changed."); await options.onChange?.(result, { edit, paragraphs: before });
+    undo.push(previous); redo.length = 0; focus(); updateToolbar(); report("Document changed."); await changed({ edit, paragraphs: before });
     await reviewPanel?.refresh();
   }
   function outlineSelection(): void {
@@ -279,7 +309,7 @@ dialog{border:1px solid #d7dce2;border-radius:10px;padding:24px;width:380px;max-
     if (!entry) return;
     const previous = await snapshot(); await mount(entry.bytes);
     const all = paragraphs(); selection = { start: { paragraphId: all[entry.start]!.id, offset: entry.selection.start.offset }, end: { paragraphId: all[entry.end]!.id, offset: entry.selection.end.offset } };
-    formatting = entry.formatting; from.pop(); to.push({ ...previous, mode: entry.mode }); focus(); await options.onChange?.(result, {});
+    formatting = entry.formatting; from.pop(); to.push({ ...previous, mode: entry.mode }); focus(); await changed({ history: direction });
   }
   async function replace(text: string, paragraphBreaks = true): Promise<void> { await apply({ kind: "replace", text, paragraphBreaks, ...(Object.keys(formatting).length ? { formatting } : {}) }); }
   async function remove(backward: boolean, word = false): Promise<void> {
@@ -317,16 +347,28 @@ dialog{border:1px solid #d7dce2;border-radius:10px;padding:24px;width:380px;max-
   input.addEventListener("keydown", e => {
     if (e.isComposing || mode !== "edit") return;
     const command = e.ctrlKey || e.metaKey, key = e.key.toLowerCase();
+    if (pending && !navigating && (["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown", "Home", "End", "PageUp", "PageDown"].includes(e.key) || command && key === "a")) {
+      e.preventDefault(); e.stopImmediatePropagation();
+      const next = new KeyboardEvent("keydown", { key: e.key, code: e.code, ctrlKey: e.ctrlKey, metaKey: e.metaKey, shiftKey: e.shiftKey, altKey: e.altKey, bubbles: true, cancelable: true });
+      event(() => enqueue(async () => { navigating = true; try { input.dispatchEvent(next); } finally { navigating = false; } }));
+      return;
+    }
     if (command && ["b", "i", "u"].includes(key)) { e.preventDefault(); const property = ({ b: "bold", i: "italic", u: "underline" } as const)[key as "b" | "i" | "u"]; event(() => format({ [property]: !currentFormatting()[property] })); }
     else if (command && (key === "z" || key === "y")) { e.preventDefault(); event(() => enqueue(() => history(key === "y" || e.shiftKey ? "redo" : "undo"))); }
-    else if (e.key === "Enter") { e.preventDefault(); event(() => enqueue(() => replace("\n", !e.shiftKey))); }
+    else if (e.key === "Enter") {
+      e.preventDefault(); event(() => enqueue(async () => {
+        const range = requireSelection(), paragraph = requireDocument().query.get(range.start.paragraphId);
+        if (!e.shiftKey && collapsed(range) && paragraph?.kind === "paragraph" && paragraph.list && !paragraph.text.length && requireDocument().query.within(paragraph).descendants().all().every(element => element.kind === "run")) await apply({ kind: "list", list: null });
+        else await replace("\n", !e.shiftKey);
+      }));
+    }
     else if (e.key === "Tab") {
       const doc = requireDocument(), paragraph = selection && doc.query.get(selection.start.paragraphId), cell = paragraph && doc.query.within(paragraph).closest("cell").first();
       if (cell && !command) {
         e.preventDefault(); event(() => enqueue(async () => {
           const doc = requireDocument(), paragraph = selection && doc.query.get(selection.start.paragraphId), current = paragraph && doc.query.within(paragraph).closest("cell").first();
           if (!current) return;
-          const cells = current.parent.parent.rows.flatMap(row => row.cells), index = cells.findIndex(cell => cell.id === current.id);
+          const cells = doc.query.within(current).closest("table").one().rows.flatMap(row => row.cells), index = cells.findIndex(cell => cell.id === current.id);
           let target = cells[index + (e.shiftKey ? -1 : 1)];
           if (!target && !e.shiftKey) {
             await apply({ kind: "table", action: "insertRow" });
@@ -536,17 +578,12 @@ dialog{border:1px solid #d7dce2;border-radius:10px;padding:24px;width:380px;max-
       await formPanel?.flush();
       return enqueue(async () => { if (composing) throw new Error("Finish composing text before changing mode."); if (next === mode) return; mode = next; if (mode === "form") formPanel?.refresh(); input.value = ""; input.blur(); selectedImage = undefined; outlineSelection(); updateToolbar(); await reviewPanel?.setMode(); report(({ view: "Viewing document.", edit: "Editing document.", review: "Reviewing document.", form: "Filling designated answer regions." })[mode]); options.onModeChange?.(mode); });
     },
-    fill(answers) { return enqueue(async () => {
-      if (mode !== "form" || !options.form) throw new Error("Answers can only be changed in form mode.");
-      const previous = await snapshot();
-      await createForm(requireDocument(), options.form).fill(answers, { signal: lifetime.signal });
-      undo.push(previous); redo.length = 0; formPanel?.refresh(); await options.onChange?.(result, {});
-    }); },
+    fill(answers) { return enqueue(() => fill(answers)); },
     answers() { if (!options.form) throw new Error("This editor has no form definition."); return createForm(requireDocument(), options.form).answers(); },
     async completeForm() { await formPanel?.flush(); return enqueue(async () => { if (mode !== "form" || !options.form) throw new Error("Completion requires form mode."); return createForm(requireDocument(), options.form).complete({ signal: lifetime.signal }); }); },
     get document() { return doc; }, get selection() { return selection; }, element: host,
     open(bytes, name = "document.docx") { return enqueue(async () => { await mount(bytes); filename = name; undo.length = 0; redo.length = 0; formatting = {}; focus(); report("Ready."); }); },
-    restore(bytes) { return enqueue(async () => { editable(); const previous = await snapshot(); await mount(bytes); undo.push(previous); redo.length = 0; formatting = {}; focus(); await options.onChange?.(result, {}); report("Version restored."); }); },
+    restore(bytes) { return enqueue(async () => { editable(); const previous = await snapshot(); await mount(bytes); undo.push(previous); redo.length = 0; formatting = {}; focus(); await changed({}); report("Version restored."); }); },
     newDocument() { return enqueue(async () => { if (mode !== "edit") throw new Error("Creating a document requires editing mode."); await mount(await createDocumentPackage(lifetime.signal)); filename = "document.docx"; undo.length = 0; redo.length = 0; formatting = {}; focus(); report("Ready."); }); },
     execute(command) { return enqueue(() => apply(command)); },
     review(command) { return enqueue(async () => {
@@ -556,7 +593,7 @@ dialog{border:1px solid #d7dce2;border-radius:10px;padding:24px;width:380px;max-
       await requireDocument().review(command);
       const all = paragraphs(), paragraph = all[Math.min(previous.start, all.length - 1)];
       if (paragraph) { const caret = { paragraphId: paragraph.id, offset: Math.min(previous.selection.start.offset, paragraph.text.length) }; selection = { start: caret, end: caret }; }
-      undo.push(previous); redo.length = 0; focus(); updateToolbar(); await options.onChange?.(result, { review: command, paragraphs: before }); await reviewPanel?.refresh();
+      undo.push(previous); redo.length = 0; focus(); updateToolbar(); await changed({ review: command, paragraphs: before }); await reviewPanel?.refresh();
     }); },
     select(range) { requireDocument(); selectedImage = undefined; selection = range; focus(); outlineSelection(); updateToolbar(); },
     find(text) { if (!text) return []; return requireDocument().query.findText(text).map(match => ({ start: { paragraphId: match.paragraph.id, offset: match.start }, end: { paragraphId: match.paragraph.id, offset: match.end } })); },
@@ -575,7 +612,7 @@ dialog{border:1px solid #d7dce2;border-radius:10px;padding:24px;width:380px;max-
         } else selection = await requireDocument().edit({ kind: "replace", selection: target, text: replacement, paragraphBreaks: false });
       } }
       catch (error) { await mount(previous.bytes); const all = paragraphs(); selection = { start: { paragraphId: all[previous.start]!.id, offset: previous.selection.start.offset }, end: { paragraphId: all[previous.end]!.id, offset: previous.selection.end.offset } }; formatting = previous.formatting; focus(); throw error; }
-      undo.push(previous); redo.length = 0; focus(); await options.onChange?.(result, {}); await reviewPanel?.refresh();
+      undo.push(previous); redo.length = 0; focus(); await changed({}); await reviewPanel?.refresh();
     }); },
     async undo() { await formPanel?.flush(); return enqueue(() => history("undo")); }, async redo() { await formPanel?.flush(); return enqueue(() => history("redo")); },
     async save() { await formPanel?.flush(); return enqueue(() => requireDocument().save({ onFieldStatus: fieldNotice })); }, async pdf() { await formPanel?.flush(); return enqueue(() => requireDocument().pdf({ onFieldStatus: fieldNotice })); },

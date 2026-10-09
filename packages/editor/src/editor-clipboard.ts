@@ -1,3 +1,4 @@
+/** Spec: spec/features/browser-editor.md */
 import type { DocumentEdit, DocumentQuery, DocumentSelection, TextFormatting } from "@onodocs/sdk";
 
 type Paragraph = Extract<DocumentEdit, { kind: "paste" }>["paragraphs"][number];

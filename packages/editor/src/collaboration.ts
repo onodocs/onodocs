@@ -1,3 +1,4 @@
+/** Spec: spec/features/document-collaboration.md */
 import { createEditor, type EditorChange, type EditorMode, type EditorOptions, type WordEditor } from "./editor.js";
 import { CollaborationAccessError, decodeCollaborationBytes, encodeCollaborationBytes, type CollaborationMutation, type CollaborationOperation, type CollaborationRange, type CollaborationReply, type CollaborationRequest, type CollaborationSnapshot } from "@onodocs/sdk/collaboration";
 
@@ -46,16 +47,30 @@ export async function openCollaborativeEditor(options: CollaborativeEditorOption
   host.className = "onodocs-collaboration"; status.setAttribute("role", "status"); members.setAttribute("aria-label", "People in this document");
   host.append(status, members, actions, editorHost); options.container.append(host);
   const modes = (): EditorMode[] => accessRevoked ? ["view"] : shared.identity.role === "edit" ? ["edit", "review", "view"] : shared.identity.role === "review" ? ["review", "view"] : ["view"];
-  const editor = createEditor({ ...options.editor, container: editorHost, ...(options.onError ? { onError: options.onError } : {}), toolbar: options.editor?.toolbar ?? ["save", "pdf", "find", "mode", "bold", "italic", "underline", "font", "size", "alignment", "review"], mode: modes()[0]!, allowedModes: modes(), review: { identity: () => ({ author: shared.identity.name, date: new Date().toISOString() }) }, async onChange(current, change) {
-    const bytes = encodeCollaborationBytes(await current.document!.save()), operation = toOperation(change);
-    if (draft?.attempted) draft = { ...draft, bytes, later: true };
-    else {
-      const operations = operation && !draft?.mutation.snapshot ? [...(draft?.mutation.operations ?? []), operation] : undefined;
-      draft = { shared, user: shared.identity.id, bytes, attempted: false, later: false, mutation: { user: shared.identity.id, id: crypto.randomUUID(), base: draft?.mutation.base ?? shared.token, checkpoint: draft?.mutation.checkpoint ?? shared.checkpoint, ...(operations ? { operations } : { snapshot: bytes }) } };
-    }
-    state = "pending"; render();
-    try { await options.recovery.write(draft); }
-    catch (error) { state = "offline"; render(); throw error; }
+  let changes = Promise.resolve();
+  const undoDrafts: (CollaborationDraft | undefined)[] = [], redoDrafts: (CollaborationDraft | undefined)[] = [];
+  const editor = createEditor({ ...options.editor, container: editorHost, ...(options.onError ? { onError: options.onError } : {}), toolbar: options.editor?.toolbar ?? ["save", "pdf", "find", "mode", "bold", "italic", "underline", "font", "size", "alignment", "review"], mode: modes()[0]!, allowedModes: modes(), review: { identity: () => ({ author: shared.identity.name, date: new Date().toISOString() }) }, onChange(_current, change) {
+    const next = changes.then(async () => {
+      const bytes = encodeCollaborationBytes(change.bytes!), operation = toOperation(change);
+      const previous = draft;
+      if (change.history) {
+        const from = change.history === "undo" ? undoDrafts : redoDrafts, to = change.history === "undo" ? redoDrafts : undoDrafts;
+        const restored = from.pop(); to.push(previous);
+        draft = previous?.attempted ? { ...previous, bytes, later: true } : restored && { ...restored, bytes };
+      } else {
+        undoDrafts.push(previous); redoDrafts.length = 0;
+        if (draft?.attempted) draft = { ...draft, bytes, later: true };
+        else {
+          const operations = operation && !draft?.mutation.snapshot ? [...(draft?.mutation.operations ?? []), operation] : undefined;
+          draft = { shared, user: shared.identity.id, bytes, attempted: false, later: false, mutation: { user: shared.identity.id, id: crypto.randomUUID(), base: draft?.mutation.base ?? shared.token, checkpoint: draft?.mutation.checkpoint ?? shared.checkpoint, ...(operations ? { operations } : { snapshot: bytes }) } };
+        }
+      }
+      state = draft ? "pending" : "connected"; render();
+      try { if (draft) await options.recovery.write(draft); else await options.recovery.remove(); }
+      catch (error) { state = "offline"; render(); throw error; }
+    });
+    changes = next.catch(() => {});
+    return next;
   } });
   try { await editor.open(decodeCollaborationBytes(draft?.bytes ?? shared.bytes)); } catch (error) { editor.dispose(); host.remove(); throw error; }
   let displayedToken = shared.token;
@@ -93,6 +108,7 @@ export async function openCollaborativeEditor(options: CollaborativeEditorOption
       if (disposed) return;
       let displayToken: string | undefined;
       await editor.synchronize(async () => {
+        await changes;
         try {
           const paragraphs = editor.document!.query.paragraphs().all(), range = editor.selection;
           const start = paragraphs.findIndex(value => value.id === range?.start.paragraphId), end = paragraphs.findIndex(value => value.id === range?.end.paragraphId);
@@ -105,12 +121,12 @@ export async function openCollaborativeEditor(options: CollaborativeEditorOption
           if (sending && reply.status === "saved") {
             if (draft!.later) { state = "conflict"; render(); return { allowedModes: modes() }; }
             await options.recovery.remove(); draft = undefined; state = "connected"; render();
-            displayToken = shared.token; return { bytes: decodeCollaborationBytes(shared.bytes), allowedModes: modes() };
+            undoDrafts.length = redoDrafts.length = 0; displayToken = shared.token; return { bytes: decodeCollaborationBytes(shared.bytes), allowedModes: modes() };
           }
           if (sending && (reply.status === "conflict" || reply.status === "forbidden")) state = reply.status;
           else if (!draft) state = "connected";
           if (shared.identity.role === "view" && draft) state = "forbidden";
-          if (changed && !draft) displayToken = shared.token;
+          if (changed && !draft) { undoDrafts.length = redoDrafts.length = 0; displayToken = shared.token; }
           render(); return { ...(changed && !draft ? { bytes: decodeCollaborationBytes(shared.bytes) } : {}), allowedModes: modes() };
         } catch (error) { if (!disposed) { accessRevoked ||= error instanceof CollaborationAccessError; state = accessRevoked ? "forbidden" : "offline"; render(); options.onError?.(error); } return accessRevoked ? { allowedModes: ["view"] } : undefined; }
       }).then(() => { if (displayToken) displayedToken = displayToken; render(); }, error => { if (!disposed) { state = "offline"; render(); options.onError?.(error); } });
@@ -118,15 +134,17 @@ export async function openCollaborativeEditor(options: CollaborativeEditorOption
     exportDraft() { return draft ? decodeCollaborationBytes(draft.bytes) : undefined; },
     async useShared() {
       await editor.synchronize(async () => {
+        await changes;
         const current = (await options.exchange({ session }, lifetime.signal)).document;
         if (!current.bytes) throw new Error("The shared document has no content.");
         shared = { ...current, bytes: current.bytes }; accessRevoked = false;
-        await options.recovery.remove(); draft = undefined; state = "connected"; render(); return { bytes: decodeCollaborationBytes(shared.bytes), allowedModes: modes() };
+        await options.recovery.remove(); draft = undefined; undoDrafts.length = redoDrafts.length = 0; state = "connected"; render(); return { bytes: decodeCollaborationBytes(shared.bytes), allowedModes: modes() };
       });
       displayedToken = shared.token; render();
     },
     async publishDraft() {
       await editor.synchronize(async () => {
+        await changes;
         if (accessRevoked || !draft || shared.identity.role !== "edit") throw new Error("Publishing a replacement requires edit permission.");
         draft = { ...draft, attempted: false, later: false, mutation: { user: shared.identity.id, id: crypto.randomUUID(), base: shared.token, checkpoint: shared.checkpoint, snapshot: draft.bytes } };
         await options.recovery.write(draft); state = "pending"; render(); return undefined;

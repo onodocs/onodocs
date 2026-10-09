@@ -1,3 +1,4 @@
+/** Spec: spec/features/template-authoring.md */
 import { createEditor, type EditorOptions, type WordEditor } from "./editor.js";
 import { openTemplate } from "@onodocs/sdk/browser";
 import { templateTag, type TemplateBinding } from "@onodocs/sdk";

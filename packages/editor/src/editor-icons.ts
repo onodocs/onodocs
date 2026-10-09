@@ -1,3 +1,4 @@
+/** Spec: spec/features/browser-editor.md */
 export const editorIcons: Readonly<Record<string, string>> = {
   "review": "<path d=\"M21 15a4 4 0 0 1-4 4H7l-4 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4z\" /><path d=\"M7 8h10M7 12h7\" />",
   "review:newComment": "<path d=\"M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z\" /><path d=\"M9 10h6M12 7v6\" />",
