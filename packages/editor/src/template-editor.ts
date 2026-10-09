@@ -107,6 +107,19 @@ button,input,select{font:inherit;color:inherit}button{cursor:pointer;border:1px 
   function refreshFields(selected = field.value): void {
     field.replaceChildren(new Option("Choose a data field", ""));
     imageTargets.clear();
+    const query = editor.document?.query;
+    let owner = selectedId ? query?.get(selectedId)?.parent : editor.selection ? query?.get(editor.selection.start.paragraphId) : undefined;
+    let reusableContext: string | undefined;
+    while (owner) {
+      if (owner.kind === "contentControl" && owner.tag?.startsWith("onodocs:")) {
+        try {
+          const container: TemplateBinding = JSON.parse(owner.tag.slice(8));
+          if (container.kind === "repeat") break;
+          if (container.kind === "section") { reusableContext = bindingName(container); break; }
+        } catch { }
+      }
+      owner = owner.parent;
+    }
     function collectImages(value: unknown, path: string[]): void {
       if (Array.isArray(value)) { for (const child of value) collectImages(child, []); }
       else if (value !== null && typeof value === "object" && !isSampleImage(value)) for (const [key, child] of Object.entries(value)) {
@@ -122,13 +135,13 @@ button,input,select{font:inherit;color:inherit}button{cursor:pointer;border:1px 
       const allowed = kind === "repeat" ? collection : kind === "if" ? typeof value === "boolean" || collection : kind === "image" ? value === null || picture : kind === "include" ? true : !object;
       if (allowed && path.length) field.add(new Option(label, JSON.stringify(path)));
       if (collection) {
-        if (value[0] && typeof value[0] === "object") for (const [key, child] of Object.entries(value[0])) visit(child, [key], `${label} item · ${key}`);
-        else if (value.length && kind === "value") field.add(new Option(`${label} item`, "[]"));
+        if (value[0] && typeof value[0] === "object") for (const [key, child] of Object.entries(value[0])) visit(child, [key], `${reusableContext ?? `${label} item`} · ${key}`);
+        else if (value.length && kind === "value") field.add(new Option(reusableContext ?? `${label} item`, "[]"));
       } else if (object && !picture) for (const [key, child] of Object.entries(value)) visit(child, [...path, key], label ? `${label}.${key}` : key);
     }
     if (kind === "include") field.add(new Option("Current record", "[]"));
     visit(context, [], "");
-    if (selected && ![...field.options].some(option => option.value === selected)) field.add(new Option(`${JSON.parse(selected).join(".") || "Current item"} (not in sample values)`, selected));
+    if (selected && ![...field.options].some(option => option.value === selected)) field.add(new Option(`${reusableContext ? `${reusableContext} · ` : ""}${JSON.parse(selected).join(".") || "Current item"} (not in sample values)`, selected));
     field.value = selected;
   }
   function selectionSummary(): void {
