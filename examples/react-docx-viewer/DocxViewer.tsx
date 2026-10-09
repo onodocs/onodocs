@@ -47,11 +47,11 @@ export function DocxViewer({ source, licenseKey = "" }: DocxViewerProps) {
         });
         if (signal.aborted) { doc.dispose(); return; }
         await canvasDocument!.view!.whenRendered();
-        if (!signal.aborted) setStatus(`Ready · ${doc.pages.length} ${doc.pages.length === 1 ? "page" : "pages"}. Select text to copy it.`);
+        if (!signal.aborted) { window.dispatchEvent(new CustomEvent("onodocs-demo-outcome", { detail: "demo_ready" })); setStatus(`Ready · ${doc.pages.length} ${doc.pages.length === 1 ? "page" : "pages"}. Select text to copy it.`); }
       } catch (error) {
         canvasDocument?.dispose();
         doc?.dispose();
-        if (!signal.aborted) setStatus(`Unable to open document. ${error instanceof Error ? error.message : "Try another Word file."}`);
+        if (!signal.aborted) { window.dispatchEvent(new CustomEvent("onodocs-demo-outcome", { detail: "demo_error" })); setStatus(`Unable to open document. ${error instanceof Error ? error.message : "Try another Word file."}`); }
       } finally {
         if (!signal.aborted) setLoading(false);
       }

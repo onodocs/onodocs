@@ -5,6 +5,9 @@ import { toAscii } from "./ascii";
 import { tree } from "./ast";
 import { demoLicense } from "./license";
 
+document.querySelector<HTMLElement>(".demo-header")!.hidden = window.top !== window;
+document.querySelector<HTMLElement>(".source-link")!.hidden = window.top === window;
+
 const controller = new AbortController();
 const status = document.querySelector<HTMLElement>("#status")!;
 const spinner = document.querySelector<HTMLElement>("#loading-indicator")!;
@@ -12,9 +15,10 @@ const apply = document.querySelector<HTMLButtonElement>("#apply-response")!;
 let deliveries: readonly (readonly string[])[] = [];
 
 async function load() {
+  let doc: Awaited<ReturnType<typeof openDocument>> | undefined;
   try {
     const signal = controller.signal;
-    const doc = await openDocument(sample, { signal, licenseKey: await demoLicense(signal) });
+    doc = await openDocument(sample, { signal, licenseKey: await demoLicense(signal) });
     if (controller.signal.aborted) return;
     deliveries = doc.query.tables().where({ headers: ["Deliverable", "Owner", "Due"] }).one().textRows;
     const tasks = deliveries.slice(1).map(([task, owner, due]) => ({ task: task!, owner: owner!, due: due! }));
@@ -31,7 +35,7 @@ async function load() {
       card.append(title, detail);
       cards.append(card);
     }
-    apply.disabled = false;
+    apply.disabled = false; window.dispatchEvent(new CustomEvent("onodocs-demo-outcome", { detail: "demo_ready" }));
     spinner.hidden = true;
     status.hidden = true;
     document.querySelector<HTMLElement>("main")!.hidden = false;
@@ -41,7 +45,7 @@ async function load() {
       status.hidden = false;
       status.textContent = `Unable to open document. ${error instanceof Error ? error.message : "Try resetting the sample."}`;
     }
-  }
+  } finally { doc?.dispose(); }
 }
 
 apply.addEventListener("click", () => {
@@ -50,7 +54,7 @@ apply.addEventListener("click", () => {
   const email = `Subject: Upcoming project deliveries\n\nHi team,\n\nHere is our upcoming delivery schedule:\n\n${items}\n\nPlease confirm that these dates work for you and flag any blockers.\n\nThanks!`;
   document.querySelector("#email-output")!.textContent = email;
   document.querySelector<HTMLElement>("#email-draft")!.hidden = false;
-  apply.hidden = true;
+  apply.hidden = true; window.dispatchEvent(new CustomEvent("onodocs-demo-outcome", { detail: "demo_generate" }));
 });
 
 function dispose() {

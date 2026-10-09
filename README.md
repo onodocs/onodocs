@@ -27,18 +27,18 @@ Open **http://127.0.0.1:5174/samples.html**. Setup installs matching SDK, Canvas
 
 | Sample | Source | What it demonstrates |
 | --- | --- | --- |
+| Document editor | [main.js](examples/editor/main.js) | Edit a report, brief or meeting notes with the Editor ribbon and Word/PDF downloads |
+| Templates and generation | [main.js](examples/proposal/main.js) | Design a proposal template, enter business data and edit the generated document |
+| Document forms | [main.js](examples/document-forms/main.js) | Separate designer and recipient modes, drafts, completion and project export |
+| Agreement review | [main.js](examples/agreement-review/main.js) | Seeded comments and suggestions, comparison, history and Word exchange |
 | DOCX viewer in TypeScript | [main.ts](examples/docx-viewer/main.ts) | Local files, progressive loading, selection, cancellation and cleanup |
 | DOCX viewer in JavaScript | [main.js](examples/docx-viewer/main.js) | The same complete example in plain JavaScript |
 | React and TypeScript Word viewer | [DocxViewer.tsx](examples/react-docx-viewer/DocxViewer.tsx) | Typed component, progress, cancellation, replacement, unmounting and Strict Mode |
 | Framework applications | [Projects and setup](docs/samples.md#framework-applications) | Vue, Nuxt, Svelte, SvelteKit, Angular, Next.js, Razor Pages and Blazor |
-| Viewer, custom forms and templates | [document.ts](examples/sdk/document.ts) | Document viewing, PNG/PDF export, anchored inputs and tagged template fields |
+| HTML attachments and tagged replacement | [document.ts](examples/sdk/document.ts) | Focused Canvas attachments and SDK text-replacement integrations |
 | Text and table extraction | [extract.ts](examples/docx-extraction/extract.ts) | Browser and Node.js text, tables and JSON, with complete JavaScript equivalents |
-| Document workflows | [workflows.ts](examples/sdk/workflows.ts) | Tables, document tree, ASCII output and a locally simulated email draft |
+| Document queries | [workflows.ts](examples/sdk/workflows.ts) | Tables, document tree, ASCII output and a locally simulated email draft |
 | Backend processing and frontend display | [server.mjs](examples/backend-viewer/server.mjs) | Real HTTP endpoints, prepared pages and a Canvas-only frontend |
-| Inline Word editor | [main.js](examples/browser-editor/main.js) | Ready-made editor, formatting, review and Word/PDF downloads; [setup](docs/samples.md#inline-word-editor) |
-| Proposal generation | [main.js](examples/proposal/main.js) | Generate a proposal, refine its wording and export Word/PDF |
-| Document forms | [main.js](examples/document-forms/main.js) | Validate answers, restore local drafts and export matching Word/JSON |
-| Agreement review | [main.js](examples/agreement-review/main.js) | Comments, tracked replacements and Word exchange |
 | Report review | [main.js](examples/ai-report/main.js) | Show source evidence and approve predetermined local suggestions |
 | Node.js analysis | [analyze.ts](examples/analyze.ts) | Read document content without a browser |
 

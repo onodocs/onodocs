@@ -35,11 +35,17 @@ async function open(source) {
       return;
     }
     await canvasDocument.view.whenRendered();
-    if (!signal.aborted) status.textContent = `Ready \xB7 ${doc.pages.length} ${doc.pages.length === 1 ? "page" : "pages"}. Select text to copy it.`;
+    if (!signal.aborted) {
+      window.dispatchEvent(new CustomEvent("onodocs-demo-outcome", { detail: "demo_ready" }));
+      status.textContent = `Ready \xB7 ${doc.pages.length} ${doc.pages.length === 1 ? "page" : "pages"}. Select text to copy it.`;
+    }
   } catch (error) {
     canvasDocument?.dispose();
     doc?.dispose();
-    if (!signal.aborted) status.textContent = `Unable to open document. ${error instanceof Error ? error.message : "Try another Word file."}`;
+    if (!signal.aborted) {
+      window.dispatchEvent(new CustomEvent("onodocs-demo-outcome", { detail: "demo_error" }));
+      status.textContent = `Unable to open document. ${error instanceof Error ? error.message : "Try another Word file."}`;
+    }
   } finally {
     if (!signal.aborted) cancel.disabled = true;
   }

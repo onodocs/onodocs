@@ -19,15 +19,20 @@ Open http://127.0.0.1:5174/samples.html. Setup installs matching SDK, Canvas and
 
 | Sample | Entry point | Demonstrates |
 | --- | --- | --- |
+| Document editor | `examples/editor/main.js` | Realistic documents, ribbon editing, local files and Word/PDF downloads |
+| Templates and generation | `examples/proposal/main.js` | Design a template, enter data, then edit the generated document |
+| Document forms | `examples/document-forms/main.js` | Form design, recipient completion, drafts and project export |
+| Agreement review | `examples/agreement-review/main.js` | Comments, suggestions, comparison and version history |
+| Scripted report review | `examples/ai-report/main.js` | Evidence and individual suggestions beside the editor |
 | TypeScript DOCX viewer | `examples/docx-viewer/main.ts` | Local files, progressive loading, selection, cancellation and cleanup |
 | JavaScript DOCX viewer | `examples/docx-viewer/main.js` | The same complete viewer in JavaScript |
 | React and TypeScript viewer | `examples/react-docx-viewer/DocxViewer.tsx` | Typed props, progress, cancellation, replacement and unmount cleanup |
 | Viewer | `examples/sdk/document.ts` | Mount a document, open local files, select text, export PNG/PDF |
-| Custom form | `examples/sdk/document.ts` | Anchor HTML fields to tagged content and collect values |
-| Template | `examples/sdk/document.ts` | Fill a booking confirmation and export PDF |
+| HTML attachments | `examples/sdk/document.ts` | Anchor HTML fields to tagged content and collect values |
+| Tagged text replacement | `examples/sdk/document.ts` | Fill a booking confirmation and export PDF |
 | Text and table extraction | `examples/docx-extraction/main.ts`, `main.js` | Local files, raw tables, header-based records, copy and download |
 | Node.js extraction | `examples/docx-extraction/node.ts`, `node.js` | The same extraction function, JSON on stdout |
-| Document workflows | `examples/sdk/workflows.ts` | Inspect tables, ASCII output and the document tree |
+| Document queries | `examples/sdk/workflows.ts` | Inspect tables, ASCII output and the document tree |
 | Node.js inspection | `examples/analyze.ts` | Read text and tables without rendering |
 
 ```sh
@@ -72,17 +77,15 @@ story scope, missing or repeated tables, merged cells and the shared Node.js CLI
 
 ## Inline Word editor
 
-The [browser editor](../examples/browser-editor/) uses the ready-made `@onodocs/editor` component. It includes a fictional document, local file opening, text formatting, regular tables, inline images, comments, tracked replacements, undo/redo and Word/PDF downloads.
+The [document editor](../examples/editor/) uses the ready-made `@onodocs/editor` component. It opens a fictional project report and offers a brief and meeting notes. Use the ribbon for formatting, tables, images, undo/redo and Word/PDF downloads.
 
 From the repository root:
 
 ```sh
-cd examples/browser-editor
-npm install
 npm start
 ```
 
-Open http://127.0.0.1:5190. Click a page to type and use Open Word to select your own document. Download Word saves the current edits; Download PDF produces searchable output. Stop the local server with Ctrl+C. The sample installs Editor and its matching SDK/Canvas dependencies from npm without the private engine repository or root sample dependencies.
+Open http://127.0.0.1:5174/samples/editor/. Click a page to type. The File ribbon provides Open Word, Download Word and Download PDF. Stop the local server with Ctrl+C. To run this example alone, use `node examples/serve-workflow.mjs editor` and open the printed address.
 
 The SDK owns document operations and saving, Canvas provides presentation, and Editor supplies the toolbar, input handling and history. The sample imports the public editor component and releases it when leaving. Selected documents stay in the browser; refreshing loses unsaved changes.
 

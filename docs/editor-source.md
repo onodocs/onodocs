@@ -25,7 +25,7 @@ import { createFormDesigner, openForm } from "@onodocs/editor/forms";
 import { openCollaborativeEditor } from "@onodocs/editor/collaboration";
 ```
 
-Use the [complete browser editor](../examples/browser-editor), [template editor](../examples/template-editor), or [application workflows](document-workflows.md) to exercise your changes. For a customized published package, choose your own package name and version and remove `private: true` before building. After renaming the package, replace `@onodocs/editor` in your application's imports with the new name, keeping any `/application`, `/forms`, or `/collaboration` suffix.
+Use the [document editor](../examples/editor), [template editor](../examples/template-editor), or [application workflows](document-workflows.md) to exercise your changes. Run `npm start` at the repository root after setup to open the sample catalogue. For a customized published package, choose your own package name and version and remove `private: true` before building. After renaming the package, replace `@onodocs/editor` in your application's imports with the new name, keeping any `/application`, `/forms`, or `/collaboration` suffix.
 
 To build against local SDK and Canvas package archives, pass their absolute paths:
 

@@ -7,17 +7,19 @@ const name = process.argv[2];
 if (!["editor", "proposal", "document-forms", "agreement-review", "ai-report", "template-editor", "document-modes"].includes(name)) throw new Error("Choose editor, proposal, document-forms, agreement-review, ai-report, template-editor or document-modes.");
 const root = resolve(import.meta.dirname, name);
 const entry = name === "ai-report" ? "start.js" : "main.js";
-const bundle = await build({ entryPoints: [resolve(root, entry)], bundle: true, format: "esm", platform: "browser", write: false });
+const bundle = await build({ entryPoints: [resolve(root, entry)], bundle: true, format: "esm", platform: "browser", loader: { ".docx": "binary", ".png": "binary" }, write: false });
 const types = { ".html": "text/html", ".css": "text/css", ".json": "application/json", ".svg": "image/svg+xml", ".docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document" };
 const server = createServer(async (request, response) => {
   try {
     const pathname = new URL(request.url, "http://localhost").pathname;
     if (pathname.startsWith("/developers/") || pathname === "/examples/") { response.writeHead(302, { Location: `https://onodocs.com${request.url}` }).end(); return; }
+    if (pathname === "/demo.css") { response.writeHead(200, { "Content-Type": "text/css" }).end(await readFile(resolve(import.meta.dirname, "demo.css"))); return; }
+    if (pathname === "/proposal/style.css") { response.writeHead(200, { "Content-Type": "text/css" }).end(await readFile(resolve(import.meta.dirname, "proposal/style.css"))); return; }
     if (pathname === `/${entry}`) { response.writeHead(200, { "Content-Type": "text/javascript" }).end(bundle.outputFiles[0].contents); return; }
     if (name === "document-forms" && pathname.startsWith("/source/") && pathname.endsWith(".txt")) {
       const file = pathname.slice("/source/".length, -".txt".length);
-      if (!["index.html", "style.css", "main.js", "serve.mjs", "brand-mark.svg", "recovery.js", "LICENSE", "THIRD-PARTY-NOTICES"].includes(file)) { response.writeHead(404).end(); return; }
-      const path = file === "recovery.js" ? resolve(import.meta.dirname, "application/recovery.js") : resolve(root, file);
+      if (!["index.html", "style.css", "main.js", "serve.mjs", "brand-mark.svg", "recovery.js", "demo.css", "LICENSE", "THIRD-PARTY-NOTICES"].includes(file)) { response.writeHead(404).end(); return; }
+      const path = file === "recovery.js" ? resolve(import.meta.dirname, "application/recovery.js") : file === "demo.css" ? resolve(import.meta.dirname, file) : resolve(root, file);
       response.writeHead(200, { "Content-Type": "text/plain", "Cache-Control": "no-store" }).end(await readFile(path)); return;
     }
     const assetRoot = name === "document-modes" && ["/sample.docx", "/definition.json"].includes(pathname) ? resolve(import.meta.dirname, "document-forms") : root;

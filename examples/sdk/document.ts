@@ -4,6 +4,9 @@ import sample from "../view-document/sample.docx";
 import template from "./template.docx";
 import { demoLicense } from "./license";
 
+document.querySelector<HTMLElement>(".demo-header")!.hidden = window.top !== window;
+document.querySelector<HTMLElement>(".source-link")!.hidden = window.top === window;
+
 const container = document.querySelector<HTMLElement>("#document-view")!;
 const viewport = document.querySelector<HTMLElement>("#document-viewport")!;
 const status = document.querySelector<HTMLElement>("#status")!;
@@ -13,6 +16,7 @@ const feedback = document.querySelector<HTMLOutputElement>("#feedback")!;
 const download = document.querySelector<HTMLButtonElement>("#download-page")!;
 const documentButtons = [...document.querySelectorAll<HTMLButtonElement>("#download-page, #fill-template, [data-save-pdf]")];
 const mode = new URLSearchParams(location.search).get("mode") ?? "viewer";
+document.querySelector(".demo-title")!.textContent = mode === "form" ? "HTML attachments" : mode === "template" ? "Tagged text replacement" : "Canvas viewer and export";
 let current: BrowserDocument | undefined;
 let canvasDocument: CanvasDocument | undefined;
 let view: DocumentView | undefined;
@@ -66,9 +70,9 @@ async function load(input?: File) {
     status.hidden = true;
     cancel.hidden = true;
     if (mode === "form") attachFields();
-    documentButtons.forEach(button => button.disabled = false);
+    documentButtons.forEach(button => button.disabled = false); window.dispatchEvent(new CustomEvent("onodocs-demo-outcome", { detail: "demo_ready" }));
   } catch (error) {
-    if (!signal.aborted) { dispose(); status.hidden = false; status.textContent = `Unable to open document. ${error instanceof Error ? error.message : "Try another Word file."}`; }
+    if (!signal.aborted) { window.dispatchEvent(new CustomEvent("onodocs-demo-outcome", { detail: "demo_error" })); dispose(); status.hidden = false; status.textContent = `Unable to open document. ${error instanceof Error ? error.message : "Try another Word file."}`; }
   }
 }
 
@@ -97,7 +101,7 @@ function attachFields() {
     const data = { dates, clientApproval: approval.checked, approvalDate: approvalDate.value };
     document.querySelector("#form-feedback")!.textContent = "Collected " + dates.length + " delivery dates. Add your own submit handler to send these values to your backend.";
     document.querySelector("#dates-json")!.textContent = JSON.stringify(data, null, 2);
-    document.querySelector<HTMLDialogElement>("#dates-dialog")!.showModal();
+    document.querySelector<HTMLDialogElement>("#dates-dialog")!.showModal(); window.dispatchEvent(new CustomEvent("onodocs-demo-outcome", { detail: "demo_complete" }));
   });
 }
 
@@ -115,7 +119,7 @@ async function perform(action: (doc: BrowserDocument, signal: AbortSignal) => Pr
     if (signal.aborted) return;
     await view?.whenRendered();
   } catch (error) {
-    if (!signal.aborted) { feedback.textContent = error instanceof Error ? error.message : "Unable to update document."; feedback.hidden = false; }
+    if (!signal.aborted) { window.dispatchEvent(new CustomEvent("onodocs-demo-outcome", { detail: "demo_error" })); feedback.textContent = error instanceof Error ? error.message : "Unable to update document."; feedback.hidden = false; }
   } finally {
     if (!documentSignal.aborted) {
       documentButtons.forEach(button => button.disabled = false);
@@ -128,7 +132,7 @@ async function perform(action: (doc: BrowserDocument, signal: AbortSignal) => Pr
 for (const name of ["viewer", "template"]) document.querySelector<HTMLElement>(`#${name}-controls`)!.hidden = mode !== name;
 document.querySelector("#fill-template")!.addEventListener("click", () => void perform(async (doc, signal) => {
   const data = bookings[document.querySelector<HTMLSelectElement>("#template-data")!.value as keyof typeof bookings];
-  await doc.update(Object.entries(data).map(([tag, text]) => ({ target: doc.query.contentControls().where({ tag }).one(), text })), { signal });
+  await doc.update(Object.entries(data).map(([tag, text]) => ({ target: doc.query.contentControls().where({ tag }).one(), text })), { signal }); window.dispatchEvent(new CustomEvent("onodocs-demo-outcome", { detail: "demo_generate" }));
 }));
 for (const button of document.querySelectorAll("[data-save-pdf]")) button.addEventListener("click", () => void perform(async (doc, signal) => {
   const filename = `${documentName}.pdf`;
@@ -155,7 +159,7 @@ download.addEventListener("click", () => void perform(async (doc, signal) => {
 function saveBlob(blob: Blob, filename: string) {
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
-  link.href = url; link.download = filename; link.click();
+  link.href = url; link.download = filename; link.click(); window.dispatchEvent(new CustomEvent("onodocs-demo-outcome", { detail: "demo_export" }));
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 Object.assign(window, { onodocsSample: { openDocument: load, dispose } });

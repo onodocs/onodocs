@@ -1,6 +1,8 @@
 # Run the document workflows
 
-Install matching released `@onodocs/sdk`, `@onodocs/canvas` and `@onodocs/editor` packages, plus `esbuild` and `fflate`. The SDK owns document operations, Canvas owns presentation, and Editor supplies the ready-made editing, form and application UI. The examples import only their public APIs. From the developer repository, run one of:
+From the [public developer repository](https://github.com/onodocs/onodocs), run `npm run setup` followed by `npm start`. Open the printed sample catalogue to try the editor, templates, forms, agreement review and extraction. The SDK owns document operations, Canvas owns presentation, and Editor supplies the ribbon, form and application UI. The examples import only their public APIs.
+
+To run one workflow separately after setup:
 
 ```sh
 node examples/serve-workflow.mjs editor
@@ -20,17 +22,17 @@ The [public examples repository](https://github.com/onodocs/onodocs/tree/main/ex
 
 The [workflow guide](https://onodocs.com/developers/document-workflows/) contains integration excerpts. Each example directory contains its HTML, CSS and application code. Proposal and agreement samples include their DOCX; the application form also includes its JSON field definition. The report creates its fictional document through the SDK. Form recovery uses `examples/application/recovery.js` and stores one draft per template and definition in this browser.
 
-The [template designer](../examples/template-editor/) starts with an invoice. Add fields or repeating content, edit sample values, preview the generated document, then return to the template or download Word/PDF. Its sample document is included in the directory.
+The [document editor](../examples/editor/) opens a project report with headings, a delivery table, an image and multiple pages. The sample picker also offers a short brief and meeting notes. Use the File ribbon to open a local document or download Word/PDF.
+
+The [template designer](../examples/template-editor/) and [proposal generator](../examples/proposal/) share one proposal template. Design template edits its wording and bindings. Enter data collects proposal details and service rows. Edit generated document opens one result for further edits with the normal Editor controls. Template changes and generated-document changes remain separate. Regeneration asks before replacing edits to the current result. The shared DOCX lives in `examples/proposal/sample.docx`.
 
 [Document modes](../examples/document-modes/) uses the equipment request from `examples/document-forms`. Switch between viewing, editing, reviewing and filling the form without reopening the document. The shared local server serves the matching document and field definition.
 
-Proposal generation repeats service rows, then permits wording edits before DOCX/PDF export. It asks before regeneration overwrites those edits. Refreshing starts a new proposal.
+The equipment request opens in recipient mode, with answer fields, local drafts, completion and Word/PDF/JSON downloads. Word and JSON contain answers from the same completion snapshot. Invalid input remains available for correction. No request is submitted to an organization. Open the designer with `?mode=design` to edit fields and rules through the Forms ribbon. Preview uses a separate answer session. Export form project downloads the current Word template, definition and runnable application with source and license notices. Extract the ZIP and follow `START.txt`. The exported application starts in watermarked evaluation mode. Definitions control this interface; they do not prevent edits in external software.
 
-The equipment request validates permitted answers and exports completed Word, PDF and JSON. Word and JSON contain answers from the same completion snapshot. Invalid input remains available for correction. Drafts remain local and no request is submitted to an organization. Definitions control this interface; they do not prevent edits in external software. In Developer tools, use Export form project to download the current Word template, its field definition and a runnable application with the required source and license notices. Extract the ZIP and follow `START.txt`. The exported application starts in watermarked evaluation mode.
+Agreement review starts with comments, tracked suggestions and an original version. Use the Review ribbon to reply, accept or reject changes, compare documents and inspect history. The reviewer selector represents two fictional parties and is not authentication. Use Download reviewed Word and Open returned Word to exchange the agreement. Versions last for the current tab. Supported exchange has been checked with Word 16; arbitrary Word review structures are not covered.
 
-Agreement review records comments, replies and tracked text replacements. Use the reviewer selector to try both fictional parties. Accept or reject suggestions, compare the original, download Word, then reopen a Word-edited copy. Reviewer selection is sample identity, not authentication. Versions last for the current tab. Supported exchange has been checked with Word 16; arbitrary Word review structures are not covered.
-
-Report review uses predetermined local suggestions for its fictional report. It makes no AI call and does not analyze arbitrary uploads. Replace `sampleReviewer` with your application's reviewer or `httpReviewer` callback for a real service, with credentials kept on your backend. The user approves each edit; changing the document invalidates earlier source references and requires another review.
+Report review uses predetermined local suggestions for its fictional report, with an evidence panel beside the editor. It makes no AI call and does not analyze arbitrary uploads. Apply suggestions individually, continue through refreshed findings, or undo through the editor. Replace `sampleReviewer` with your application's reviewer or `httpReviewer` callback for a real service, with credentials kept on your backend.
 
 PDF export includes searchable text, links, bookmarks and supported tagged structure, with vector graphics where supported and rasterized visible text. It is not a PDF/UA certification. Rendering and pagination depend on available fonts. Always test your documents and browser targets before production use.
 
