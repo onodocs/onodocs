@@ -14,7 +14,7 @@ const samples = { report: { bytes: report, name: "Project report.docx" }, brief:
 let sampleDocument;
 let selectedSample = "";
 let dirty = false;
-export const editor = createEditor({ container, document: { licenseKey: await demoLicense(lifetime.signal), signal: lifetime.signal }, allowedModes: ["view", "edit"], onChange: () => { dirty = true; window.dispatchEvent(new CustomEvent("onodocs-demo-outcome", { detail: "demo_edit" })); }, onError: error => { window.dispatchEvent(new CustomEvent("onodocs-demo-outcome", { detail: "demo_error" })); status.textContent = error.message; } });
+export const editor = createEditor({ container, document: { licenseKey: await demoLicense(lifetime.signal), signal: lifetime.signal }, allowedModes: ["view", "edit"], onChange: () => { dirty = true; window.dispatchEvent(new CustomEvent("onodocs-demo-outcome", { detail: "demo_edit" })); }, onError: () => { window.dispatchEvent(new CustomEvent("onodocs-demo-outcome", { detail: "demo_error" })); } });
 
 async function openSample(name) {
   const sample = samples[name];
