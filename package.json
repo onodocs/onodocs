@@ -15,9 +15,9 @@
     "extract": "node examples/docx-extraction/node.ts"
   },
   "dependencies": {
-    "@onodocs/canvas": "0.5.3",
-    "@onodocs/editor": "0.5.3",
-    "@onodocs/sdk": "0.5.3",
+    "@onodocs/canvas": "0.5.4",
+    "@onodocs/editor": "0.5.4",
+    "@onodocs/sdk": "0.5.4",
     "fflate": "0.8.3",
     "pdf-lib": "1.17.1",
     "playwright-core": "1.62.1",
