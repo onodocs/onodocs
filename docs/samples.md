@@ -146,3 +146,13 @@ Use the corresponding directory from the table for another framework. Every proj
 Each application includes a Word document, local file selection, loading status, error recovery, cancellation, text selection and copying, and Hide viewer / Show viewer controls. Files chosen in the browser are not uploaded. Nuxt, SvelteKit and Next.js render the initial page on the server and open the document after mounting in the browser. Blazor uses an interactive server circuit for its component controls while JavaScript processes the local document.
 
 The applications share [mount.ts](../examples/sdk/mount.ts), [styles](../examples/frameworks/style.css) and the included document. Nuxt reuses the Vue components. Keep the repository directory structure when running these examples. See the [framework guide](https://onodocs.com/developers/#frameworks) for short integration examples.
+
+## Command-line template filling
+
+After setup, run `node examples/fill-template.mjs template.docx completed.docx customer "Willow Design"` from the repository root. The input must contain an editable content control tagged `customer`. Set `ONODOCS_LICENSE_KEY` for licensed use.
+
+## HTTP document service
+
+The [HTTP service](../examples/http-service/server.mjs) uses the SDK server and HTTP entries. Install Google Chrome, set `ONODOCS_SERVICE_TOKEN`, then run `node examples/http-service/server.mjs` from the repository root. The default address is `http://127.0.0.1:5191`. `HOST`, `PORT`, `CHROMIUM_PATH` and `ONODOCS_LICENSE_KEY` configure the service.
+
+The [JavaScript](../examples/http-service/client.mjs), [Python](../examples/http-service/client.py) and [C#](../examples/http-service/client.cs) clients open a Word document and export PDF. Run `node examples/http-service/client.mjs input.docx output.pdf`, `python examples/http-service/client.py input.docx output.pdf`, or `dotnet run --file examples/http-service/client.cs -- input.docx output.pdf` with the same service token. Keep this credential on the backend; production browser clients need application-owned authentication.
