@@ -99,13 +99,13 @@ export function createEditor(options: EditorOptions): WordEditor {
 :host([data-mode=form]){display:grid;grid-template-columns:minmax(0,1fr) 310px}:host([data-mode=form]) nav,:host([data-mode=form]) footer{grid-column:1/-1}:host([data-mode=form]) main{grid-column:1;grid-row:2;width:calc(100% - 40px)}:host([data-mode=form]) .form-panel{grid-column:2;grid-row:2;align-self:start;margin:28px 16px 28px 0}.form-panel{background:white;border:1px solid #dce1e6;padding:20px;margin:20px auto;max-width:860px}.form-panel label{display:grid;gap:5px;margin:12px 0}.form-panel input,.form-panel select,.form-panel textarea{position:static;opacity:1;width:100%;height:auto;min-height:34px;padding:8px;border:1px solid #a9b5bd}.form-panel textarea{min-height:80px;font:inherit}.form-panel input[type=number]{width:100%}.form-panel select{max-width:none}.form-panel input[type=checkbox]{width:20px}.form-panel small[role=alert]{color:#a32828}.form-panel button{background:#176d60;color:white}
 nav{position:sticky;top:0;z-index:5;background:var(--onodocs-toolbar-background,#fff);border-bottom:1px solid #d7dce2;box-shadow:0 2px 5px #25304006;padding:0 16px}
 .tool-group{display:flex;align-items:center;gap:3px;padding-right:10px;margin-right:4px;border-right:1px solid #e0e4e9}.tool-group:last-child{border-right:0;margin-right:0;padding-right:0}
-.ribbon-header{display:flex;align-items:center;gap:12px;border-bottom:1px solid #e6e9ee;min-height:42px}.quick-access{display:flex;gap:2px;padding-right:10px;border-right:1px solid #e0e4e9}.ribbon-tabs{display:flex;align-self:stretch;gap:2px;overflow-x:auto;scrollbar-width:thin}.ribbon-tabs button{height:100%;min-height:42px;border-radius:0;border-bottom:3px solid transparent;padding:8px 14px 6px}.ribbon-tabs button[aria-selected=true]{color:var(--onodocs-accent,#a33327);border-bottom-color:currentColor;font-weight:600}.ribbon-tabs button[data-context]{color:#346e66}.ribbon-header>select{margin-left:auto;flex:none}.ribbon-panel{display:flex;align-items:stretch;gap:0;min-height:106px;padding:10px 3px 6px;overflow-x:auto;scrollbar-width:thin}.ribbon-panel .tool-group{flex:none;flex-direction:column;justify-content:space-between;align-items:stretch;gap:5px;padding:0 14px;margin:0}.ribbon-panel .tool-group:first-child{padding-left:0}.tool-content{display:flex;flex-direction:column;justify-content:center;gap:4px;flex:1}.tool-line{display:flex;align-items:center;gap:3px}.group-caption{display:block;text-align:center;font-size:11px;color:#687380;line-height:16px}.ribbon-panel .large-button{height:66px;min-width:62px;flex-direction:column;gap:7px;padding:7px 10px}.large-button svg{width:25px;height:25px}.ribbon-panel select[aria-label="Font family"]{width:145px}.ribbon-panel select[aria-label="Paragraph style"]{min-width:150px;max-width:210px;height:54px;font-size:16px}.ribbon-panel select[aria-label="Paragraph alignment"],.ribbon-panel select[aria-label="List"]{width:133px}.ribbon-panel input[type=color]{border-color:#dce1e6}
+.ribbon-header{display:flex;align-items:center;gap:12px;border-bottom:1px solid #e6e9ee;min-height:42px}.quick-access{display:flex;gap:2px;padding-right:10px;border-right:1px solid #e0e4e9}.ribbon-tabs{display:flex;align-self:stretch;gap:2px;overflow-x:auto;scrollbar-width:thin}.ribbon-tabs button{height:100%;min-height:42px;border-radius:0;border-bottom:3px solid transparent;padding:8px 14px 6px}.ribbon-tabs button[aria-selected=true]{color:var(--onodocs-accent,#a33327);border-bottom-color:currentColor;font-weight:600}.ribbon-tabs button[data-context]{color:#346e66}.ribbon-header>select{margin-left:auto;flex:none}.ribbon-panel{display:flex;align-items:stretch;gap:0;padding:6px 3px 4px;overflow-x:auto;scrollbar-width:thin}.ribbon-panel .tool-group{flex:none;flex-direction:column;justify-content:space-between;align-items:stretch;gap:4px;padding:0 14px;margin:0}.ribbon-panel .tool-group:first-child{padding-left:0}.tool-content{display:flex;flex-direction:column;justify-content:center;gap:4px;flex:1}.tool-line{display:flex;align-items:center;gap:3px}.group-caption{display:block;text-align:center;font-size:11px;color:#687380;line-height:16px}.ribbon-panel .large-button{height:32px;min-width:62px;gap:7px;padding:5px 8px}.large-button svg{width:20px;height:20px}.ribbon-panel select[aria-label="Font family"]{width:145px}.ribbon-panel select[aria-label="Paragraph style"]{min-width:150px;max-width:210px;height:54px;font-size:16px}.ribbon-panel select[aria-label="Paragraph alignment"],.ribbon-panel select[aria-label="List"]{width:133px}.ribbon-panel input[type=color]{border-color:#dce1e6}
 button,select,input{font:inherit;color:inherit;border:1px solid transparent;border-radius:5px;background:transparent;height:32px;padding:5px 8px}button{display:inline-flex;align-items:center;justify-content:center;gap:7px;cursor:pointer;white-space:nowrap}button.icon-button{width:32px;padding:6px}svg{width:18px;height:18px;flex:none;pointer-events:none}button:hover:not(:disabled){background:#f0f2f5}button:disabled{opacity:.32;cursor:default}button[aria-pressed=true]{color:var(--onodocs-accent,#a33327);background:var(--onodocs-selection,#fae9e5)}button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--onodocs-accent,#b43829);outline-offset:2px}.ribbon-tabs button:focus-visible{outline-offset:-5px}
 select,input{border-color:#dce1e6;background:white}select{max-width:170px}input[type=number]{width:58px}input[type=color]{width:32px;padding:6px;border-color:transparent;cursor:pointer}
 main{max-width:860px;margin:28px auto;min-height:300px;box-shadow:0 1px 5px #1e293b18}textarea{position:absolute;width:1px;height:1px;opacity:0;border:0;padding:0;resize:none;overflow:hidden;z-index:2}textarea[aria-label="Document text"]{pointer-events:none}textarea.composing{opacity:1;width:220px;background:white;pointer-events:auto}footer{padding:9px 24px;background:var(--onodocs-toolbar-background,white);border-top:1px solid #dce1e6;color:#66717f;font-size:12px}footer[data-error=true]{color:#a62a24}
 dialog{border:1px solid #d7dce2;border-radius:10px;padding:24px;width:380px;max-width:90vw;color:inherit;background:white;box-shadow:0 12px 48px #17212d26}dialog::backdrop{background:#10203055}dialog form{display:grid;gap:14px}dialog h2{margin:0 0 8px;font-size:18px;font-weight:600}dialog label{display:grid;gap:6px}dialog input,dialog input[type=number]{width:100%;height:36px}dialog button{border-color:#dce1e6}dialog button[type=submit]{background:var(--onodocs-accent,#b43829);color:white;border:0}
 @media(max-width:900px){:host([data-mode=form]){grid-template-columns:1fr}:host([data-mode=form]) .form-panel{grid-column:1;grid-row:3;margin:16px}nav{padding:0 10px}main{margin:16px 12px}.tool-group{padding-right:6px;margin-right:0}select{max-width:140px}.ribbon-header{gap:6px}.ribbon-tabs button{padding-inline:11px}.ribbon-panel .tool-group{padding-inline:10px}}
-@media(max-width:600px){.tool-group{flex:none}nav button,nav input,nav select{height:44px}button.icon-button{width:44px}nav input[type=color]{width:44px}main{margin:12px 8px}.ribbon-header{flex-wrap:wrap;gap:0}.quick-access{border:0;padding:0}.ribbon-tabs{order:2;width:100%;border-top:1px solid #edf0f3}.ribbon-tabs button{min-height:44px;padding-inline:14px}.ribbon-header>select{margin-left:auto}.ribbon-panel{min-height:132px}.ribbon-panel .large-button{height:88px;min-width:76px}.ribbon-panel select[aria-label="Paragraph style"]{height:60px}}
+@media(max-width:600px){.tool-group{flex:none}nav button,nav input,nav select{height:44px}button.icon-button{width:44px}nav input[type=color]{width:44px}main{margin:12px 8px}.ribbon-header{flex-wrap:wrap;gap:0}.quick-access{border:0;padding:0}.ribbon-tabs{order:2;width:100%;border-top:1px solid #edf0f3}.ribbon-tabs button{min-height:44px;padding-inline:14px}.ribbon-header>select{margin-left:auto}.ribbon-panel .large-button{height:44px;min-width:76px}.ribbon-panel select[aria-label="Paragraph style"]{height:60px}}
 `;
   const toolbar = document.createElement("nav"), preview = document.createElement("main"), input = document.createElement("textarea"), status = document.createElement("footer");
   toolbar.setAttribute("aria-label", "Document tools"); toolbar.setAttribute("part", "toolbar");
@@ -124,6 +124,7 @@ dialog{border:1px solid #d7dce2;border-radius:10px;padding:24px;width:380px;max-
   let navigating = false;
   let changeNotifications: Promise<void>[] = [];
   let typing: { text: string } | undefined;
+  let opening: AbortController | undefined;
   let inputText = "", inputStart = 0, inputEnd = 0;
   let inputParagraphs: { id: string; start: number; length: number }[] = [];
   const objectOutlines: DocumentAttachment[] = [];
@@ -134,7 +135,7 @@ dialog{border:1px solid #d7dce2;border-radius:10px;padding:24px;width:380px;max-
   function requireDocument(): BrowserDocument { if (disposed) throw new Error("Editor is disposed."); if (!doc) throw new Error("Open a document first."); return doc; }
   function requireSelection(): DocumentSelection { requireDocument(); if (!selection) throw new Error("Select document text first."); return selection; }
   function editable(): void { requireDocument(); if (mode !== "edit") throw new Error("Editing is unavailable in this document mode."); }
-  function enqueue<T>(action: () => Promise<T>, notify = true): Promise<T> {
+  function enqueue<T>(action: () => Promise<T>, notify = true, signal?: AbortSignal): Promise<T> {
     typing = undefined;
     pending++; input.setAttribute("aria-busy", "true");
     const notifications: Promise<void>[] = [];
@@ -143,7 +144,7 @@ dialog{border:1px solid #d7dce2;border-radius:10px;padding:24px;width:380px;max-
       changeNotifications = notifications;
       return action();
     });
-    const failed = (error: unknown) => { if (!disposed) { report(error instanceof Error ? error.message : String(error), true); options.onError?.(error); } };
+    const failed = (error: unknown) => { if (!disposed && !signal?.aborted) { report(error instanceof Error ? error.message : String(error), true); options.onError?.(error); } };
     queue = operation.then(() => {}, failed).finally(() => { pending--; if (!disposed) { input.setAttribute("aria-busy", String(pending > 0)); updateToolbar(); } });
     const completed = operation.then(async value => { try { await Promise.all(notifications); } catch (error) { failed(error); throw error; } return value; });
     if (notify) return completed;
@@ -163,7 +164,7 @@ dialog{border:1px solid #d7dce2;border-radius:10px;padding:24px;width:380px;max-
     void notification.catch(() => {});
     changeNotifications.push(notification);
   }
-  function event(action: () => Promise<unknown>): void { void action().catch(error => { if (!disposed) report(error instanceof Error ? error.message : String(error), true); }); }
+  function event(action: () => Promise<unknown>): void { void action().catch(error => { if (!disposed && !(error instanceof DOMException && error.name === "AbortError")) report(error instanceof Error ? error.message : String(error), true); }); }
   function syncInput(): void {
     if (!doc || !selection || composing) return;
     const first = doc.query.get(selection.start.paragraphId);
@@ -234,9 +235,10 @@ dialog{border:1px solid #d7dce2;border-radius:10px;padding:24px;width:380px;max-
     return { ...chosen, ...formatting };
   }
   async function snapshot(): Promise<Snapshot> { const range = requireSelection(), all = paragraphs(); return { mode, bytes: await requireDocument().save({ fields: "preserve" }), start: all.findIndex(p => p.id === range.start.paragraphId), end: all.findIndex(p => p.id === range.end.paragraphId), selection: range, formatting: { ...formatting } }; }
-  async function mount(bytes: ArrayBuffer | Uint8Array | Blob): Promise<void> {
-    const next = await openDocument(bytes, { commentDisplay: "hidden", ...(options.review ? { revisionView: "accepted" as const } : {}), ...options.document, signal: options.document?.signal ? AbortSignal.any([options.document.signal, lifetime.signal]) : lifetime.signal });
+  async function mount(bytes: ArrayBuffer | Uint8Array | Blob, signal = lifetime.signal): Promise<void> {
+    const next = await openDocument(bytes, { commentDisplay: "hidden", ...(options.review ? { revisionView: "accepted" as const } : {}), ...options.document, signal: AbortSignal.any([lifetime.signal, signal, ...(options.document?.signal ? [options.document.signal] : [])]) });
     if (disposed) { next.dispose(); throw new Error("Editor is disposed."); }
+    if (signal.aborted) { next.dispose(); signal.throwIfAborted(); }
     for (const outline of objectOutlines.splice(0)) outline.dispose(); selectedImage = undefined;
     canvas?.dispose(); doc?.dispose(); doc = next;
     canvas = createDocument(doc, { container: preview, viewOptions: { zoom: "fit-width", input, onSelectionChange(next) { if (pending && !navigating || composing) return; if (JSON.stringify(next) !== JSON.stringify(selection)) formatting = {}; selection = next; selectedImage = undefined; syncInput(); outlineSelection(); updateToolbar(); } } });
@@ -272,7 +274,7 @@ dialog{border:1px solid #d7dce2;border-radius:10px;padding:24px;width:380px;max-
     if (command.kind === "replace" || command.kind === "paste") formatting = {};
     selectedImage = command.kind === "imageProperties" && !command.remove ? requireDocument().query.images().at(imageIndex)?.id : undefined;
     outlineSelection();
-    undo.push(previous); redo.length = 0; focus(); updateToolbar(); report("Document changed."); await changed({ edit, paragraphs: before });
+    undo.push(previous); redo.length = 0; await canvas?.view?.whenRendered({ visibleOnly: true }); focus(); updateToolbar(); report("Document changed."); await changed({ edit, paragraphs: before });
     await reviewPanel?.refresh();
   }
   function outlineSelection(): void {
@@ -295,7 +297,8 @@ dialog{border:1px solid #d7dce2;border-radius:10px;padding:24px;width:380px;max-
       const paragraph = target.kind === "image" ? doc.query.within(target).closest("paragraph").first() : doc.query.within(target).paragraphs().first();
       if (paragraph) {
         e.preventDefault(); e.stopPropagation();
-        selection = { start: { paragraphId: paragraph.id, offset: 0 }, end: { paragraphId: paragraph.id, offset: 0 } };
+        const caret = hit?.caret ? { paragraphId: hit.caret.paragraphId, offset: hit.caret.offset } : { paragraphId: paragraph.id, offset: 0 };
+        selection = { start: caret, end: caret };
         focus(); selectedImage = target.kind === "image" ? target.id : undefined; outlineSelection(); updateToolbar();
         report(target.kind === "image" ? "Image selected. Use Image properties to resize or delete it." : "Table selected. Use Table tools to change rows and columns.");
       }
@@ -403,8 +406,8 @@ dialog{border:1px solid #d7dce2;border-radius:10px;padding:24px;width:380px;max-
     dialog.addEventListener("close", () => { dialog.remove(); focus(); }); dialog.showModal(); return Promise.resolve();
   }
   function fieldNotice(fields: readonly import("@onodocs/sdk").DocumentFieldStatus[]) { const pending = fields.filter(field => field.status === "unsupported" || field.status === "requires-layout"); if (pending.length) report(`Exported with cached fields: ${pending.map(field => field.command).join(", ")}. Update these fields in Word.`, true); }
-  async function download(pdf: boolean): Promise<void> { const bytes = pdf ? await result.pdf() : await result.save(), url = URL.createObjectURL(new Blob([bytes], { type: pdf ? "application/pdf" : "application/vnd.openxmlformats-officedocument.wordprocessingml.document" })); const anchor = document.createElement("a"); anchor.href = url; anchor.download = filename.replace(/\.docx$/i, "") + (pdf ? ".pdf" : ".docx"); anchor.click(); setTimeout(() => URL.revokeObjectURL(url), 1000); }
-  button("open", "Open Word", async () => { const picker = document.createElement("input"); picker.type = "file"; picker.accept = ".docx"; picker.addEventListener("change", () => { const file = picker.files?.[0]; if (file) event(() => result.open(file, file.name)); }); picker.click(); });
+  async function download(pdf: boolean): Promise<void> { const bytes = pdf ? await result.pdf() : await result.save(), url = URL.createObjectURL(new Blob([bytes], { type: pdf ? "application/pdf" : "application/octet-stream" })); const anchor = document.createElement("a"); anchor.href = url; anchor.download = pdf ? filename.replace(/\.(docx|docm|dotx|dotm)$/i, "") + ".pdf" : /\.(docx|docm|dotx|dotm)$/i.test(filename) ? filename : filename + ".docx"; anchor.click(); setTimeout(() => URL.revokeObjectURL(url), 1000); }
+  button("open", "Open Word", async () => { const picker = document.createElement("input"); picker.type = "file"; picker.accept = ".docx,.docm,.dotx,.dotm"; picker.addEventListener("change", () => { const file = picker.files?.[0]; if (file) event(() => result.open(file, file.name)); }); picker.click(); });
   button("new", "New document", () => result.newDocument());
   button("save", "Download Word", () => download(false)); button("pdf", "Download PDF", () => download(true));
   button("undo", "Undo", () => result.undo()); button("redo", "Redo", () => result.redo());
@@ -470,7 +473,7 @@ dialog{border:1px solid #d7dce2;border-radius:10px;padding:24px;width:380px;max-
         for (const [key, value] of Object.entries({ viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", "stroke-width": "1.75", "stroke-linecap": "round", "stroke-linejoin": "round", "aria-hidden": "true", focusable: "false" })) icon.setAttribute(key, value);
         icon.innerHTML = markup;
         control.replaceChildren(icon);
-        const labeled = large || name === "find" || name === "replace" || name === "review" || name.startsWith("review:");
+        const labeled = large || name === "find" || name === "replace" || name === "page" || name === "review" || name.startsWith("review:");
         if (labeled) { const text = document.createElement("span"); text.textContent = toolLabels[name] ?? label; control.append(text); }
         if (large || !labeled) control.classList.add(large ? "large-button" : "icon-button");
       }
@@ -495,9 +498,8 @@ dialog{border:1px solid #d7dce2;border-radius:10px;padding:24px;width:380px;max-
     toolbar.append(header);
     const definitions = [
       { name: "File", groups: [{ label: "Document", rows: [["new", "open"]] }, { label: "Download", rows: [["save", "pdf"]] }] },
-      { name: "Home", groups: [{ label: "Font", rows: [["font", "size"], ["bold", "italic", "underline", "strike", "color"]] }, { label: "Paragraph", rows: [["list"], ["alignment"]] }, { label: "Styles", rows: [["style"]] }, { label: "Editing", rows: [["find"], ["replace"]] }, { label: "Commands", rows: [(options.commands ?? []).filter(command => !command.ribbon).map(command => command.id)] }] },
+      { name: "Home", groups: [{ label: "Font", rows: [["font", "size"], ["bold", "italic", "underline", "strike", "color"]] }, { label: "Paragraph", rows: [["list"], ["alignment"]] }, { label: "Styles", rows: [["style"]] }, { label: "Editing", rows: [["find"], ["replace"]] }, { label: "Page", rows: [["page"]] }, { label: "Commands", rows: [(options.commands ?? []).filter(command => !command.ribbon).map(command => command.id)] }] },
       { name: "Insert", groups: [{ label: "Tables", rows: [["table"]] }, { label: "Illustrations", rows: [["image"]] }, { label: "Links", rows: [["link"]] }, { label: "Header & footer", rows: [["header", "footer"]] }] },
-      { name: "Layout", groups: [{ label: "Page setup", rows: [["page"]] }] },
       { name: "Review", groups: [{ label: "Comments", rows: [["review:newComment", "review"], ["review:previousComment", "review:nextComment"]] }, { label: "Tracking", rows: [["review:tracking"], ["review:changes"]] }, { label: "Changes", rows: [["review:acceptAll", "review:rejectAll"], ["review:previousChange", "review:nextChange"]] }, { label: "Compare", rows: [["review:compare"], ["review:history"]] }] },
       { name: "Table", context: "table:insertRow", groups: [{ label: "Insert", rows: [["table:insertRow", "table:insertColumn"]] }, { label: "Delete", rows: [["table:deleteRow", "table:deleteColumn", "table:delete"]] }] },
       { name: "Picture", context: "imageTools", groups: [{ label: "Picture", rows: [["imageTools"]] }] },
@@ -555,6 +557,8 @@ dialog{border:1px solid #d7dce2;border-radius:10px;padding:24px;width:380px;max-
       const before = paragraphs(), range = selection, start = before.findIndex(p => p.id === range?.start.paragraphId), end = before.findIndex(p => p.id === range?.end.paragraphId);
       const next = await load();
       if (!next) return;
+      const previousMode = mode;
+      const editingText = root.activeElement === input;
       if (next.allowedModes) {
         const previous = [...allowedModes]; allowedModes.splice(0, allowedModes.length, ...next.allowedModes);
         try { if (!allowedModes.length) throw new Error("At least one mode is required."); for (const value of allowedModes) validateMode(value); }
@@ -568,8 +572,11 @@ dialog{border:1px solid #d7dce2;border-radius:10px;padding:24px;width:380px;max-
         const all = paragraphs(), first = all[start], last = all[end];
         if (range && first && last) selection = { start: { paragraphId: first.id, offset: Math.min(range.start.offset, first.text.length) }, end: { paragraphId: last.id, offset: Math.min(range.end.offset, last.text.length) } };
       }
-      outlineSelection(); updateToolbar(); await reviewPanel?.setMode();
+      outlineSelection(); updateToolbar();
+      if (mode === previousMode) await reviewPanel?.refresh(); else await reviewPanel?.setMode();
       if (selection) canvas?.view?.setSelection(selection);
+      syncInput();
+      if (editingText && mode === "edit" && !root.activeElement && document.activeElement === document.body) input.focus({ preventScroll: true });
     }); },
     get mode() { return mode; }, get allowedModes() { return allowedModes; },
     async setMode(next) {
@@ -582,7 +589,20 @@ dialog{border:1px solid #d7dce2;border-radius:10px;padding:24px;width:380px;max-
     answers() { if (!options.form) throw new Error("This editor has no form definition."); return createForm(requireDocument(), options.form).answers(); },
     async completeForm() { await formPanel?.flush(); return enqueue(async () => { if (mode !== "form" || !options.form) throw new Error("Completion requires form mode."); return createForm(requireDocument(), options.form).complete({ signal: lifetime.signal }); }); },
     get document() { return doc; }, get selection() { return selection; }, element: host,
-    open(bytes, name = "document.docx") { return enqueue(async () => { await mount(bytes); filename = name; undo.length = 0; redo.length = 0; formatting = {}; focus(); report("Ready."); }); },
+    open(bytes, name = "document.docx") {
+      opening?.abort();
+      const controller = new AbortController(); opening = controller;
+      report("Opening document…");
+      return enqueue(async () => {
+        try {
+          controller.signal.throwIfAborted();
+          await mount(bytes, controller.signal);
+          controller.signal.throwIfAborted();
+          filename = name; undo.length = 0; redo.length = 0; formatting = {}; focus(); report("Ready.");
+        } catch (error) { controller.signal.throwIfAborted(); throw error; }
+        finally { if (opening === controller) opening = undefined; }
+      }, true, controller.signal);
+    },
     restore(bytes) { return enqueue(async () => { editable(); const previous = await snapshot(); await mount(bytes); undo.push(previous); redo.length = 0; formatting = {}; focus(); await changed({}); report("Version restored."); }); },
     newDocument() { return enqueue(async () => { if (mode !== "edit") throw new Error("Creating a document requires editing mode."); await mount(await createDocumentPackage(lifetime.signal)); filename = "document.docx"; undo.length = 0; redo.length = 0; formatting = {}; focus(); report("Ready."); }); },
     execute(command) { return enqueue(() => apply(command)); },
