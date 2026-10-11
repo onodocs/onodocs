@@ -48,4 +48,4 @@ node examples/document-collaboration/serve.mjs
 
 Open the printed address with `?user=alex` and `?user=sam` in separate browser profiles. Use `?user=jo` for review access. The sample keeps edits in `~/.tmp/onodocs/collaboration-demo.sqlite`; browser recovery stays in each profile. Stop the server with Ctrl+C. Set `PORT` if its default port is already in use. The URL-selected identities demonstrate roles and are not production authentication.
 
-For licensed shared sessions, pass `licenseKey` to `createCollaborationService` from `@onodocs/sdk/collaboration` on the server and through the editor's document options in the browser. The public repository and Editor package include the complete collaboration example. The application supplies authentication, roles, transport and atomic storage.
+For licensed shared sessions, pass `licenseKey` to `createCollaborationService` from `@onodocs/sdk/collaboration` on the server and through the editor's document options in the browser. The public repository contains the complete collaboration example. The application supplies authentication, roles, transport and atomic storage.

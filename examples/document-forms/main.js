@@ -5,6 +5,8 @@ import { recoveryStore } from "../application/recovery.js";
 import projectPackage from "../../package.json" with { type: "json" };
 
 const container = document.querySelector("main"), status = document.querySelector("#status"), outputs = document.querySelector("#outputs"), dialog = document.querySelector("#draft-choice");
+const designContainer = document.createElement("div"), fillContainer = document.createElement("div");
+container.append(designContainer, fillContainer);
 let bytes, definition, designer, filling, recovery, saved, completed, busy = false;
 const lifetime = new AbortController();
 const licenseKey = await demoLicense(lifetime.signal);
@@ -12,6 +14,7 @@ const authoring = new URLSearchParams(location.search).get("mode") === "design";
 function report(message, error = false) { status.textContent = message; status.dataset.error = String(error); if (error) window.dispatchEvent(new CustomEvent("onodocs-demo-outcome", { detail: "demo_error" })); }
 function showMode(mode) {
   document.body.dataset.mode = mode;
+  designContainer.hidden = mode !== "design"; fillContainer.hidden = mode === "design";
   const designMode = mode === "design", previewMode = mode === "preview";
   document.querySelector("#title").textContent = designMode ? "Design the equipment request" : previewMode ? "Try your form" : "Equipment request";
   document.querySelector("#description").textContent = designMode ? "Edit the document and use Forms to define fields, preview answers or export your application." : previewMode ? "Fill this temporary preview. Return to the designer to keep editing the blank template." : "Fill in your answers, review the document and download your completed request.";
@@ -42,12 +45,12 @@ async function stores() {
   recovery = recoveryStore(`onodocs-equipment:${hash}:recovery`); saved = recoveryStore(`onodocs-equipment:${hash}:saved`);
 }
 async function fill(input) {
-  const next = await openForm({ container, input, definition, document: { licenseKey }, ...(authoring ? {} : { recovery }), persist: value => authoring ? Promise.resolve() : saved.write(value), signal: lifetime.signal, onEvent(event) {
+  const next = await openForm({ container: fillContainer, input, definition, document: { licenseKey }, ...(authoring ? {} : { recovery }), persist: value => authoring ? Promise.resolve() : saved.write(value), signal: lifetime.signal, onEvent(event) {
     if (event.type === "change") invalidate();
     if (event.type === "saved" && !completed && !authoring) report("Draft saved in this browser.");
     if (event.type === "error") report("Your draft could not be saved in this browser. Keep this page open, allow browser storage and retry Save draft.", true);
   }, onComplete(result) { window.dispatchEvent(new CustomEvent("onodocs-demo-outcome", { detail: "demo_complete" })); completed = result; outputs.hidden = false; report(authoring ? "Preview complete. These answers have not changed your blank template." : "Request complete. Download it below to share through your own approval process."); outputs.scrollIntoView({ block: "nearest" }); } });
-  designer?.dispose(); designer = undefined; filling?.dispose(); filling = next; window.dispatchEvent(new CustomEvent("onodocs-demo-outcome", { detail: "demo_ready" })); invalidate(); showMode(authoring ? "preview" : "fill");
+  filling?.dispose(); filling = next; window.dispatchEvent(new CustomEvent("onodocs-demo-outcome", { detail: "demo_ready" })); invalidate(); showMode(authoring ? "preview" : "fill");
   report(authoring ? "Temporary preview. Answers are discarded when you return to the designer." : "Answers stay in this browser. Nothing is submitted to a purchasing team.");
 }
 async function preview() {
@@ -60,10 +63,13 @@ async function preview() {
   catch { report("Browser draft storage is unavailable. Allow browser storage and retry Save draft before leaving this page."); return; }
   if (draft && await choose("Resume your saved request?", "A draft for this template and its field rules is stored in this browser. Cancel keeps the blank form; the stored draft remains until your next save.", "Restore draft")) { await fill(draft); report("Saved draft restored. Review the answers before completing your request."); }
 }
-async function design() {
-  const next = createFormDesigner({ container, document: { licenseKey }, onPreview: () => run(preview), onExportProject: () => run(exportProject), onError(error) { report(error.message, true); } });
-  try { await next.open(bytes, definition); } catch (error) { next.dispose(); throw error; }
-  filling?.dispose(); filling = undefined; designer?.dispose(); designer = next; invalidate();
+async function design(replace = false) {
+  if (!designer || replace) {
+    const next = createFormDesigner({ container: designContainer, document: { licenseKey }, onPreview: () => run(preview), onExportProject: () => run(exportProject), onError(error) { report(error.message, true); } });
+    try { await next.open(bytes, definition); } catch (error) { next.dispose(); throw error; }
+    designer?.dispose(); designer = next;
+  }
+  filling?.dispose(); filling = undefined; invalidate();
   showMode("design"); report("Use the Forms ribbon to define fields, preview the form and export the complete project.");
 }
 async function initialize() {
@@ -101,8 +107,8 @@ async function exportProject() {
 }
 action("#rules", async () => { if (designer) ({ bytes, definition } = await designer.save()); download(JSON.stringify(definition, null, 2), "form.json", "application/json"); });
 document.querySelector("#resume").addEventListener("change", event => { const file = event.target.files[0]; if (!file) return; void run(async () => { if (!await choose("Open a Word draft?", "This replaces the visible answers. Use a draft downloaded from this form. The same field rules will apply.", "Open draft")) return; await fill(new Uint8Array(await file.arrayBuffer())); await filling.save(); report("Word draft opened and saved in this browser. Review the answers before completing."); }).finally(() => { event.target.value = ""; }); });
-document.querySelector("#document").addEventListener("change", event => { const file = event.target.files[0]; if (!file) return; void run(async () => { filling?.dispose(); filling = undefined; bytes = new Uint8Array(await file.arrayBuffer()); definition = { title: file.name.replace(/\.docx$/i, ""), fields: [] }; await design(); }); });
-document.querySelector("#definition").addEventListener("change", event => { const file = event.target.files[0]; if (!file) return; void run(async () => { const next = JSON.parse(await file.text()); if (designer) ({ bytes } = await designer.save()); definition = next; await design(); }); });
+document.querySelector("#document").addEventListener("change", event => { const file = event.target.files[0]; if (!file) return; void run(async () => { filling?.dispose(); filling = undefined; bytes = new Uint8Array(await file.arrayBuffer()); definition = { title: file.name.replace(/\.docx$/i, ""), fields: [] }; await design(true); }); });
+document.querySelector("#definition").addEventListener("change", event => { const file = event.target.files[0]; if (!file) return; void run(async () => { const next = JSON.parse(await file.text()); if (designer) ({ bytes } = await designer.save()); definition = next; await design(true); }); });
 container.addEventListener("input", invalidate);
 window.addEventListener("pagehide", event => { if (!event.persisted) { lifetime.abort(); designer?.dispose(); filling?.dispose(); } });
 await run(initialize);
