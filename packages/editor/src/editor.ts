@@ -27,6 +27,7 @@ export interface EditorOptions {
   readonly mode?: EditorMode;
   readonly allowedModes?: readonly EditorMode[];
   readonly form?: FormDefinition;
+  readonly captureHistory?: () => (() => void);
   readonly onModeChange?: (mode: EditorMode) => void;
   readonly onFormComplete?: (result: Readonly<{ bytes: Uint8Array<ArrayBuffer>; answers: FormAnswers }>) => void | Promise<void>;
   readonly review?: EditorReviewOptions;
@@ -60,7 +61,7 @@ export interface WordEditor {
   open(input: ArrayBuffer | Uint8Array | Blob, name?: string): Promise<void>;
   restore(input: ArrayBuffer | Uint8Array | Blob): Promise<void>;
   newDocument(): Promise<void>;
-  execute(command: EditorCommand): Promise<void>;
+  execute(command: EditorCommand | undefined, update?: () => void): Promise<void>;
   review(command: import("@onodocs/sdk").DocumentReviewCommand): Promise<void>;
   select(selection: DocumentSelection, scroll?: boolean): void;
   find(text: string): readonly DocumentSelection[];
@@ -72,6 +73,7 @@ export interface WordEditor {
   dispose(): void;
 }
 interface Snapshot {
+  readonly restoreState: (() => void) | undefined;
   readonly mode: EditorMode;
   readonly bytes: Uint8Array<ArrayBuffer>;
   readonly start: number;
@@ -234,7 +236,7 @@ dialog{border:1px solid #d7dce2;border-radius:10px;padding:24px;width:380px;max-
     if (p) for (const run of doc!.query.within(p).runs()) { chosen = run.formatting; offset += run.text.length; if (offset > selection!.start.offset || collapsed(selection!) && offset === selection!.start.offset) break; }
     return { ...chosen, ...formatting };
   }
-  async function snapshot(): Promise<Snapshot> { const range = requireSelection(), all = paragraphs(); return { mode, bytes: await requireDocument().save({ fields: "preserve" }), start: all.findIndex(p => p.id === range.start.paragraphId), end: all.findIndex(p => p.id === range.end.paragraphId), selection: range, formatting: { ...formatting } }; }
+  async function snapshot(): Promise<Snapshot> { const range = requireSelection(), all = paragraphs(); return { mode, restoreState: options.captureHistory?.(), bytes: await requireDocument().save({ fields: "preserve" }), start: all.findIndex(p => p.id === range.start.paragraphId), end: all.findIndex(p => p.id === range.end.paragraphId), selection: range, formatting: { ...formatting } }; }
   async function mount(bytes: ArrayBuffer | Uint8Array | Blob, signal = lifetime.signal): Promise<void> {
     const next = await openDocument(bytes, { commentDisplay: "hidden", ...(options.review ? { revisionView: "accepted" as const } : {}), ...options.document, signal: AbortSignal.any([lifetime.signal, signal, ...(options.document?.signal ? [options.document.signal] : [])]) });
     if (disposed) { next.dispose(); throw new Error("Editor is disposed."); }
@@ -257,24 +259,27 @@ dialog{border:1px solid #d7dce2;border-radius:10px;padding:24px;width:380px;max-
     if (styles && !options.styles) { styles.replaceChildren(new Option("Default paragraph", "")); for (const policy of doc.semantic.policyViews.textFormatting.domains.flatMap(domain => domain.paragraphStyles)) if (policy.styleType === "paragraph") styles.add(new Option(policy.styleId, policy.styleId)); }
     await reviewPanel?.refresh();
   }
-  async function apply(command: EditorCommand): Promise<void> {
-    editable(); const previous = await snapshot(), before = paragraphs(), edit = { ...command, selection: requireSelection() } as DocumentEdit;
-    const imageIndex = selectedImage ? requireDocument().query.images().all().findIndex(image => image.id === selectedImage) : -1;
-    const review = options.review ? await requireDocument().readReview() : undefined;
-    if (review?.tracking && command.kind !== "replace" && command.kind !== "format") throw new Error("Stop tracking before changing document structure.");
-    if (review?.tracking && command.kind === "format") {
-      const range = requireSelection(), all = paragraphs(), index = all.findIndex(p => p.id === range.start.paragraphId), endIndex = all.findIndex(p => p.id === range.end.paragraphId);
-      await requireDocument().review({ kind: "trackedFormat", selection: range, formatting: command.formatting, identity: options.review!.identity() });
-      selection = { start: { ...range.start, paragraphId: paragraphs()[index]!.id }, end: { ...range.end, paragraphId: paragraphs()[endIndex]!.id } };
-    } else if (review && command.kind === "replace" && (review.tracking || review.comments.length || review.revisions.length)) {
-      const range = requireSelection(), index = paragraphs().findIndex(p => p.id === range.start.paragraphId);
-      await requireDocument().review(review.tracking ? { kind: "trackedReplace", selection: range, text: command.text, identity: options.review!.identity() } : { kind: "replaceText", selection: range, text: command.text, paragraphBreaks: command.paragraphBreaks !== false });
-      const lines = !review.tracking && command.paragraphBreaks !== false ? command.text.split("\n") : [command.text], caret = { paragraphId: paragraphs()[index + lines.length - 1]!.id, offset: (lines.length === 1 ? range.start.offset : 0) + lines.at(-1)!.length }; selection = { start: caret, end: caret };
-    } else selection = await requireDocument().edit({ ...command, selection: requireSelection() } as DocumentEdit);
-    if (command.kind === "replace" || command.kind === "paste") formatting = {};
-    selectedImage = command.kind === "imageProperties" && !command.remove ? requireDocument().query.images().at(imageIndex)?.id : undefined;
+  async function apply(command: EditorCommand | undefined, update?: () => void): Promise<void> {
+    editable(); const previous = await snapshot(), before = paragraphs(), edit = command ? { ...command, selection: requireSelection() } as DocumentEdit : undefined;
+    if (command) {
+      const imageIndex = selectedImage ? requireDocument().query.images().all().findIndex(image => image.id === selectedImage) : -1;
+      const review = options.review ? await requireDocument().readReview() : undefined;
+      if (review?.tracking && command.kind !== "replace" && command.kind !== "format") throw new Error("Stop tracking before changing document structure.");
+      if (review?.tracking && command.kind === "format") {
+        const range = requireSelection(), all = paragraphs(), index = all.findIndex(p => p.id === range.start.paragraphId), endIndex = all.findIndex(p => p.id === range.end.paragraphId);
+        await requireDocument().review({ kind: "trackedFormat", selection: range, formatting: command.formatting, identity: options.review!.identity() });
+        selection = { start: { ...range.start, paragraphId: paragraphs()[index]!.id }, end: { ...range.end, paragraphId: paragraphs()[endIndex]!.id } };
+      } else if (review && command.kind === "replace" && (review.tracking || review.comments.length || review.revisions.length)) {
+        const range = requireSelection(), index = paragraphs().findIndex(p => p.id === range.start.paragraphId);
+        await requireDocument().review(review.tracking ? { kind: "trackedReplace", selection: range, text: command.text, identity: options.review!.identity() } : { kind: "replaceText", selection: range, text: command.text, paragraphBreaks: command.paragraphBreaks !== false });
+        const lines = !review.tracking && command.paragraphBreaks !== false ? command.text.split("\n") : [command.text], caret = { paragraphId: paragraphs()[index + lines.length - 1]!.id, offset: (lines.length === 1 ? range.start.offset : 0) + lines.at(-1)!.length }; selection = { start: caret, end: caret };
+      } else selection = await requireDocument().edit({ ...command, selection: requireSelection() } as DocumentEdit);
+      if (command.kind === "replace" || command.kind === "paste") formatting = {};
+      selectedImage = command.kind === "imageProperties" && !command.remove ? requireDocument().query.images().at(imageIndex)?.id : undefined;
+    }
+    try { update?.(); } catch (error) { await restoreSnapshot(previous); throw error; }
     outlineSelection();
-    undo.push(previous); redo.length = 0; await canvas?.view?.whenRendered({ visibleOnly: true }); focus(); updateToolbar(); report("Document changed."); await changed({ edit, paragraphs: before });
+    undo.push(previous); redo.length = 0; await canvas?.view?.whenRendered({ visibleOnly: true }); focus(); updateToolbar(); report("Document changed."); await changed({ ...(edit ? { edit } : {}), paragraphs: before });
     await reviewPanel?.refresh();
   }
   function outlineSelection(): void {
@@ -306,13 +311,17 @@ dialog{border:1px solid #d7dce2;border-radius:10px;padding:24px;width:380px;max-
   }
   preview.addEventListener("pointerdown", selectObject, { capture: true });
   preview.addEventListener("click", selectObject, { capture: true });
+  async function restoreSnapshot(entry: Snapshot): Promise<void> {
+    await mount(entry.bytes);
+    const all = paragraphs(); selection = { start: { paragraphId: all[entry.start]!.id, offset: entry.selection.start.offset }, end: { paragraphId: all[entry.end]!.id, offset: entry.selection.end.offset } };
+    formatting = entry.formatting; entry.restoreState?.(); focus();
+  }
   async function history(direction: "undo" | "redo"): Promise<void> {
     requireDocument(); const from = direction === "undo" ? undo : redo, to = direction === "undo" ? redo : undo, entry = from.at(-1);
     if (mode === "view" || mode !== "edit" && entry && entry.mode !== mode) throw new Error("This history operation is unavailable in the current mode.");
     if (!entry) return;
-    const previous = await snapshot(); await mount(entry.bytes);
-    const all = paragraphs(); selection = { start: { paragraphId: all[entry.start]!.id, offset: entry.selection.start.offset }, end: { paragraphId: all[entry.end]!.id, offset: entry.selection.end.offset } };
-    formatting = entry.formatting; from.pop(); to.push({ ...previous, mode: entry.mode }); focus(); await changed({ history: direction });
+    const previous = await snapshot(); await restoreSnapshot(entry);
+    from.pop(); to.push({ ...previous, mode: entry.mode }); await changed({ history: direction });
   }
   async function replace(text: string, paragraphBreaks = true): Promise<void> { await apply({ kind: "replace", text, paragraphBreaks, ...(Object.keys(formatting).length ? { formatting } : {}) }); }
   async function remove(backward: boolean, word = false): Promise<void> {
@@ -605,7 +614,7 @@ dialog{border:1px solid #d7dce2;border-radius:10px;padding:24px;width:380px;max-
     },
     restore(bytes) { return enqueue(async () => { editable(); const previous = await snapshot(); await mount(bytes); undo.push(previous); redo.length = 0; formatting = {}; focus(); await changed({}); report("Version restored."); }); },
     newDocument() { return enqueue(async () => { if (mode !== "edit") throw new Error("Creating a document requires editing mode."); await mount(await createDocumentPackage(lifetime.signal)); filename = "document.docx"; undo.length = 0; redo.length = 0; formatting = {}; focus(); report("Ready."); }); },
-    execute(command) { return enqueue(() => apply(command)); },
+    execute(command, update) { return enqueue(() => apply(command, update)); },
     review(command) { return enqueue(async () => {
       requireDocument();
       if (mode !== "edit" && (mode !== "review" || !["comment", "reply", "resolveComment", "deleteComment", "revision"].includes(command.kind))) throw new Error("This review action is unavailable in the current mode.");

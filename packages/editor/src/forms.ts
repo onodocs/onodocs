@@ -55,7 +55,7 @@ export interface FormDesigner {
   readonly definition: FormDefinition;
   open(input: ArrayBuffer | Uint8Array | Blob, definition?: FormDefinition): Promise<void>;
   addField(field: FormField, insert?: boolean): Promise<void>;
-  removeField(id: string): void;
+  removeField(id: string): Promise<void>;
   save(): Promise<Readonly<{ bytes: Uint8Array<ArrayBuffer>; definition: FormDefinition }>>;
   dispose(): void;
 }
@@ -74,7 +74,7 @@ export function createFormDesigner(options: FormDesignerOptions): FormDesigner {
   heading.textContent = "Form designer"; title.value = "New form"; title.setAttribute("aria-label", "Form title"); status.setAttribute("role", "status");
   panel.setAttribute("aria-label", "Form fields");
   panel.append(heading, title, list, settings, status); root.append(styles(), preview, panel); options.container.append(shell);
-  let fields: FormField[] = [];
+  let fields: FormField[] = [], formTitle = title.value;
   const commands: NonNullable<EditorOptions["commands"]> = options.ribbon === false ? [] : [
     { id: "form:add", label: "Add field", ribbon: { tab: "Forms", group: "Fields", icon: "new" }, execute() { settings.reset(); (controls.get("insert") as HTMLInputElement).checked = true; showSettings(); controls.get("id")!.focus(); } },
     { id: "form:settings", label: "Field settings", ribbon: { tab: "Forms", group: "Fields", icon: "review:tracking" }, execute() {
@@ -92,7 +92,7 @@ export function createFormDesigner(options: FormDesignerOptions): FormDesigner {
     ...options.onPreview ? [{ id: "form:preview", label: "Preview form", ribbon: { tab: "Forms", group: "Preview", icon: "find" }, execute: async () => options.onPreview!(result) }] : [],
     ...options.onExportProject ? [{ id: "form:export", label: "Export form project", ribbon: { tab: "Forms", group: "Export", icon: "save" }, execute: async () => options.onExportProject!(result) }] : [],
   ];
-  const editor = createEditor({ container: preview, ...(options.document ? { document: options.document } : {}), commands, toolbar: ["undo", "redo", "bold", "italic", "underline", "font", "size", "alignment", "table", "tableTools", ...commands.map(command => command.id)], onError(error) { status.textContent = String(error); options.onError?.(error); } });
+  const editor = createEditor({ captureHistory() { const definition = result.definition; return () => { fields = [...definition.fields]; formTitle = definition.title; title.value = formTitle; render(); const field = fields.find(field => field.id === value("id")); if (field) editField(field, false); else { settings.reset(); showSettings(); } }; }, onChange() { options.onChange?.(result); }, container: preview, ...(options.document ? { document: options.document } : {}), commands, toolbar: ["undo", "redo", "bold", "italic", "underline", "font", "size", "alignment", "table", "tableTools", ...commands.map(command => command.id)], onError(error) { status.textContent = String(error); options.onError?.(error); } });
   const controls = new Map<string, HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>();
   for (const [name, caption, type] of [["id", "Field ID", "text"], ["label", "Field label", "text"], ["tag", "Word tag (optional)", "text"], ["type", "Field type", "select"], ["choices", "Choices (one per line)", "textarea"], ["required", "Required", "checkbox"], ["readOnly", "Read-only field", "checkbox"], ["min", "Minimum number", "number"], ["max", "Maximum number", "number"], ["maxLength", "Maximum characters", "number"], ["help", "Help text", "text"], ["insert", "Insert after selected paragraph", "checkbox"]]) {
     const label = document.createElement("label"); label.textContent = caption!;
@@ -120,27 +120,26 @@ export function createFormDesigner(options: FormDesignerOptions): FormDesigner {
     for (const field of fields) {
       const row = document.createElement("p"), edit = document.createElement("button"), remove = document.createElement("button"); edit.textContent = field.label; remove.textContent = "Remove"; remove.setAttribute("aria-label", `Remove ${field.label}`); row.className = "field-row";
       edit.addEventListener("click", () => editField(field));
-      remove.addEventListener("click", () => result.removeField(field.id)); row.append(edit, remove); list.append(row);
+      remove.addEventListener("click", () => { void result.removeField(field.id).catch(error => { status.textContent = String(error); }); }); row.append(edit, remove); list.append(row);
     }
   }
   const result: FormDesigner = {
     editor,
-    get definition() { return { title: title.value, fields }; },
-    async open(input, definition = { title: "New form", fields: [] }) { await editor.open(input); createForm(editor.document!, definition); fields = definition.fields.map(field => ({ ...field })); title.value = definition.title; render(); },
+    get definition() { return { title: formTitle, fields }; },
+    async open(input, definition = { title: "New form", fields: [] }) { await editor.open(input); createForm(editor.document!, definition); fields = definition.fields.map(field => ({ ...field })); formTitle = definition.title; title.value = formTitle; render(); },
     async addField(field, insert = true) {
       const previous = fields.find(item => item.id === field.id), next = previous ? fields.map(item => item.id === field.id ? field : item) : [...fields, field];
       createForm(editor.document!, { title: title.value, fields: next });
       if (previous && previous.tag !== field.tag) throw new Error("An existing field's tag cannot be changed.");
-      if (previous) {
-        await editor.execute({ kind: "contentControl", tag: field.tag, title: field.label, multiline: field.type === "multiline", properties: true });
-      }
-      if (!previous && !editor.document!.query.contentControls().where({ tag: field.tag }).count()) await editor.execute({ kind: "contentControl", tag: field.tag, title: field.label, multiline: field.type === "multiline", insert });
-      fields = next; render(); options.onChange?.(result); status.textContent = "Field saved. Preview the form to fill its answer regions.";
+      const command = previous ? { kind: "contentControl" as const, tag: field.tag, title: field.label, multiline: field.type === "multiline", properties: true } : !editor.document!.query.contentControls().where({ tag: field.tag }).count() ? { kind: "contentControl" as const, tag: field.tag, title: field.label, multiline: field.type === "multiline", insert } : undefined;
+      await editor.execute(command, () => { const current = fields.some(item => item.id === field.id) ? fields.map(item => item.id === field.id ? field : item) : [...fields, field]; createForm(editor.document!, { title: formTitle, fields: current }); fields = current; render(); });
+      status.textContent = "Field saved. Preview the form to fill its answer regions.";
     },
-    removeField(id) { fields = fields.filter(field => field.id !== id); render(); options.onChange?.(result); },
+    removeField(id) { return editor.execute(undefined, () => { fields = fields.filter(field => field.id !== id); render(); }); },
     async save() { createForm(editor.document!, result.definition); const tags = new Set(editor.document!.query.contentControls().map(control => control.tag)); if (fields.some(field => !tags.has(field.tag))) throw new Error("A field region was removed. Restore it or remove its form rule before saving."); return { bytes: await editor.save(), definition: result.definition }; },
     dispose() { editor.dispose(); shell.remove(); }
   };
+  title.addEventListener("change", () => { const next = title.value; void editor.execute(undefined, () => { formTitle = next; }).catch(error => { title.value = formTitle; status.textContent = String(error); }); });
   settings.addEventListener("submit", event => {
     event.preventDefault(); const id = value("id").trim(), type = value("type") as FormField["type"];
     const field: FormField = { id, tag: fields.find(field => field.id === id)?.tag ?? (value("tag").trim() || `onodocs.${id}`), label: value("label"), type, required: (controls.get("required") as HTMLInputElement).checked, readOnly: (controls.get("readOnly") as HTMLInputElement).checked, help: value("help"), ...(type === "choice" ? { choices: value("choices").split("\n").map(value => value.trim()).filter(Boolean) } : {}), ...Object.fromEntries(["min", "max", "maxLength"].filter(name => value(name) !== "").map(name => [name, Number(value(name))])) };
