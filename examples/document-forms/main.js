@@ -108,7 +108,15 @@ async function exportProject() {
 action("#rules", async () => { if (designer) ({ bytes, definition } = await designer.save()); download(JSON.stringify(definition, null, 2), "form.json", "application/json"); });
 document.querySelector("#resume").addEventListener("change", event => { const file = event.target.files[0]; if (!file) return; void run(async () => { if (!await choose("Open a Word draft?", "This replaces the visible answers. Use a draft downloaded from this form. The same field rules will apply.", "Open draft")) return; await fill(new Uint8Array(await file.arrayBuffer())); await filling.save(); report("Word draft opened and saved in this browser. Review the answers before completing."); }).finally(() => { event.target.value = ""; }); });
 document.querySelector("#document").addEventListener("change", event => { const file = event.target.files[0]; if (!file) return; void run(async () => { filling?.dispose(); filling = undefined; bytes = new Uint8Array(await file.arrayBuffer()); definition = { title: file.name.replace(/\.docx$/i, ""), fields: [] }; await design(true); }); });
-document.querySelector("#definition").addEventListener("change", event => { const file = event.target.files[0]; if (!file) return; void run(async () => { const next = JSON.parse(await file.text()); if (designer) ({ bytes } = await designer.save()); definition = next; await design(true); }); });
+document.querySelector("#definition").addEventListener("change", event => {
+  const file = event.target.files[0]; if (!file) return;
+  void run(async () => {
+    if (designer) ({ bytes, definition } = await designer.save());
+    const previous = definition;
+    try { definition = JSON.parse(await file.text()); await design(true); }
+    catch (error) { definition = previous; throw new Error("This file could not be opened as a form definition. Choose a valid form JSON file. Your current form is unchanged.", { cause: error }); }
+  }).finally(() => { event.target.value = ""; });
+});
 container.addEventListener("input", invalidate);
 window.addEventListener("pagehide", event => { if (!event.persisted) { lifetime.abort(); designer?.dispose(); filling?.dispose(); } });
 await run(initialize);
