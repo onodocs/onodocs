@@ -22,6 +22,7 @@
     "examples/**/*.tsx"
   ],
   "exclude": [
-    "examples/frameworks"
+    "examples/frameworks",
+    "examples/application/editor.component.ts"
   ]
 }
