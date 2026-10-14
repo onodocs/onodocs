@@ -4,7 +4,10 @@ import report from "./sample.docx";
 import brief from "../view-document/sample.docx";
 import plan from "./plan.docx";
 
-if (new URLSearchParams(location.search).has("embedded")) document.querySelector(".demo-header").hidden = true;
+if (new URLSearchParams(location.search).has("embedded")) {
+  document.querySelector(".demo-header").hidden = true;
+  document.querySelector(".sample-picker").hidden = true;
+}
 
 const lifetime = new AbortController();
 const container = document.querySelector("#app");
