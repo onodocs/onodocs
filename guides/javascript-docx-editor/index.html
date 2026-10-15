@@ -1,0 +1,115 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>JavaScript DOCX Editor: Install, Edit and Save Word Files | OnoDocs</title><meta name="description" content="Add a browser Word editor with npm and TypeScript. Run the sample, open DOCX files, edit, save and reopen them, then connect application storage or React."><link rel="canonical" href="https://onodocs.com/developers/javascript-docx-editor/"><meta property="og:type" content="article"><meta property="og:site_name" content="OnoDocs"><meta property="og:title" content="JavaScript DOCX editor: load, edit, save and reopen"><meta property="og:description" content="Install the Word editor, try the runnable sample and connect document saving to your JavaScript or React application."><meta property="og:url" content="https://onodocs.com/developers/javascript-docx-editor/"><link rel="stylesheet" href="../style.css"><link rel="icon" type="image/svg+xml" href="../brand-mark.svg"><meta name="referrer" content="strict-origin"></head>
+<body><a class="skip-link" href="#main">Skip to content</a><header class="site-header"><a class="brand" href="https://onodocs.com/" aria-label="OnoDocs home"><img class="brand-mark" src="../brand-mark.svg" width="28" height="28" alt="O">noDocs</a><nav aria-label="Main"><a href="https://onodocs.com/examples/">Demos</a><a href="https://onodocs.com/developers/" aria-current="page">Docs</a><a href="https://onodocs.com/pricing/">Pricing</a><a href="https://onodocs.com/support/">Support</a><a class="github-link" href="https://github.com/onodocs/onodocs" target="_blank" rel="noopener" aria-label="OnoDocs on GitHub" title="OnoDocs on GitHub"><img src="../github-mark.svg" width="18" height="18" alt=""></a></nav></header>
+<main id="main"><section class="page-intro"><p class="eyebrow">Developer guide · Word editing</p><h1>Build a JavaScript DOCX editor</h1><p>Install <code>@onodocs/editor</code> to give your application a Word editor with a ribbon, text selection, formatting, undo/redo and DOCX downloads. Documents are processed in the browser. This guide takes you through opening a file, editing it, saving and reopening it, then connecting your application's storage and React lifecycle.</p><p><a href="https://github.com/onodocs/onodocs/tree/main/examples/editor">Complete editor sample on GitHub</a> · <a href="https://github.com/onodocs/onodocs/blob/main/guides/javascript-docx-editor/index.html">Guide source</a> · <a href="https://onodocs.com/samples/editor/" target="_blank" rel="noopener">Try the editor</a></p></section>
+<div class="doc-layout"><nav class="doc-nav" aria-label="Guide sections"><a href="#setup">Run the sample</a><a href="#roundtrip">Load, edit, save, reopen</a><a href="#install">Install in your app</a><a href="#embed">Embed the editor</a><a href="#storage">Application saving</a><a href="#recovery">Autosave and recovery</a><a href="#react">React and Next.js</a><a href="#licensing">Privacy and licensing</a><a href="#limitations">Supported editing</a><a href="#next">Next steps</a></nav><article class="prose">
+<section id="setup"><h2>Run the editor locally</h2><p>You need Git, Node.js 22.18 or newer, and npm. The public repository supplies the application, build setup and sample Word files. Evaluation needs no account or license key.</p><pre><code>git clone https://github.com/onodocs/onodocs.git
+cd onodocs
+npm run setup
+npm start</code></pre><p>Open <a href="http://127.0.0.1:5174/samples/editor/"><code>http://127.0.0.1:5174/samples/editor/</code></a>. You should see a project report and the editor ribbon, with an evaluation watermark. Keep the terminal running; Ctrl+C stops the server. For a single sample, run <code>node examples/serve-workflow.mjs editor</code> after setup and open its printed address. See the <a href="https://github.com/onodocs/onodocs/blob/main/docs/document-workflows.md">complete sample instructions</a>.</p></section>
+<section id="roundtrip"><h2>Open a DOCX, edit, save and reopen it</h2><ol><li>Use the included project report or choose <strong>Open Word</strong> in the File ribbon to select your own DOCX. It is read locally.</li><li>Click a paragraph and type. Select text to apply formatting. Try Undo and Redo to check the editing flow.</li><li>Choose <strong>Download Word</strong> from File. Your browser downloads a new DOCX containing the current edits; the original file is unchanged.</li><li>Use <strong>Open Word</strong> to open that downloaded file and verify your edits. You can also open it in Word or LibreOffice to assess your document's interchange needs.</li></ol><p>Save before opening another document or leaving the page. This standalone sample keeps working edits in the tab; a download does not create a server copy or a recoverable browser draft. <a href="https://onodocs.com/samples/editor/" target="_blank" rel="noopener">Try this journey in the hosted editor</a>.</p></section>
+<section id="install"><h2>Install in an existing JavaScript or TypeScript application</h2><pre><code>npm install @onodocs/editor</code></pre><p>Editor includes TypeScript declarations and installs matching SDK and Canvas dependencies. SDK owns document processing; Canvas displays pages; Editor adds the editing interface. Use your application's browser bundler. If you also install SDK or Canvas directly, keep their versions aligned with Editor. <a href="https://www.npmjs.com/package/@onodocs/editor">Editor on npm</a>.</p><p>The code below goes in your existing application. If you do not have an application shell, start with the <a href="#setup">complete runnable sample</a>, which already includes HTML, styles and bundling. Deploy all emitted assets, including lazy PDF chunks. Browser editing does not require Playwright or a rendering server.</p></section>
+<section id="embed"><h2>Embed the editor with local opening and downloads</h2><p>Add an empty host and a visible status region to your page. Give the host a usable height:</p><pre><code>&lt;div id="editor" style="height: 80vh; min-height: 24rem"&gt;&lt;/div&gt;
+&lt;p id="status" role="status"&gt;&lt;/p&gt;</code></pre><p>Use this in your bundled <code>main.ts</code>. Put a DOCX at your application's <code>/sample.docx</code> URL, or download the <a href="https://onodocs.com/samples/editor/sample.docx" download="">sample report</a> and serve it there.</p><pre><code id="main-code" data-file="main.ts">import { createEditor } from "@onodocs/editor";
+
+const lifetime = new AbortController();
+const status = document.querySelector&lt;HTMLElement&gt;("#status")!;
+const editor = createEditor({
+  container: document.querySelector&lt;HTMLElement&gt;("#editor")!,
+  document: { signal: lifetime.signal },
+  allowedModes: ["view", "edit"],
+  onError: showError
+});
+
+function showError(error: unknown) {
+  if (!lifetime.signal.aborted) {
+    status.textContent = error instanceof Error ? error.message : "Unable to complete the operation.";
+  }
+}
+
+async function openSample() {
+  status.textContent = "Opening document…";
+  try {
+    const response = await fetch("/sample.docx", { signal: lifetime.signal });
+    if (!response.ok) throw new Error(`Open failed (${response.status})`);
+    const bytes = await response.arrayBuffer();
+    lifetime.signal.throwIfAborted();
+    await editor.open(bytes, "sample.docx");
+    if (!lifetime.signal.aborted) status.textContent = "Ready";
+  } catch (error) { showError(error); }
+}
+
+export function disposeEditor() {
+  lifetime.abort();
+  editor.dispose();
+}
+
+window.addEventListener("pagehide", event =&gt; {
+  if (!event.persisted) disposeEditor();
+});
+void openSample();</code></pre><p>The ribbon supplies local opening, editing, undo/redo and downloads. A failed initial fetch leaves the ribbon available to open another file. Call <code>disposeEditor()</code> before removing the host in a single-page application. It aborts loading and releases the editor; it does not save edits. The <a href="https://github.com/onodocs/onodocs/blob/main/examples/editor/main.js">complete sample</a> adds a sample picker and confirmation before switching samples.</p><p>For your own controls, <code>await editor.open(file, file.name)</code> accepts a local <code>File</code>. <code>await editor.save()</code> returns DOCX bytes; it does not itself download or store them. Use <code>editor.execute(command)</code>, <code>editor.undo()</code> and <code>editor.redo()</code> for changes with editor history.</p></section>
+<section id="storage"><h2>Connect saving to your application</h2><p>Use <code>@onodocs/editor/application</code> when the document belongs to a user or record in your application. It tracks unsaved changes and calls your <code>persist</code> callback. A successful <code>application.save()</code> means that callback acknowledged storage. The ribbon's Download Word action still only downloads a local copy.</p><p>Copy <a href="https://github.com/onodocs/onodocs/blob/main/examples/application/mount.ts">mount.ts</a> beside your module. This sample helper imports the editor after mounting and returns immediate cancellation and cleanup. It is source to copy, not a separate npm package.</p><p>Save the following function as <code>stored-editor.ts</code>; it replaces the local-file integration above. Supply an empty editor host, a status element, a Save button and your document endpoint. Your server must implement authenticated <code>GET</code> returning DOCX bytes and <code>PUT</code> storing the request's DOCX bytes, with non-success responses for failures. These endpoints are your application code.</p><pre><code id="storage-code" data-file="stored-editor.ts">import { mountEditor } from "./mount";
+
+export function mountStoredEditor(container: HTMLElement, status: HTMLElement, saveButton: HTMLButtonElement, url: string) {
+  const lifetime = new AbortController();
+  let stop = () =&gt; {};
+  let ready = false;
+  saveButton.disabled = true;
+  status.textContent = "Opening document…";
+
+  function showError(error: unknown) {
+    if (!lifetime.signal.aborted) {
+      status.textContent = error instanceof Error ? error.message : "Unable to complete the operation.";
+    }
+  }
+
+  async function open() {
+    const response = await fetch(url, { credentials: "same-origin", signal: lifetime.signal });
+    if (!response.ok) throw new Error(`Open failed (${response.status})`);
+    const input = await response.arrayBuffer();
+    lifetime.signal.throwIfAborted();
+    stop = mountEditor(container, {
+      input, name: "document.docx", autosaveDelay: false,
+      allowedModes: ["view", "edit"],
+      async persist(bytes, signal) {
+        const saved = await fetch(url, {
+          method: "PUT", credentials: "same-origin", signal,
+          headers: { "Content-Type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document" },
+          body: bytes
+        });
+        if (!saved.ok) throw new Error(`Save failed (${saved.status})`);
+      },
+      onEvent(event) {
+        if (lifetime.signal.aborted) return;
+        saveButton.disabled = !ready || event.state.saving;
+        if (event.type === "error") showError(event.error);
+        else status.textContent = event.state.saving ? "Saving…" : event.state.dirty ? "Unsaved changes" : event.type === "ready" ? "Ready" : "Saved";
+      }
+    }, application =&gt; {
+      ready = true;
+      saveButton.disabled = false;
+      saveButton.addEventListener("click", () =&gt; {
+        void application.save().catch(showError);
+      }, { signal: lifetime.signal });
+    });
+  }
+
+  void open().catch(showError);
+  return () =&gt; {
+    lifetime.abort();
+    stop();
+    saveButton.disabled = true;
+  };
+}</code></pre><p>Call <code>mountStoredEditor(host, status, saveButton, "/api/documents/123")</code> after creating those DOM elements, and call its returned cleanup before removing the host or changing the document. Edit, press Save, wait for storage to succeed, then reopen the same record in a new session. Its GET response should contain the saved edits.</p><p>This example uses manual saving. A failed PUT leaves changes available for retry. Edits made during saving remain dirty until their own save succeeds. Your server owns authorization, durable storage and CSRF protection. For concurrent writers, add your application's version or ETag to the request and reject conflicts; offer reload, save-as or explicit resolution for 409/412 responses. A simple PUT alone does not prevent one writer from overwriting another.</p><p>Keep the application session's default restriction on Open/New controls. Create a new session when the user or document identity changes; calling <code>application.editor.open()</code> directly bypasses session tracking. Direct document mutations also bypass the editor's undo history; after a successful direct mutation, call <code>application.markChanged()</code> to publish its dirty state.</p></section>
+<section id="recovery"><h2>Autosave, recovery and leaving the page</h2><p>Omit <code>autosaveDelay: false</code> to debounce application saves by 1000 milliseconds, or set a nonnegative delay. The optional <code>recovery</code> store provides asynchronous <code>read</code>, <code>write</code> and <code>remove</code> methods. The <a href="https://github.com/onodocs/onodocs/blob/main/examples/application/recovery.js">existing IndexedDB helper</a> supplies one implementation. Scope its key to the authenticated user and document, and ask before restoring with <code>restoreRecovery: true</code> when a draft may conflict with server content.</p><p>Recovery checkpoints are written when saving starts. Abrupt termination can lose changes made inside the debounce window. Disposal aborts work and retains an existing checkpoint; it does not flush unsaved changes. Warn while dirty and await saving before application navigation. Do not rely on asynchronous saving during <code>beforeunload</code>. Choose draft retention and logout cleanup for your application's privacy requirements.</p></section>
+<section id="react"><h2>Use the editor in React or Next.js</h2><p>Copy the <a href="https://github.com/onodocs/onodocs/blob/main/examples/application/Editor.jsx">React Editor component</a> and its sibling <a href="https://github.com/onodocs/onodocs/blob/main/examples/application/mount.js">mount.js</a> from the public repository. TypeScript applications can use <a href="https://github.com/onodocs/onodocs/blob/main/examples/application/mount.ts">mount.ts</a>. The component returns the helper's cleanup from its effect, covering replacement, unmount and React Strict Mode.</p><p>In a parent component, memoize <code>options</code> and <code>onReady</code> so unrelated renders preserve the editing session. Here <code>input</code> is the fetched document, and <code>persist</code> is your stable storage callback using the PUT behavior above:</p><pre><code id="react-code">import { useMemo } from "react";
+import { Editor } from "./Editor";
+
+export function DocumentEditor({ input, persist }) {
+  const options = useMemo(() =&gt; ({ input, persist }), [input, persist]);
+  return &lt;div className="editor-host"&gt;&lt;Editor options={options} /&gt;&lt;/div&gt;;
+}</code></pre><pre><code>.editor-host &gt; div { height: 80vh; min-height: 24rem; }</code></pre><p>This uses default autosave. Add <code>onEvent</code> to the memoized options to display errors and dirty/saving status; use the component's <code>onReady</code> callback to retain the application handle for an explicit Save button. Save or confirm discarding edits before replacing <code>input</code>. Keep the document bytes and persistence callback stable, and create a new session when document identity changes.</p><p>For Next.js, place this integration behind <code>"use client"</code>. The helper dynamically imports the browser editor inside the effect, allowing the initial page shell to render on the server. Fetch document input with cancellation and keep <code>File</code> objects in client state. React owns the surrounding UI; leave the editor host empty for the editor to manage. The <a href="https://onodocs.com/developers/#frameworks">framework projects</a> provide complete application shells for React, Next.js, Vue, Svelte, Angular and .NET.</p></section>
+<section id="licensing"><h2>Local processing, evaluation and licensing</h2><p>The standalone sample processes local documents in the browser and does not upload their contents or filenames. Connecting <code>persist</code> sends the saved bytes to the endpoint you supply. The hosted demo records usage events only with consent under our <a href="https://onodocs.com/privacy/">privacy policy</a>; downloaded samples and SDK packages contain no analytics. Scripts and fonts still need to load, so cache required assets for offline applications.</p><p>Editor source is MIT-licensed. Its SDK and Canvas dependencies require a commercial application license for production; free non-production evaluation needs no key and adds a watermark. Trial and commercial keys go in <code>document: { licenseKey }</code> for either editor API. The issued signed token may be included in your browser bundle and is verified offline over HTTPS or localhost. See <a href="https://onodocs.com/pricing/">pricing and trials</a> and the <a href="https://onodocs.com/terms/">application license terms</a>.</p></section>
+<section id="limitations"><h2>Check supported editing with your documents</h2><p>Common text formatting, lists, links, regular tables and inline-image properties are supported. Rich paste preserves common text formatting and lists; pasted tables and images become readable text with a notice. Floating-image manipulation and merged-table restructuring remain limited. Font availability affects pagination and appearance; see <a href="https://onodocs.com/developers/#fonts">font setup</a>. Rendering can differ from Word.</p><p>Password-protected files and older DOC or RTF formats need to be unlocked or converted first. Review features have their own limits: imported paragraph-mark and table-row revision decisions require Word. PDF export offers searchable text, links and supported tags, with supported vector graphics and rasterized visible text; it is not PDF/UA certified. Test opening, editing, saving and reopening representative documents before choosing the editor for your workflow.</p><p>If opening fails, display the rejected error and let the user retry. If saving fails, retain the active session and retry storage. A blank or clipped host needs a usable height; missing content or different page breaks may need the document's fonts. Report reproducible document issues with minimal fictional examples in <a href="https://github.com/onodocs/onodocs/issues">GitHub Issues</a>.</p></section>
+<section id="next"><h2>Extend the document workflow</h2><p>Continue with <a href="https://onodocs.com/developers/document-workflows/">templates, forms, agreement review and collaboration</a>. For viewing without editing, use the <a href="https://onodocs.com/developers/react-docx-viewer/">React DOCX viewer guide</a> or <a href="https://onodocs.com/developers/javascript-docx-viewer/">JavaScript viewer guide</a>. To customize the editor's ribbon and controls, follow the <a href="https://github.com/onodocs/onodocs/blob/main/docs/editor-source.md">Editor source guide</a>.</p></section>
+</article></div></main><footer class="site-footer"><span>OnoDocs · Ion OÜ</span><nav aria-label="Footer"><a href="https://onodocs.com/refunds/">Refunds</a><a href="https://onodocs.com/privacy/">Privacy</a><a href="https://onodocs.com/terms/">License &amp; terms</a><a href="https://github.com/onodocs/onodocs">GitHub</a><a href="https://onodocs.com/support/">Support</a></nav></footer>
+</body></html>

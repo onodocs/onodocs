@@ -47,3 +47,5 @@ body{font-size:16px}.eyebrow{font-size:12px}#sample-status,.code-heading{font-si
 .privacy-option input:checked{background:#b43829;border-color:#b43829}
 .privacy-option input:checked::before{transform:translateX(16px)}
 .privacy-option input:disabled{opacity:.45;cursor:not-allowed}
+
+#quick-start .code-heading{padding:4px 12px}#quick-start pre{padding:12px;line-height:1.45}#quick-start pre code{font-size:inherit}
