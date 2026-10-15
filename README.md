@@ -60,6 +60,7 @@ Open http://127.0.0.1:5175. The included document is ready to view. To open your
 
 ## Guides
 
+- [Install, embed and save with the JavaScript DOCX editor](https://onodocs.com/developers/javascript-docx-editor/) — [guide source](guides/javascript-docx-editor/index.html)
 - [Editing, generation, forms and review workflows](https://onodocs.com/developers/document-workflows/) ([guide source](guides/document-workflows/index.html))
 
 - [Extract DOCX text and tables in JavaScript and TypeScript](https://onodocs.com/developers/extract-docx-text-tables/) — [guide source](guides/extract-docx-text-tables/index.html)

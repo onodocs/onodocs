@@ -89,7 +89,7 @@ Open http://127.0.0.1:5174/samples/editor/. Click a page to type. The File ribbo
 
 The SDK owns document operations and saving, Canvas provides presentation, and Editor supplies the toolbar, input handling and history. The sample imports the public editor component and releases it when leaving. Selected documents stay in the browser; refreshing loses unsaved changes.
 
-Rich paste preserves common text formatting, links and lists. Tables and images paste as readable text with a notice. Floating-image manipulation and merged-table restructuring remain limited. Tracked text replacements stay within a paragraph; structural changes require tracking disabled. Imported paragraph-mark and table-row revision decisions require Word. See the [integration guide](https://onodocs.com/developers/document-workflows/#editor) for supported workflows and application callbacks.
+Rich paste preserves common text formatting, links and lists. Tables and images paste as readable text with a notice. Floating-image manipulation and merged-table restructuring remain limited. Tracked text replacements stay within a paragraph; structural changes require tracking disabled. Imported paragraph-mark and table-row revision decisions require Word. See the [editor integration guide](https://onodocs.com/developers/javascript-docx-editor/) for supported workflows and application callbacks.
 
 Evaluation rendering includes a watermark. Saved DOCX files do not carry that visual watermark; the evaluation and commercial licensing terms still apply.
 
