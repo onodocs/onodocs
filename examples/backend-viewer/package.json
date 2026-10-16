@@ -9,8 +9,8 @@
     "node": ">=22.18"
   },
   "dependencies": {
-    "@onodocs/canvas": "0.5.7",
-    "@onodocs/sdk": "0.5.7",
+    "@onodocs/canvas": "0.5.8",
+    "@onodocs/sdk": "0.5.8",
     "esbuild": "^0.28.2",
     "playwright-core": "1.62.1"
   }
