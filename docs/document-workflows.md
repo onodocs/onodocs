@@ -49,3 +49,17 @@ node examples/document-collaboration/serve.mjs
 Open the printed address with `?user=alex` and `?user=sam` in separate browser profiles. Use `?user=jo` for review access. The sample keeps edits in `~/.tmp/onodocs/collaboration-demo.sqlite`; browser recovery stays in each profile. Stop the server with Ctrl+C. Set `PORT` if its default port is already in use. The URL-selected identities demonstrate roles and are not production authentication.
 
 For licensed shared sessions, pass `licenseKey` to `createCollaborationService` from `@onodocs/sdk/collaboration` on the server and through the editor's document options in the browser. The public repository contains the complete collaboration example. The application supplies authentication, roles, transport and atomic storage.
+
+
+## React application editor
+
+The [React editor sample](../examples/react-docx-editor/) is available from the main sample hub after `npm start`. It reuses the application session component and mount helper. Open a DOCX, edit it, save a browser-local copy, restore it and clear it. Manual browser saving is distinct from ribbon downloads and automatic recovery. The [React/Next.js guide](https://onodocs.com/developers/react-docx-editor/) explains stable options, client mounting, production persistence, errors and unsaved-change handling.
+
+## Focused integration guides
+
+- [Editor customization and public source](https://onodocs.com/developers/editor-customization/)
+- [Templates](https://onodocs.com/developers/templates/) and [forms](https://onodocs.com/developers/forms/)
+- [Review](https://onodocs.com/developers/review/) and [collaboration](https://onodocs.com/developers/collaboration/)
+- [Deployment](https://onodocs.com/developers/deployment/) and [PDF export](https://onodocs.com/developers/pdf-export/)
+- [Optional Agent](https://onodocs.com/developers/document-agent/)
+- [Supported features](https://onodocs.com/developers/supported-features/) and [release migration notes](https://onodocs.com/releases/)

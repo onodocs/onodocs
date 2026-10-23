@@ -15,10 +15,11 @@ npm run setup
 npm start
 ```
 
-Open http://127.0.0.1:5174/samples.html. Setup installs matching SDK, Canvas and Editor packages from npm and the other sample dependencies.
+Open http://127.0.0.1:5174/samples.html. Setup installs matching SDK, Canvas and Editor packages from npm, Agent from its matching GitHub release archive, and the other sample dependencies.
 
 | Sample | Entry point | Demonstrates |
 | --- | --- | --- |
+| React Word editor | `examples/react-docx-editor/main.jsx` | Application sessions, explicit browser persistence, saved-copy restore/deletion and unsaved-change handling |
 | Document editor | `examples/editor/main.js` | Realistic documents, ribbon editing, local files and Word/PDF downloads |
 | Templates and generation | `examples/proposal/main.js` | Design a template, enter data, then edit the generated document |
 | Document forms | `examples/document-forms/main.js` | Form design, recipient completion, drafts and project export |
@@ -90,7 +91,7 @@ Open http://127.0.0.1:5174/samples/editor/. Click a page to type. The File ribbo
 
 The SDK owns document operations and saving, Canvas provides presentation, and Editor supplies the toolbar, input handling and history. The sample imports the public editor component and releases it when leaving. Selected documents stay in the browser; refreshing loses unsaved changes.
 
-Rich paste preserves common text formatting, links and lists. Tables and images paste as readable text with a notice. Floating-image manipulation and merged-table restructuring remain limited. Tracked text replacements stay within a paragraph; structural changes require tracking disabled. Imported paragraph-mark and table-row revision decisions require Word. See the [editor integration guide](https://onodocs.com/developers/javascript-docx-editor/) for supported workflows and application callbacks.
+Rich paste preserves supported text formatting, links, lists and tables, with PNG/JPEG image paste. The editor supports merged-table operations and inline/floating drawings; grouped-shape clipboard transfer and native SmartArt editing remain unavailable. Tracked text replacements stay within a paragraph; structural changes require tracking disabled. Imported paragraph-mark and table-row revision decisions require Word. See the [editor integration guide](https://onodocs.com/developers/javascript-docx-editor/) for supported workflows and application callbacks.
 
 Evaluation rendering includes a watermark. Saved DOCX files do not carry that visual watermark; the evaluation and commercial licensing terms still apply.
 
@@ -161,3 +162,10 @@ The [JavaScript](../examples/http-service/client.mjs), [Python](../examples/http
 ## Document agent
 
 The optional agent example runs its own backend. With matching local or published SDK, Canvas, Editor and Agent packages installed, set `OPENAI_API_KEY` in the server environment and run `npm run example:agent`. Open the printed loopback address. See [the integration guide](agent.md) for storage, metering, provider and attachment policies. Node.js 22.18 or newer is required for the example SQLite store.
+
+
+## React Word editor
+
+Open the React Word editor from the sample hub. It reuses `examples/application/Editor.jsx`, the mount helper and IndexedDB storage. Save in this browser stores one explicit copy; Open saved copy restores it and Clear saved copy removes it. Local documents are not uploaded. The sample confirms replacement of unsaved changes and reports storage failures. Ribbon Word/PDF downloads remain separate from application persistence.
+
+The [React/Next.js guide](https://onodocs.com/developers/react-docx-editor/) explains stable props, client mounting, authenticated persistence, recovery and cleanup. See [customization](https://onodocs.com/developers/editor-customization/) for a typed application command example.

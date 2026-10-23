@@ -56,9 +56,16 @@ npm install
 npm start
 ```
 
-Open http://127.0.0.1:5175. The included document is ready to view. To open your own server-side file, use `npm start -- /path/to/document.docx`. Ctrl+C stops the server and its renderer. The [complete guide](https://onodocs.com/developers/#combined) explains both endpoints and links the complete source.
+Open http://127.0.0.1:5175. The included document is ready to view. To open your own server-side file, use `npm start -- /path/to/document.docx`. Ctrl+C stops the server and its renderer. The [complete guide](https://onodocs.com/developers/deployment/#http) explains both endpoints and links the complete source.
 
 ## Guides
+
+- [Editor overview](https://onodocs.com/editor/), [customization](https://onodocs.com/developers/editor-customization/) and [public source build](docs/editor-source.md)
+- [React/Next.js editor](https://onodocs.com/developers/react-docx-editor/) — [runnable sample](examples/react-docx-editor/)
+- [Templates](https://onodocs.com/developers/templates/), [forms](https://onodocs.com/developers/forms/), [review](https://onodocs.com/developers/review/) and [collaboration](https://onodocs.com/developers/collaboration/)
+- [Deployment](https://onodocs.com/developers/deployment/) and [PDF export](https://onodocs.com/developers/pdf-export/)
+- [Agent integration](https://onodocs.com/developers/document-agent/) — [local setup](docs/agent.md)
+- [Compatibility](https://onodocs.com/developers/supported-features/) and [releases/migration](https://onodocs.com/releases/)
 
 - [Install, embed and save with the JavaScript DOCX editor](https://onodocs.com/developers/javascript-docx-editor/) — [guide source](guides/javascript-docx-editor/index.html)
 - [Editing, generation, forms and review workflows](https://onodocs.com/developers/document-workflows/) ([guide source](guides/document-workflows/index.html))
@@ -101,7 +108,7 @@ cancellation and disposal. For JavaScript, remove the generic type and non-null
 assertions, or use [main.js](examples/docx-viewer/main.js).
 
 The packages are also available as [release archives](https://github.com/onodocs/onodocs/releases). Supported Word package types include DOCX, DOCM, DOTX and DOTM; VBA does not
-execute. Older DOC/RTF files are not supported. The [inline editor sample](docs/samples.md#inline-word-editor) demonstrates editing, review and DOCX/PDF saving. Editing complex Word structures remains limited. Fonts affect rendering. PDF exports contain searchable text, links and supported tagged structure; visible native text is rasterized. PDF/UA certification is not claimed.
+execute. Older DOC/RTF files are not supported. The [inline editor sample](docs/samples.md#inline-word-editor) demonstrates editing, review and DOCX/PDF saving. See the [supported features and compatibility reference](https://onodocs.com/developers/supported-features/) for operation-specific limits. Fonts affect rendering. PDF exports contain searchable text, links and supported tagged structure; visible native text is rasterized. PDF/UA certification is not claimed.
 
 ## Licensing and support
 

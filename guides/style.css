@@ -49,3 +49,5 @@ body{font-size:16px}.eyebrow{font-size:12px}#sample-status,.code-heading{font-si
 .privacy-option input:disabled{opacity:.45;cursor:not-allowed}
 
 #quick-start .code-heading{padding:4px 12px}#quick-start pre{padding:12px;line-height:1.45}#quick-start pre code{font-size:inherit}
+
+.table-scroll{max-width:100%;overflow-x:auto}.doc-nav{max-height:calc(100vh - 48px);overflow-y:auto}.prose details pre{max-width:100%}@media(max-width:700px){.doc-nav{max-height:none;overflow:visible}}

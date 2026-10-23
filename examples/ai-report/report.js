@@ -17,11 +17,11 @@ export async function createReport(options) {
   const document = await createDocument(options);
   try {
     const caret = { paragraphId: document.content.paragraphs().one().id, offset: 0 };
-    await document.edit({ kind: "replace", selection: { start: caret, end: caret }, text: reportParagraphs.join("\n") });
+    await document.edit({ kind: "replace", selection: { start: caret, end: caret }, text: reportParagraphs.join("\n"), paragraphBreaks: true });
     for (const index of [0, 2, 6]) {
       const paragraph = document.content.paragraphs().at(index);
       const selection = { start: { paragraphId: paragraph.id, offset: 0 }, end: { paragraphId: paragraph.id, offset: paragraph.text.length } };
-      await document.edit({ kind: "style", selection, style: "Heading1" });
+      await document.edit({ kind: "style", selection, styleId: "Heading1" });
     }
     return document;
   } catch (error) { document.dispose(); throw error; }

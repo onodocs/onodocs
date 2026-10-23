@@ -1,92 +1,383 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="description" content="OnoDocs JavaScript API reference: document loading, queries, text updates, browser views, HTML attachments, geometry, and server rendering."><title>JavaScript &amp; TypeScript API Reference | OnoDocs</title><link rel="stylesheet" href="../style.css"><link rel="canonical" href="https://onodocs.com/developers/api/"><meta property="og:type" content="website"><meta property="og:site_name" content="OnoDocs"><meta property="og:title" content="JavaScript &amp; TypeScript API Reference | OnoDocs"><meta property="og:description" content="OnoDocs JavaScript API reference: document loading, queries, text updates, browser views, HTML attachments, geometry, and server rendering."><meta property="og:url" content="https://onodocs.com/developers/api/"><link rel="icon" type="image/svg+xml" href="../brand-mark.svg"><meta name="referrer" content="strict-origin"></head><body><a class="skip-link" href="#main">Skip to content</a><header class="site-header"><a class="brand" href="https://onodocs.com/" aria-label="OnoDocs home"><img class="brand-mark" src="../brand-mark.svg" width="28" height="28" alt="O">noDocs</a><nav aria-label="Main"><a href="https://onodocs.com/examples/">Demos</a><a href="https://onodocs.com/developers/" aria-current="page">Docs</a><a href="https://onodocs.com/pricing/">Pricing</a><a href="https://onodocs.com/support/">Support</a><a class="github-link" href="https://github.com/onodocs/onodocs" target="_blank" rel="noopener" aria-label="OnoDocs on GitHub" title="OnoDocs on GitHub"><img src="../github-mark.svg" width="18" height="18" alt=""></a></nav></header><main id="main"><section class="page-intro"><p class="eyebrow">Documentation / API reference</p><h1>API reference</h1><p>Signatures, options, and behavior for the OnoDocs JavaScript and TypeScript SDK. <a href="https://onodocs.com/developers/">Integration guide</a></p><p><a href="https://github.com/onodocs/onodocs">Guides and samples on GitHub</a></p></section><div class="doc-layout"><nav class="doc-nav" aria-label="API sections"><a href="https://onodocs.com/developers/">Integration guide</a><a href="https://onodocs.com/developers/document-workflows/">Workflow APIs</a><a href="#entry-points">Entry points</a><a href="#open-document">openDocument</a><a href="#documents">Documents</a><a href="#queries">Queries</a><a href="#elements">Elements</a><a href="#text-ranges">Text ranges</a><a href="#updates">Text updates</a><a href="#views">Views</a><a href="#attachments">Attachments</a><a href="#pages">Pages</a><a href="#geometry">Geometry</a><a href="#server">Server renderer</a><a href="#fonts">Fonts</a><a href="#licensing">Licensing</a><a href="#stages">Low-level stages</a></nav><article class="prose">
-<section aria-labelledby="entry-points"><h2 id="entry-points">Entry points</h2>
-<table><thead><tr><th>Module</th><th>Runtime exports</th><th>Result</th></tr></thead><tbody><tr><td><code>@onodocs/sdk</code></td><td><code>openDocument</code>, core stage APIs, <code>PackageOperationError</code>, <code>SemanticOperationError</code>, <code>QueryCardinalityError</code>, <code>sdkReleaseDate</code></td><td>Analysis in Node.js or the browser.</td></tr><tr><td><code>@onodocs/sdk/browser</code></td><td><code>openDocument</code>, <code>PackageOperationError</code>, <code>SemanticOperationError</code>, <code>QueryCardinalityError</code>, <code>sdkReleaseDate</code></td><td>Analysis, layout and immutable page publication.</td></tr><tr><td><code>@onodocs/sdk/server</code></td><td><code>createRenderer</code>, <code>sdkReleaseDate</code></td><td>Headless Chromium image/PDF output and prepared page publication.</td></tr><tr><td><code>@onodocs/canvas</code></td><td><code>createDocument</code>, <code>openDocument</code>, <code>encode</code>, <code>decode</code>, <code>materializePageDisplayListToCanvas</code></td><td>Page painting, views, selection, attachments and remote document loading.</td></tr></tbody></table><p>All entry points include TypeScript declarations. The <code>?</code> suffix marks optional arguments or properties. The SDK accepts DOCX, DOCM, DOTX and DOTM files.</p>
-</section>
-<section aria-labelledby="open-document"><h2 id="open-document">openDocument</h2>
-<p>Use the default entry point to inspect content or the browser entry point to render pages.</p><pre><code>openDocument(input: ArrayBuffer | Uint8Array | Blob, options?: OpenDocumentOptions): Promise&lt;InspectedDocument&gt;
-openDocument(input: ArrayBuffer | Uint8Array | Blob, options?: BrowserOptions): Promise&lt;BrowserDocument&gt;</code></pre><p>Both entry points accept DOCX, DOCM, DOTX and DOTM inputs, including <code>File</code>, which extends Blob. Macro content is not executed. Opening copies byte inputs and reads File/Blob input once. Fetch URLs in application code before opening.</p><table><thead><tr><th>Option</th><th>Type</th><th>Meaning</th></tr></thead><tbody><tr><td><code>signal</code></td><td><code>AbortSignal</code></td><td>Cancel opening.</td></tr><tr><td><code>revisionView</code></td><td><code>"accepted" | "original" | "markup"</code></td><td>Select the document revision view.</td></tr><tr><td><code>licenseKey</code></td><td><code>string</code></td><td>Offline trial or commercial token. Omit for evaluation.</td></tr><tr><td><code>fonts</code></td><td><code>FontSources</code></td><td>Browser/server only. Additional font sources; see <a href="#fonts">font options</a>.</td></tr><tr><td><code>defaultFont</code></td><td><code>string</code></td><td>Browser/server only. Default font family.</td></tr><tr><td><code>onProgress</code></td><td><code>(progress: DocumentProgress) =&gt; void</code></td><td>Observe parsing, fonts, layout and ready stages and the current document source.</td></tr></tbody></table><p>Opening rejects on failure or cancellation. Analysis does not create pages. Call <code>dispose()</code> when finished to release the retained source package. See the guide’s <a href="https://onodocs.com/developers/#lifecycle">shared error and cleanup pattern</a>.</p>
-</section>
-<section aria-labelledby="documents"><h2 id="documents">Document objects</h2>
-<p><code>DocumentProgress</code> contains <code>stage</code> (parsing, fonts, layout or ready), <code>document: DocumentSource</code>. Layout events may also supply <code>phase</code>, <code>iteration</code>, <code>completed</code> and <code>total</code>; these describe the current phase, not an overall percentage. Preview pages can change until opening completes.</p><h3>InspectedDocument</h3><table><thead><tr><th>Member</th><th>Type / return value</th><th>Purpose</th></tr></thead><tbody><tr><td><code>source</code></td><td><code>AssemblyDocument</code></td><td>Readonly imported source facts and provenance; unchanged by text updates.</td></tr><tr><td><code>semantic</code></td><td><code>SemanticDocument</code></td><td>Current readonly document meaning, content, and styles.</td></tr><tr><td><code>query</code></td><td><code>DocumentQuery&lt;"document"&gt;</code></td><td>Query rooted at the document.</td></tr><tr><td><code>license</code></td><td><code>LicenseStatus</code></td><td>Current evaluation, trial, or commercial status.</td></tr><tr><td><code>update(updates, options?)</code></td><td><code>Promise&lt;void&gt;</code></td><td><a href="#updates">Replace text</a> in supported targets.</td></tr></tbody></table><p><code>save(options?)</code> returns a <code>Promise&lt;Uint8Array&gt;</code> containing the current DOCX. <code>edit(command)</code> applies supported authoring commands; <code>readReview()</code> and <code>review(command)</code> expose document review. Call <code>dispose()</code> to release the document. Use the package TypeScript declarations for their complete options.</p><h3>BrowserDocument</h3><p>Includes every InspectedDocument member, plus:</p><table><thead><tr><th>Member</th><th>Type / return value</th><th>Purpose</th></tr></thead><tbody><tr><td><code>layout</code></td><td><code>LayoutDocument</code></td><td>Readonly physical layout.</td></tr><tr><td><code>geometry</code></td><td><code>DocumentGeometry</code></td><td>Content fragments and page hit testing.</td></tr><tr><td><code>pages</code></td><td><code>readonly PageSource[]</code></td><td>Published pages, indexed from zero.</td></tr><tr><td><code>disposed</code></td><td><code>boolean</code></td><td>Whether rendering resources have been released.</td></tr><tr><td><code>dispose()</code></td><td><code>void</code></td><td>Dispose subscribed Canvas documents and release processing resources. Further painting is rejected; models remain inspectable.</td></tr></tbody></table><p>Query results, semantic/layout models, pages, and geometry obtained before an update remain snapshots. Read them again after updating. The source model contains supported DOCX facts. Saving retains the source package and preserves unrelated content; the exposed model is not a full XML representation.</p>
-</section>
-<section aria-labelledby="queries"><h2 id="queries">DocumentQuery</h2>
-<p>Queries are iterable and return matches in document traversal order. Kind selectors search descendants; overlapping selections do not duplicate elements.</p><table><thead><tr><th>Method</th><th>Result / scope</th></tr></thead><tbody><tr><td><code>paragraphs()</code>, <code>runs()</code>, <code>tables()</code>, <code>contentControls()</code>, <code>bookmarks()</code></td><td>A query of the selected kind.</td></tr><tr><td><code>stories()</code></td><td>Story query from a document query.</td></tr><tr><td><code>rows()</code></td><td>A table's own rows; nested-table rows are not flattened.</td></tr><tr><td><code>cells()</code></td><td>A table or row's own cells.</td></tr><tr><td><code>children()</code></td><td>Direct children of the selected elements.</td></tr><tr><td><code>descendants()</code></td><td>All descendants of the selected elements.</td></tr><tr><td><code>within(element)</code></td><td>Query scoped to the supplied DocumentElement.</td></tr><tr><td><code>get(id)</code></td><td>Document query only: <code>DocumentElement | undefined</code> from the current snapshot.</td></tr><tr><td><code>closest(kind)</code></td><td>Input elements or their nearest matching ancestors, without duplicates.</td></tr><tr><td><code>where(filter)</code></td><td>Same-kind query narrowed by the filters below.</td></tr><tr><td><code>filter(predicate)</code></td><td>Same-kind query narrowed by an application predicate.</td></tr><tr><td><code>findText(text: string | RegExp)</code></td><td><code>QueryResults&lt;DocumentTextRange&gt;</code>; see <a href="#text-ranges">text ranges</a>.</td></tr></tbody></table><h3>Filters</h3><table><thead><tr><th>Applies to</th><th>Filter</th></tr></thead><tbody><tr><td>All element kinds</td><td><code>text: string | { contains: string } | { startsWith: string } | { endsWith: string }</code></td></tr><tr><td>Paragraph</td><td><code>style: string</code></td></tr><tr><td>Table</td><td><code>headers: readonly string[]</code></td></tr><tr><td>Content control</td><td><code>tag: string</code>, <code>title: string</code></td></tr><tr><td>Bookmark</td><td><code>name: string</code></td></tr><tr><td>Story</td><td><code>story: "body" | "header" | "footer" | "footnote" | "endnote" | "textbox"</code></td></tr></tbody></table><p>All filter properties are optional. String matching is exact and case sensitive; text objects select the specified operation. Table headers match the first row exactly, in order and case sensitively. Multiple properties and chained filters combine with AND. Unknown filter keys throw.</p><h3>Result selection</h3><table><thead><tr><th>Method</th><th>Return value / behavior</th></tr></thead><tbody><tr><td><code>all()</code></td><td><code>readonly T[]</code></td></tr><tr><td><code>map(project)</code></td><td><code>U[]</code>; project each value and its index.</td></tr><tr><td><code>count()</code></td><td><code>number</code></td></tr><tr><td><code>first()</code>, <code>at(index: number)</code></td><td><code>T | undefined</code></td></tr><tr><td><code>one()</code></td><td><code>T</code>; throws QueryCardinalityError unless exactly one result exists.</td></tr><tr><td><code>optional()</code></td><td><code>T | undefined</code>; throws QueryCardinalityError for multiple results.</td></tr><tr><td><code>for...of</code></td><td>Iterates each result.</td></tr></tbody></table><p>Result selection also applies to <code>findText</code> results. Negative <code>at</code> indices count from the end; noninteger indices throw.</p>
-</section>
-<section aria-labelledby="elements"><h2 id="elements">Document elements</h2>
-<p>All elements expose readonly <code>kind</code>, <code>id</code>, <code>text</code>, <code>source</code>, <code>children</code>, and <code>parent</code> (undefined at the root). Source locations may be undefined; when present they contain <code>factIndex</code>, <code>ordinal</code> (bigint), and <code>provenance</code>.</p><table><thead><tr><th>Kind / type</th><th>Additional members</th></tr></thead><tbody><tr><td><code>document / DocumentRoot</code></td><td>Root node.</td></tr><tr><td><code>story / DocumentStory</code></td><td><code>story</code>, <code>scopeId</code></td></tr><tr><td><code>paragraph / DocumentParagraph</code></td><td><code>nodeId</code>, <code>style: string | null</code></td></tr><tr><td><code>run / DocumentRun</code></td><td><code>nodeId</code>, <code>semantic</code>, <code>link: DocumentLink | undefined</code></td></tr><tr><td><code>table / DocumentTable</code></td><td><code>semantic</code>, <code>rows: readonly DocumentRow[]</code>, <code>textRows: readonly (readonly string[])[]</code></td></tr><tr><td><code>row / DocumentRow</code></td><td><code>semantic</code>, <code>cells: readonly DocumentCell[]</code>, <code>parent: DocumentTable</code></td></tr><tr><td><code>cell / DocumentCell</code></td><td><code>semantic</code>, <code>parent: DocumentRow</code></td></tr><tr><td><code>contentControl / DocumentContentControl</code></td><td><code>nodeId</code>, <code>tag: string | null</code>, <code>title: string | null</code></td></tr><tr><td><code>bookmark / DocumentBookmark</code></td><td><code>name</code>, <code>run</code> (start target, not an enclosing range).</td></tr></tbody></table><p><code>textRows</code> includes the first row. Nested-table text stays within its containing cell. Merged cells retain the document’s structure, so rows are not padded into a rectangular grid. A reused header is one semantic story with multiple physical occurrences.</p><p>A run’s <code>link</code> is <code>{ kind: "external", target, tooltip }</code> or <code>{ kind: "bookmark", target }</code>. The target is a URL or bookmark name. Applications own link navigation. Elements contain parent references and bigint metadata; use <code>map</code> to select the text and fields you want to export as JSON.</p>
-</section>
-<section aria-labelledby="text-ranges"><h2 id="text-ranges">DocumentTextRange</h2>
-<pre><code>interface DocumentTextRange {
-  readonly kind: "textRange";
-  readonly paragraph: DocumentParagraph;
-  readonly start: number;
-  readonly end: number;
-  readonly text: string;
-}</code></pre><p><code>findText</code> searches contiguous text across runs within a paragraph. Ranges use half-open <code>[start, end)</code> JavaScript UTF-16 offsets. String searches are case sensitive. Regular expressions preserve flags, do not alter the caller’s lastIndex, and omit zero-length matches. Each selected contiguous interval is searched independently. Searches do not join paragraphs or read text inside raster images. Semantic text may differ from generated field appearances after layout.</p>
-</section>
-<section aria-labelledby="updates"><h2 id="updates">Text updates</h2>
-<pre><code>update(updates: DocumentTextUpdate | readonly DocumentTextUpdate[], options?: { signal?: AbortSignal }): Promise&lt;void&gt;
-
-interface DocumentTextUpdate {
-  readonly target: string | DocumentEditableElement | DocumentTextRange;
-  readonly text: string;
-}</code></pre><p>Available on inspected, browser, and server documents. The target is a run, paragraph, cell, content control, its query ID, or a search range. <code>DocumentEditableElement</code> is the union of those four element types. Element targets must contain ordinary text in one paragraph. Text inherits the first selected run’s formatting. Tabs and newlines are supported. Range replacements preserve text outside the range and its formatting; an empty range inserts text. Offsets use the original paragraph’s UTF-16 positions and cannot split surrogate pairs.</p><pre><code>const customer = doc.content.contentControls().where({ tag: "customer" }).one();
-await doc.update({ target: customer, text: "Willow Design" });</code></pre><p>Batches reject overlapping or missing targets, generated fields, and multi-paragraph replacements without changing document content. Disjoint ranges in one run can be updated together. Unchanged updates preserve snapshots, formatting, and attachments. Updates execute in submission order. Browser updates rebuild layout and refresh views; existing HTML attachments are removed and can be reattached with fresh anchors.</p><p>For server updates, obtain target elements, IDs, or ranges by inspecting the same input with the analysis entry point. Exported page images and PDFs reflect updates. Use <code>save()</code> to export the current DOCX. The editor supports ordinary structural edits, and browser/server saves refresh supported fields. See <a href="https://onodocs.com/developers/document-workflows/">editing, templates, review and forms</a> for the supported workflows and limits.</p>
-</section>
-<section aria-labelledby="views"><h2 id="views">DocumentView</h2>
-<p>Create presentation with <code>const canvasDocument = createDocument(doc)</code> from <code>@onodocs/canvas</code>. It accepts any <code>DocumentSource</code>, including remote pages. Canvas exposes <code>pages</code>, <code>disposed</code>, <code>mount</code>, <code>refresh</code> and <code>dispose</code>. Optional <code>{ container, viewOptions }</code> passed to <code>createDocument</code> creates <code>canvasDocument.view</code>. Sources with subscriptions refresh automatically.</p><p>For HTTP endpoints, use <code>await openDocument(url, options)</code> from <code>@onodocs/canvas</code>. It returns the same <code>CanvasDocument</code>. Options include <code>container</code>, <code>viewOptions</code>, <code>signal</code> and <code>request</code> for fetch headers, credentials and caching. Requests use GET. Canvas loads the manifest at <code>url</code> and pages at <code>url/pages/:index</code>, preserving query parameters. See the <a href="https://onodocs.com/developers/#combined">working backend viewer</a>.</p><pre><code>canvasDocument.mount(container: HTMLElement, options?: ViewOptions): DocumentView
-
-interface ViewOptions {
-  readonly zoom?: number | "fit-width";
-  readonly gap?: number;
-  readonly title?: string;
-}</code></pre><p><code>zoom</code> is a numeric scale or fit-width. Scale 1 uses 96 CSS pixels per inch; fit-width tracks the container. <code>gap</code> is the gap between page shells in CSS pixels, not twips. <code>title</code> labels the view.</p><table><thead><tr><th>Member</th><th>Return value / meaning</th></tr></thead><tbody><tr><td><code>element</code></td><td><code>HTMLElement</code>; the view’s DOM root.</td></tr><tr><td><code>disposed</code></td><td><code>boolean</code></td></tr><tr><td><code>whenRendered()</code></td><td><code>Promise&lt;void&gt;</code>; wait for the visible pages and nearby pages to finish painting.</td></tr><tr><td><code>setZoom(zoom)</code></td><td><code>void</code>; accepts a number or <code>"fit-width"</code>.</td></tr><tr><td><code>toClient(pageIndex, point)</code></td><td><code>DocumentPoint</code>; page twips to viewport CSS pixels.</td></tr><tr><td><code>fromClient(point)</code></td><td><code>{ pageIndex, point } | undefined</code>; viewport CSS pixels to page twips.</td></tr><tr><td><code>hitTest(point)</code></td><td><code>DocumentHit | undefined</code>; accepts viewport CSS pixels.</td></tr><tr><td><code>scrollTo(anchor, options?)</code></td><td><code>boolean</code>; reveal a page or a chosen physical fragment. Options use native <code>ScrollIntoViewOptions</code>. Returns false if the page is unavailable.</td></tr><tr><td><code>attach(element, options)</code></td><td><code>DocumentAttachment</code>; see <a href="#attachments">attachments</a>.</td></tr><tr><td><code>dispose()</code></td><td><code>void</code>; remove this view and its attachments.</td></tr></tbody></table><p><code>DocumentPoint</code> is <code>{ x: number, y: number }</code>. Points passed to view hit testing and fromClient use the same coordinate system as event.clientX/clientY.</p>
-</section>
-<section aria-labelledby="attachments"><h2 id="attachments">HTML attachments</h2>
-<pre><code>view.attach(element: HTMLElement, options: AttachmentOptions): DocumentAttachment</code></pre><table><thead><tr><th>Option</th><th>Type / meaning</th></tr></thead><tbody><tr><td><code>anchor</code> (required)</td><td><code>ViewAnchor</code>: DocumentFragment or an object containing a page’s index and size</td></tr><tr><td><code>placement</code></td><td><code>"overlay"</code> (default), <code>inside-{top|center|bottom}-{left|center|right}</code>, or <code>outside-{top|right|bottom|left}</code>.</td></tr><tr><td><code>size</code></td><td><code>{ width: number, height: number }</code> in twips. Omit to fill the anchor, reduced by inside inset.</td></tr><tr><td><code>offset</code></td><td><code>{ x: number, y: number }</code> in twips, applied after placement.</td></tr><tr><td><code>inset</code></td><td>Inside placement only. Inward spacing in twips.</td></tr><tr><td><code>gap</code></td><td>Outside placement only. Distance from the selected edge in twips; the control is centered along that edge.</td></tr></tbody></table><p>Resolve content elements and text ranges to a chosen physical fragment through <code>doc.geometry.fragments(anchor)</code>. Content anchors preserve transforms and clipping; page anchors use the full page. Attachments follow zoom and resize but do not reflow text.</p><p>Attaching moves the HTML element into the view. Use a dedicated element or a framework portal. <code>DocumentAttachment.element</code> returns that element; <code>disposed</code> reports its state; <code>dispose()</code> removes it and restores its original inline style. Reattaching the same HTML element disposes its previous attachment, including in another view. Application inputs do not change document text or appear in exported images.</p>
-</section>
-<section aria-labelledby="pages"><h2 id="pages">Pages</h2><p>The SDK exposes <code>PageSource</code> with <code>index</code>, <code>size</code>, <code>interaction</code> and <code>load(signal?): Promise&lt;PageDisplayList&gt;</code>. Canvas exposes <code>DocumentPage</code> with the same index, size and interaction, plus the render method below.</p>
-<table><thead><tr><th>Member</th><th>Type / meaning</th></tr></thead><tbody><tr><td><code>index</code></td><td><code>number</code>; zero-based page index.</td></tr><tr><td><code>size</code></td><td><code>{ width: number, height: number }</code> in twips.</td></tr><tr><td><code>render(canvas, options?)</code></td><td><code>Promise&lt;void&gt;</code>; paint to HTMLCanvasElement. Options: <code>{ dpi?: number; signal?: AbortSignal }</code>. Await completion before reading or exporting canvas pixels.</td></tr></tbody></table><p>Use standard canvas APIs to export an image. Page geometry uses 1440 twips per inch; output DPI controls raster resolution independently of view zoom.</p>
-</section>
-<section aria-labelledby="geometry"><h2 id="geometry">Geometry and hit testing</h2>
-<table><thead><tr><th>Method</th><th>Return value</th></tr></thead><tbody><tr><td><code>doc.geometry.fragments(anchor)</code></td><td><code>readonly DocumentFragment[]</code>; anchor is a DocumentElement or DocumentTextRange.</td></tr><tr><td><code>doc.geometry.hitTest(pageIndex, point)</code></td><td><code>DocumentHit | undefined</code>; point uses page twips.</td></tr></tbody></table><p>A fragment contains <code>pageIndex</code>, <code>rectangle</code>, <code>transform</code>, <code>bounds</code>, and <code>clips</code>. Bounds enclose the unclipped geometry; retain the supplied transforms and clips when interpreting a fragment. Content may span lines, pages, or repeated stories. Row fragments cover the row’s own cells as one rectangle per physical occurrence.</p><pre><code>interface DocumentHit {
-  readonly elementId: string;
-  readonly fragment: DocumentFragment;
-  readonly caret?: {
-    readonly paragraphId: string;
-    readonly offset: number;
-    readonly point: DocumentPoint;
-  };
-}</code></pre><pre><code>const hit = view.hitTest({ x: event.clientX, y: event.clientY });
-if (hit) {
-  const element = doc.content.get(hit.elementId);
-  const cell = element ? doc.content.within(element).closest("cell").optional() : undefined;
-}</code></pre><p>Resolve hit IDs through <code>doc.content.get</code> when the processing SDK is available. Canvas hit results use published IDs and work independently of the semantic model. Text hits resolve to a run or paragraph; table whitespace resolves to a cell or table. The optional caret uses the same UTF-16 offsets as text queries. Generated field appearances omit a caret when no source position can be represented. Raster drawings without a semantic hit identity and blank page space return no element. Invalid page indices throw.</p>
-</section>
-<section aria-labelledby="server"><h2 id="server">Server rendering</h2>
-<pre><code>createRenderer(options?: RendererOptions): Promise&lt;ServerRenderer&gt;
-
-interface RendererOptions {
-  readonly executablePath?: string;
-  readonly channel?: "chrome" | "msedge" | "chromium";
-}</code></pre><p>Install <code>playwright-core</code> alongside the SDK and install a Chromium-family browser separately. Reuse one renderer across requests. Each open document owns a separate browser context.</p><table><thead><tr><th>ServerRenderer member</th><th>Return value</th></tr></thead><tbody><tr><td><code>disposed</code></td><td><code>boolean</code>; whether the renderer is closing or closed.</td></tr><tr><td><code>openDocument(input, options?)</code></td><td><code>Promise&lt;RenderedDocument&gt;</code>; input: ArrayBuffer or Uint8Array; options: <a href="#open-document">BrowserOptions</a> excluding <code>onProgress</code>.</td></tr><tr><td><code>dispose()</code></td><td><code>Promise&lt;void&gt;</code>; close the browser and all remaining documents.</td></tr></tbody></table><h3>RenderedDocument</h3><p><code>manifest({ signal }?)</code> returns <code>Promise&lt;DocumentManifest&gt;</code> with page sizes and interaction data. <code>page(index, { signal }?)</code> returns <code>Promise&lt;PageDisplayList&gt;</code>. Publish them through your application’s authenticated routes and display with Canvas in the frontend. Pass <code>{ format: "json" }</code> to either method to receive a <code>Promise&lt;string&gt;</code> response body, and send it with <code>Content-Type: application/json</code>. Canvas <code>openDocument(url, options?)</code> loads the manifest at that URL and pages at its <code>/pages/:index</code> suffix. It accepts <code>container</code>, <code>viewOptions</code>, <code>signal</code> and <code>request</code> (fetch options such as headers and credentials, shared by all requests). It returns <code>Promise&lt;CanvasDocument&gt;</code> and reports unsuccessful HTTP status codes as errors. Requests default to no-store. After updates, replace the complete snapshot; do not mix old and new pages. See the <a href="https://onodocs.com/developers/#combined">combined deployment guide</a>.</p><table><thead><tr><th>Member</th><th>Type / return value</th></tr></thead><tbody><tr><td><code>pages</code></td><td><code>readonly PageSize[]</code>; width and height in twips.</td></tr><tr><td><code>disposed</code></td><td><code>boolean</code>; whether the document context is closing or closed.</td></tr><tr><td><code>update(updates, options?)</code></td><td><code>Promise&lt;void&gt;</code>; same text-update contract.</td></tr><tr><td><code>licenseStatus()</code></td><td><code>Promise&lt;LicenseStatus&gt;</code></td></tr><tr><td><code>renderPage(index, options?)</code></td><td><code>Promise&lt;Uint8Array&gt;</code>; PNG or JPEG bytes.</td></tr><tr><td><code>pdf(options?)</code></td><td><code>Promise&lt;Uint8Array&gt;</code>; options: <code>{ dpi?: number, signal?: AbortSignal }</code>.</td></tr><tr><td><code>dispose()</code></td><td><code>Promise&lt;void&gt;</code>; close this document’s context.</td></tr></tbody></table><p><code>save(options?)</code> returns current Word bytes. <code>edit(command)</code> forwards authoring operations through the same document model. Exported PDF has the current supported field values.</p><h3>RenderPageOptions</h3><table><thead><tr><th>Option</th><th>Type / meaning</th></tr></thead><tbody><tr><td><code>format</code></td><td><code>"png" | "jpeg"</code>; default PNG.</td></tr><tr><td><code>dpi</code></td><td>Positive finite output resolution; default 96 DPI.</td></tr><tr><td><code>quality</code></td><td>Number from 0 to 1; JPEG encoding quality, default 0.92.</td></tr><tr><td><code>signal</code></td><td>AbortSignal for cancellation.</td></tr></tbody></table><p>PDF output defaults to 150 DPI. PDF exports preserve document page sizes, including mixed sizes. They include searchable text, links, bookmarks and supported tagged structure. Supported graphics remain vector while visible native text is rasterized. PDF/UA certification is not established. HTML attachments are excluded.</p><p>Document contexts make no outbound requests. Supply fonts as data URLs or install them on the rendering host. Cancelling an executing operation closes the document context; reopen it to retry. Cancelling a queued operation leaves the active operation and document intact. Operations on one document are serialized; your application controls concurrency across documents. Dispose documents and the renderer in finally blocks in production.</p>
-</section>
-<section aria-labelledby="fonts"><h2 id="fonts">FontSources</h2>
-<pre><code>type FontSources = string | FontVariantSources | Readonly&lt;Record&lt;string, string | FontVariantSources&gt;&gt;;
-
-interface FontVariantSources {
-  readonly regular: string;
-  readonly bold?: string;
-  readonly italic?: string;
-  readonly boldItalic?: string;
-  readonly collectionIndex?: number | Readonly&lt;Partial&lt;Record&lt;"regular" | "bold" | "italic" | "boldItalic", number&gt;&gt;&gt;;
-  readonly fallbackFaces?: readonly string[];
-  readonly familyFaces?: Readonly&lt;Partial&lt;Record&lt;"roman" | "swiss", string&gt;&gt;&gt;;
-}</code></pre><p>Strings identify font sources. Use a family-name map to provide multiple families and variant objects for their faces. Embedded DOCX fonts load automatically. See the guide’s <a href="https://onodocs.com/developers/#fonts">font deployment notes</a>.</p>
-</section>
-<section aria-labelledby="licensing"><h2 id="licensing">LicenseStatus</h2>
-<p>Pass <code>licenseKey</code> when opening a document. Browser/analysis documents expose <code>license</code>; server documents expose asynchronous <code>licenseStatus()</code>. Verification is offline; browser verification requires HTTPS or a secure local context.</p><table><thead><tr><th>mode</th><th>Additional property</th></tr></thead><tbody><tr><td><code>"evaluation"</code></td><td><code>reason</code>: missing-key, invalid-key, verification-unavailable, not-yet-valid, trial-expired, release-not-covered, demo-expired, or origin-not-covered.</td></tr><tr><td><code>"trial"</code></td><td><code>license</code>: signed trial claims.</td></tr><tr><td><code>"demo"</code></td><td><code>license</code>: a website demonstration token valid for at most 24 hours at its exact browser origin.</td></tr><tr><td><code>"commercial"</code></td><td><code>license</code>: signed commercial claims.</td></tr></tbody></table><p>Evaluation keeps analysis results available and watermarks rendered output. <code>sdkReleaseDate</code> is the SDK’s exported release-date string. See <a href="https://onodocs.com/pricing/">licensing terms</a>.</p>
-</section>
-<section aria-labelledby="stages"><h2 id="stages">Low-level models and stages</h2>
-<p>The default entry point also re-exports the engine’s stage APIs and readonly contracts. These are for applications that provide their own services or need an intermediate result.</p><table><thead><tr><th>API</th><th>Purpose</th></tr></thead><tbody><tr><td><code>parseDocumentSource</code></td><td>Create typed imported source facts.</td></tr><tr><td><code>createSemanticDocument</code></td><td>Resolve document meaning from source facts.</td></tr><tr><td><code>parseDocumentForRendering</code></td><td>Prepare semantic content and owned rendering resources.</td></tr><tr><td><code>createLayoutDocument</code></td><td>Realize page layout with explicit layout services.</td></tr><tr><td><code>createPageDisplayList</code></td><td>Compile one layout page to paint commands.</td></tr><tr><td><code>materializePageDisplayListToCanvas</code></td><td>Exported by <code>@onodocs/canvas</code>. Replay paint commands through the canvas adapter.</td></tr></tbody></table><p>Use <code>openDocument</code> for managed loading and rendering. Treat stage outputs as read-only. Use layout output for page geometry. The complete low-level signatures are included in the package’s TypeScript declarations; download the SDK from the <a href="https://github.com/onodocs/onodocs/releases">public releases</a> to inspect them.</p>
-</section></article></div></main><footer class="site-footer"><span>OnoDocs · Ion OÜ</span><nav aria-label="Footer"><a href="https://onodocs.com/refunds/">Refunds</a><a href="https://onodocs.com/privacy/">Privacy</a><a href="https://onodocs.com/terms/">License &amp; terms</a><a href="https://onodocs.com/developers/">Documentation</a><a href="https://onodocs.com/support/">Support</a></nav></footer></body></html>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Public API reference | OnoDocs</title><meta name="description" content="Current public entry points and signatures for document processing, Editor and optional workflows. Signatures below are generated from the packages used to build this website."><link rel="canonical" href="https://onodocs.com/developers/api/"><meta property="og:type" content="website"><meta property="og:site_name" content="OnoDocs"><meta property="og:title" content="Public API reference | OnoDocs"><meta property="og:description" content="Current public entry points and signatures for document processing, Editor and optional workflows. Signatures below are generated from the packages used to build this website."><meta property="og:url" content="https://onodocs.com/developers/api/"><link rel="stylesheet" href="../style.css"><link rel="icon" type="image/svg+xml" href="../brand-mark.svg"><meta name="referrer" content="strict-origin"></head>
+<body><a class="skip-link" href="#main">Skip to content</a><header class="site-header"><a class="brand" href="https://onodocs.com/" aria-label="OnoDocs home"><img class="brand-mark" src="../brand-mark.svg" width="28" height="28" alt="O">noDocs</a><nav aria-label="Main"><a href="https://onodocs.com/editor/">Editor</a><a href="https://onodocs.com/examples/">Demos</a><a href="https://onodocs.com/developers/" aria-current="page">Docs</a><a href="https://onodocs.com/pricing/">Pricing</a><a href="https://onodocs.com/support/">Support</a><a class="github-link" href="https://github.com/onodocs/onodocs" aria-label="OnoDocs on GitHub"><img src="../github-mark.svg" width="18" height="18" alt=""></a></nav></header>
+<main id="main"><section class="page-intro"><p class="eyebrow">Developer guide</p><h1>Public API reference</h1><p>Current public entry points and signatures for document processing, Editor and optional workflows. Signatures below are generated from the packages used to build this website.</p><p>Expand a symbol to read its declaration. Referenced types and inherited members are available through TypeScript/IDE navigation in the installed package. Start with the <a href="https://onodocs.com/developers/">task guides</a> for complete integrations.</p></section><div class="doc-layout"><nav class="doc-nav" aria-label="Documentation sections"><a href="#open-document">Open and inspect</a><a href="#queries">Query document content</a><a href="#text-ranges">Selections and ranges</a><a href="#updates">Edits and observed results</a><a href="#browser">Browser document</a><a href="#view">Canvas and views</a><a href="#editor">Editor</a><a href="#application">Application sessions</a><a href="#templates">Templates</a><a href="#template-editor">Template designer</a><a href="#forms">Form processing</a><a href="#form-ui">Form filling and design</a><a href="#review">Review and comparison</a><a href="#extraction">Extract content</a><a href="#server">Server rendering</a><a href="#http">HTTP service</a><a href="#collaboration">Collaboration service</a><a href="#collaborative-editor">Collaborative editor</a><a href="#agent">Agent browser integration</a><a href="#agent-server">Agent backend</a><a href="#agent-provider">Model provider</a><a href="#entry-points">Entry points</a><a href="#attachments">Attachments</a><a href="#pages">Pages</a><a href="#geometry">Geometry</a><a href="#fonts">Fonts</a><a href="#licensing">Licensing</a><a href="#stages">Stages</a></nav><article class="prose"><section id="open-document"><span id="documents"></span><h2>Open and inspect</h2><p>Use the default entry for data operations in Node or a browser. <code>content</code> and <code>body</code> are live query roots; <code>snapshot()</code> captures a query at a point in time. Returned elements and subqueries are snapshots. Dispose documents after use.</p><p>Import from <code>@onodocs/sdk</code>.</p><details><summary><code>openDocument</code></summary><pre><code data-api="@onodocs/sdk#openDocument">export declare function openDocument(input: ArrayBuffer | Uint8Array | Blob, options?: OpenDocumentOptions): Promise&lt;InspectedDocument&gt;;</code></pre></details><details><summary><code>InspectedDocument</code></summary><pre><code data-api="@onodocs/sdk#InspectedDocument">export interface InspectedDocument {
+    readonly license: LicenseStatus;
+    readonly source: AssemblyDocument;
+    readonly semantic: SemanticDocument;
+    /** Live query root. Returned elements and subqueries are snapshots. */
+    readonly content: DocumentQuery&lt;"document"&gt;;
+    /** Live body query root, including tables. */
+    readonly body: DocumentQuery&lt;"story"&gt;;
+    /** Immutable query snapshot; the same object is returned until document content changes. */
+    snapshot(): DocumentQuery&lt;"document"&gt;;
+    chartContent(drawingId: string, options?: Readonly&lt;{
+        signal?: AbortSignal;
+    }&gt;): Promise&lt;import("../core/index.js").ChartContent&gt;;
+    imageData(imageId: string, options?: Readonly&lt;{
+        signal?: AbortSignal;
+    }&gt;): Promise&lt;Readonly&lt;{
+        bytes: Uint8Array;
+        mediaType: string;
+    }&gt;&gt;;
+    tableStyles(): import("../core/index.js").QueryResults&lt;import("../core/index.js").DocumentTableStyle&gt;;
+    paragraphStyles(): import("../core/index.js").QueryResults&lt;import("../core/index.js").DocumentParagraphStyle&gt;;
+    readonly disposed: boolean;
+    extractDocument(options?: import("./extraction.js").ExtractionOptions): import("./extraction.js").DocumentExtraction;
+    update(updates: DocumentTextUpdate | readonly DocumentTextUpdate[], options?: DocumentChangeOptions): Promise&lt;DocumentChangeResult&gt;;
+    edit(edit: DocumentEdit, options?: DocumentChangeOptions): Promise&lt;DocumentEditResult&gt;;
+    readReview(options?: Readonly&lt;{
+        signal?: AbortSignal;
+    }&gt;): Promise&lt;import("../core/index.js").DocumentReview&gt;;
+    review(command: import("../core/index.js").DocumentReviewCommand, options?: DocumentChangeOptions): Promise&lt;DocumentReviewResult&gt;;
+    fieldStatus(options?: Readonly&lt;{
+        signal?: AbortSignal;
+    }&gt;): Promise&lt;readonly DocumentFieldStatus[]&gt;;
+    save(options?: DocumentSaveOptions): Promise&lt;Uint8Array&lt;ArrayBuffer&gt;&gt;;
+    dispose(): void;
+}</code></pre></details></section><section id="queries"><span id="elements"></span><h2>Query document content</h2><p>Queries select document elements and expose search ranges. Paragraph <code>styleId</code> identifies its authored style; <code>properties</code> distinguishes authored overrides from effective values. Reacquire targets after edits.</p><p>Import from <code>@onodocs/sdk</code>.</p><details><summary><code>DocumentQuery</code></summary><pre><code data-api="@onodocs/sdk#DocumentQuery">export interface DocumentQuery&lt;K extends DocumentElementKind = DocumentElementKind&gt; extends QueryResults&lt;ElementOf&lt;K&gt;&gt; {
+    /** Selected ranges joined with newlines; empty paragraphs contribute empty ranges. */
+    readonly text: string;
+    noteSettings(this: DocumentQuery&lt;"document"&gt;): QueryResults&lt;DocumentNoteSettings&gt;;
+    sections(this: DocumentQuery&lt;"document"&gt;): QueryResults&lt;DocumentSection&gt;;
+    get(this: DocumentQuery&lt;"document"&gt;, id: string): DocumentElement | undefined;
+    /** Inspect a range within one paragraph. */
+    range(selection: import("../foundation/index.js").DocumentSelection): DocumentTextRange;
+    ranges(): readonly DocumentTextRange[];
+    /** Convert all query results into one contiguous editable range. Does not read or change the editor selection. */
+    toSelection(): import("../foundation/index.js").DocumentSelection;
+    within&lt;T extends DocumentElement&gt;(element: T | readonly T[]): DocumentQuery&lt;T["kind"]&gt;;
+    closest&lt;T extends DocumentElementKind&gt;(kind: T): DocumentQuery&lt;T&gt;;
+    where(filter: DocumentFilter&lt;K&gt;): DocumentQuery&lt;K&gt;;
+    filter(predicate: (element: ElementOf&lt;K&gt;) =&gt; boolean): DocumentQuery&lt;K&gt;;
+    children(): DocumentQuery;
+    descendants(): DocumentQuery;
+    /** All descendant paragraphs, including table cells. */
+    paragraphs(): DocumentQuery&lt;"paragraph"&gt;;
+    runs(): DocumentQuery&lt;"run"&gt;;
+    images(): DocumentQuery&lt;"image"&gt;;
+    tables(): DocumentQuery&lt;"table"&gt;;
+    rows(this: DocumentQuery&lt;"table"&gt;): DocumentQuery&lt;"row"&gt;;
+    cells(this: DocumentQuery&lt;"table"&gt; | DocumentQuery&lt;"row"&gt;): DocumentQuery&lt;"cell"&gt;;
+    contentControls(): DocumentQuery&lt;"contentControl"&gt;;
+    bookmarks(): DocumentQuery&lt;"bookmark"&gt;;
+    stories(this: DocumentQuery&lt;"document"&gt;): DocumentQuery&lt;"story"&gt;;
+    findText(text: string | RegExp): QueryResults&lt;DocumentTextRange&gt;;
+}</code></pre></details><details><summary><code>DocumentParagraph</code></summary><pre><code data-api="@onodocs/sdk#DocumentParagraph">export interface DocumentParagraph extends ElementBase&lt;"paragraph"&gt; {
+    readonly dropCap?: Readonly&lt;{
+        mode: "drop" | "margin";
+        lines: number;
+        distance: number;
+    }&gt;;
+    readonly bibliography?: Readonly&lt;{
+        instruction: import("../parsing-api/index.js").BibliographyInstruction;
+        selection: import("../foundation/index.js").DocumentSelection;
+    }&gt;;
+    readonly caption?: Readonly&lt;{
+        label: string;
+        number: string;
+    }&gt;;
+    readonly sectionIndex?: number;
+    readonly selection: import("../foundation/index.js").DocumentSelection;
+    readonly properties: Readonly&lt;{
+        authored: import("../parsing-api/index.js").ParagraphProperties;
+        effective: import("../parsing-api/index.js").ParagraphProperties;
+    }&gt;;
+    readonly list?: Readonly&lt;{
+        kind: string;
+        level: number;
+        group: string;
+    }&gt;;
+    readonly headingLevel?: number;
+    readonly nodeId: StructureNodeId;
+    readonly styleId: string | null;
+    readonly alignment: "left" | "center" | "right" | "both";
+}</code></pre></details></section><section id="text-ranges"><h2>Selections and ranges</h2><p>Selection offsets use UTF-16 text positions and the end is exclusive. Page indices are zero based. Content can cross stories; use separate ranges for noncontiguous scopes. Authored paragraph measurements use points; rendered geometry uses twips.</p><p>Import from <code>@onodocs/sdk</code>.</p><details><summary><code>DocumentSelection</code></summary><pre><code data-api="@onodocs/sdk#DocumentSelection">export interface DocumentSelection {
+    readonly start: ParagraphPosition;
+    readonly end: ParagraphPosition;
+}</code></pre></details></section><section id="updates"><h2>Edits and observed results</h2><p>Edits return observed content and selection information. Atomic batch edits produce one history entry when routed through the editor. Set supported property patches to null to restore inheritance. Use the <a href="https://onodocs.com/developers/sdk/#updates">editing examples</a> and <a href="https://onodocs.com/releases/#migration">migration notes</a>.</p><p>Import from <code>@onodocs/sdk</code>.</p><details><summary><code>DocumentEditResult</code></summary><pre><code data-api="@onodocs/sdk#DocumentEditResult">export interface DocumentEditResult extends DocumentChangeResult {
+    readonly selection: DocumentSelection;
+}</code></pre></details><details><summary><code>DocumentChangeResult</code></summary><pre><code data-api="@onodocs/sdk#DocumentChangeResult">export interface DocumentChangeResult {
+    /** Published snapshots of affected blocks, including their unchanged content. Requery after subsequent edits. */
+    readonly paragraphs: readonly DocumentParagraphResult[];
+    readonly tables: readonly DocumentTableResult[];
+    readonly images: readonly DocumentImageResult[];
+    readonly drawings: readonly DocumentDrawingResult[];
+    readonly contentControls: readonly DocumentContentControlResult[];
+    readonly sections: readonly DocumentSection[];
+    /** Explicitly removed structural elements, from the preceding snapshot. */
+    readonly removed: readonly Pick&lt;DocumentElement, "id" | "kind" | "text"&gt;[];
+    /** Browser documents also report the final page count and zero-based pages containing affected content. */
+    readonly pageCount?: number;
+    readonly pageIndexes?: readonly number[];
+}</code></pre></details></section><section id="browser"><h2>Browser document</h2><p>The browser entry supplies layout, geometry, pages and browser output alongside document operations. Load required fonts and dispose the document and views. See <a href="https://onodocs.com/developers/javascript-docx-viewer/">viewer integration</a>.</p><p>Import from <code>@onodocs/sdk/browser</code>.</p><details><summary><code>openDocument</code></summary><pre><code data-api="@onodocs/sdk/browser#openDocument">export declare function openDocument(input: ArrayBuffer | Uint8Array | Blob, options?: BrowserOptions): Promise&lt;BrowserDocument&gt;;</code></pre></details><details><summary><code>BrowserDocument</code></summary><pre><code data-api="@onodocs/sdk/browser#BrowserDocument">export interface BrowserDocument extends InspectedDocument, DocumentSource {
+    readonly layoutView: DocumentLayoutView;
+    setLayoutView(view: DocumentLayoutView, options?: Readonly&lt;{
+        signal?: AbortSignal;
+    }&gt;): Promise&lt;void&gt;;
+    pdf(options?: import("./pdf-options.js").PdfOptions): Promise&lt;Uint8Array&lt;ArrayBuffer&gt;&gt;;
+    /** Spec: document.body.table.autofit.authoring */
+    measureTable(table: import("./index.js").DocumentTable, options?: Readonly&lt;{
+        maxWidth?: number;
+        signal?: AbortSignal;
+    }&gt;): Promise&lt;Readonly&lt;{
+        columnWidths: readonly number[];
+    }&gt;&gt;;
+    readonly layout: LayoutDocument;
+    readonly geometry: DocumentGeometry;
+    readonly pages: readonly PageSource[];
+    readonly disposed: boolean;
+    dispose(): void;
+}</code></pre></details></section><section id="view"><span id="views"></span><h2>Canvas and views</h2><p>Create a Canvas document from a document source, or open an authenticated page-manifest URL. The view handles mounting, selection, scrolling and painting. <a href="https://onodocs.com/developers/sdk/#anchors">HTML attachments</a> are application overlays and are excluded from exports.</p><p>Import from <code>@onodocs/canvas</code>.</p><details><summary><code>createDocument</code></summary><pre><code data-api="@onodocs/canvas#createDocument">export declare function createDocument(source: DocumentSource, options?: Readonly&lt;{
+    container?: HTMLElement;
+    viewOptions?: ViewOptions;
+}&gt;): CanvasDocument;</code></pre></details><details><summary><code>openDocument</code></summary><pre><code data-api="@onodocs/canvas#openDocument">export declare function openDocument(url: string | URL, options?: RemoteDocumentOptions): Promise&lt;CanvasDocument&gt;;</code></pre></details><details><summary><code>DocumentView</code></summary><pre><code data-api="@onodocs/canvas#DocumentView">export interface DocumentView {
+    readonly element: HTMLElement;
+    readonly disposed: boolean;
+    whenRendered(options?: Readonly&lt;{
+        visibleOnly?: boolean;
+    }&gt;): Promise&lt;void&gt;;
+    setZoom(zoom: number | "fit-width"): void;
+    readonly pageMovement: "vertical" | "horizontal";
+    setPageMovement(movement: "vertical" | "horizontal"): void;
+    toClient(pageIndex: number, point: DocumentPoint): DocumentPoint;
+    fromClient(point: DocumentPoint): Readonly&lt;{
+        pageIndex: number;
+        point: DocumentPoint;
+    }&gt; | undefined;
+    hitTest(point: DocumentPoint): DocumentHit | undefined;
+    readonly selection: DocumentSelection | undefined;
+    /** Selects text; pass false to preserve the current scroll position. */
+    setSelection(selection: DocumentSelection, scroll?: boolean): void;
+    setSelectionOverlays(selections: readonly SelectionOverlay[]): void;
+    readonly visiblePages: readonly number[];
+    /** Scrolls to the start of a zero-based page. */
+    scrollTo(pageIndex: number, options?: ScrollIntoViewOptions): boolean;
+    scrollTo(anchor: ViewAnchor, options?: ScrollIntoViewOptions): boolean;
+    attach(element: HTMLElement, options: AttachmentOptions): DocumentAttachment;
+    dispose(): void;
+}</code></pre></details></section><section id="editor"><h2>Editor</h2><p>Use <code>execute</code> and <code>review</code> for mutations with editor history. Save returns bytes; persistence is supplied by your application. <a href="https://onodocs.com/developers/javascript-docx-editor/">Embed Editor</a> · <a href="https://onodocs.com/developers/editor-customization/">Customize Editor</a>.</p><p>Import from <code>@onodocs/editor</code>.</p><details><summary><code>createEditor</code></summary><pre><code data-api="@onodocs/editor#createEditor">export declare function createEditor(options: EditorOptions): WordEditor;</code></pre></details><details><summary><code>EditorOptions</code></summary><pre><code data-api="@onodocs/editor#EditorOptions">export interface EditorOptions {
+    readonly container: HTMLElement;
+    readonly document?: BrowserOptions;
+    readonly toolbar?: readonly string[] | false;
+    readonly fonts?: readonly string[];
+    readonly writing?: EditorWritingOptions;
+    readonly dictation?: EditorDictationOptions;
+    readonly protection?: EditorProtectionOptions;
+    readonly defaultFormattingStorageKey?: string | false;
+    readonly quickPartsStorageKey?: string | false;
+    readonly styles?: readonly Readonly&lt;{
+        id: string;
+        label: string;
+    }&gt;[];
+    readonly readOnly?: boolean;
+    readonly mode?: EditorMode;
+    readonly allowedModes?: readonly EditorMode[];
+    readonly form?: FormDefinition;
+    readonly captureHistory?: () =&gt; (() =&gt; void);
+    readonly onModeChange?: (mode: EditorMode) =&gt; void;
+    readonly onFormComplete?: (result: Readonly&lt;{
+        bytes: Uint8Array&lt;ArrayBuffer&gt;;
+        answers: FormAnswers;
+    }&gt;) =&gt; void | Promise&lt;void&gt;;
+    readonly review?: EditorReviewOptions;
+    readonly onChange?: (editor: WordEditor, change: EditorChange) =&gt; void | Promise&lt;void&gt;;
+    readonly onError?: (error: unknown) =&gt; void;
+    readonly commands?: readonly Readonly&lt;{
+        id: string;
+        label: string;
+        modes?: readonly EditorMode[];
+        quickAccess?: boolean;
+        icon?: string;
+        ribbon?: Readonly&lt;{
+            tab: string;
+            group: string;
+            icon?: string;
+        }&gt;;
+        execute: (editor: WordEditor) =&gt; void | Promise&lt;void&gt;;
+    }&gt;[];
+}</code></pre></details><details><summary><code>WordEditor</code></summary><pre><code data-api="@onodocs/editor#WordEditor">export interface WordEditor {
+    readonly reviewDisplay: "accepted" | "markup" | "original";
+    readonly reviewFilter: import("@onodocs/sdk").ReviewFilter;
+    setReviewDisplay(display: "accepted" | "markup" | "original", comments?: boolean, filter?: import("@onodocs/sdk").ReviewFilter): Promise&lt;void&gt;;
+    readonly cellSelection: EditorCellSelection | undefined;
+    selectCells(selection: EditorCellSelection): void;
+    readonly view: DocumentView | undefined;
+    synchronize(load: () =&gt; Promise&lt;EditorSynchronization | undefined&gt;): Promise&lt;void&gt;;
+    readonly document: BrowserDocument | undefined;
+    /** Current user selection or caret; read before editing because edits can move it. */
+    readonly selection: DocumentSelection | undefined;
+    readonly element: HTMLElement;
+    readonly mode: EditorMode;
+    readonly allowedModes: readonly EditorMode[];
+    setMode(mode: EditorMode, options?: EditorOperationOptions): Promise&lt;void&gt;;
+    fill(answers: FormAnswers, options?: EditorOperationOptions): Promise&lt;void&gt;;
+    answers(): FormAnswers;
+    completeForm(options?: EditorOperationOptions): Promise&lt;Readonly&lt;{
+        bytes: Uint8Array&lt;ArrayBuffer&gt;;
+        answers: FormAnswers;
+    }&gt;&gt;;
+    open(input: ArrayBuffer | Uint8Array | Blob, name?: string, options?: EditorOperationOptions): Promise&lt;void&gt;;
+    restore(input: ArrayBuffer | Uint8Array | Blob, options?: EditorOperationOptions): Promise&lt;void&gt;;
+    newDocument(options?: EditorOperationOptions): Promise&lt;void&gt;;
+    execute(command: EditorCommand | undefined, update?: () =&gt; void | Promise&lt;void&gt;, options?: EditorOperationOptions): Promise&lt;import("@onodocs/sdk").DocumentEditResult | import("@onodocs/sdk").DocumentReviewResult | undefined&gt;;
+    review(command: import("@onodocs/sdk").DocumentReviewCommand, options?: EditorOperationOptions): Promise&lt;import("@onodocs/sdk").DocumentReviewResult&gt;;
+    select(selection: DocumentSelection, scroll?: boolean): void;
+    find(text: string): readonly DocumentSelection[];
+    replaceAll(text: string, replacement: string, options?: EditorOperationOptions): Promise&lt;void&gt;;
+    undo(options?: EditorOperationOptions): Promise&lt;void&gt;;
+    redo(options?: EditorOperationOptions): Promise&lt;void&gt;;
+    save(): Promise&lt;Uint8Array&lt;ArrayBuffer&gt;&gt;;
+    pdf(): Promise&lt;Uint8Array&lt;ArrayBuffer&gt;&gt;;
+    dispose(): void;
+}</code></pre></details></section><section id="application"><h2>Application sessions</h2><p>Sessions track dirty/saving state and acknowledge your persistence callback. Disposal cancels work; it does not flush a save. <a href="https://onodocs.com/developers/react-docx-editor/">React example</a> · <a href="https://onodocs.com/developers/javascript-docx-editor/#recovery">Recovery behavior</a>.</p><p>Import from <code>@onodocs/editor/application</code>.</p><details><summary><code>openApplicationEditor</code></summary><pre><code data-api="@onodocs/editor/application#openApplicationEditor">export declare function openApplicationEditor(options: ApplicationOptions): Promise&lt;ApplicationEditor&gt;;</code></pre></details><details><summary><code>ApplicationOptions</code></summary><pre><code data-api="@onodocs/editor/application#ApplicationOptions">export interface ApplicationOptions extends Omit&lt;EditorOptions, "onChange" | "onError"&gt; {
+    readonly input: ArrayBuffer | Uint8Array | Blob;
+    readonly name?: string;
+    readonly signal?: AbortSignal;
+    readonly persist: (bytes: Uint8Array&lt;ArrayBuffer&gt;, signal: AbortSignal) =&gt; Promise&lt;void&gt;;
+    readonly recovery?: RecoveryStore;
+    readonly restoreRecovery?: boolean;
+    readonly autosaveDelay?: number | false;
+    readonly onEvent?: (event: ApplicationEvent) =&gt; void;
+}</code></pre></details><details><summary><code>ApplicationEditor</code></summary><pre><code data-api="@onodocs/editor/application#ApplicationEditor">export interface ApplicationEditor {
+    readonly editor: WordEditor;
+    readonly state: ApplicationState;
+    markChanged(): void;
+    save(): Promise&lt;void&gt;;
+    dispose(): void;
+}</code></pre></details></section><section id="templates"><h2>Templates</h2><p>Generate each output from the original template and consume batches incrementally. <a href="https://onodocs.com/developers/templates/">Template guide</a>.</p><p>Import from <code>@onodocs/sdk</code>.</p><details><summary><code>openTemplate</code></summary><pre><code data-api="@onodocs/sdk#openTemplate">export declare function openTemplate(input: ArrayBuffer | Uint8Array | Blob, options?: OpenDocumentOptions): Promise&lt;DocumentTemplate&gt;;</code></pre></details><details><summary><code>DocumentTemplate</code></summary><pre><code data-api="@onodocs/sdk#DocumentTemplate">export interface DocumentTemplate {
+    readonly fields: readonly TemplateField[];
+    readonly disposed: boolean;
+    generate(data: unknown, options?: TemplateGenerationOptions): Promise&lt;Uint8Array&lt;ArrayBuffer&gt;&gt;;
+    batch(data: Iterable&lt;unknown&gt; | AsyncIterable&lt;unknown&gt;, options?: TemplateGenerationOptions): AsyncIterable&lt;Uint8Array&lt;ArrayBuffer&gt;&gt;;
+    dispose(): void;
+}</code></pre></details></section><section id="template-editor"><h2>Template designer</h2><p>Author bindings with the ordinary Word editor and preview generated output.</p><p>Import from <code>@onodocs/editor</code>.</p><details><summary><code>createTemplateEditor</code></summary><pre><code data-api="@onodocs/editor#createTemplateEditor">export declare function createTemplateEditor(options: TemplateEditorOptions): TemplateEditor;</code></pre></details></section><section id="forms"><h2>Form processing</h2><p>Keep trusted rules beside the template. Completion returns matching answers and Word bytes. <a href="https://onodocs.com/developers/forms/">Forms guide</a>.</p><p>Import from <code>@onodocs/sdk/forms</code>.</p><details><summary><code>createForm</code></summary><pre><code data-api="@onodocs/sdk/forms#createForm">export declare function createForm(document: FormDocument, definition: FormDefinition): DocumentForm;</code></pre></details><details><summary><code>FormDefinition</code></summary><pre><code data-api="@onodocs/sdk/forms#FormDefinition">export interface FormDefinition {
+    readonly title: string;
+    readonly fields: readonly FormField[];
+}</code></pre></details><details><summary><code>DocumentForm</code></summary><pre><code data-api="@onodocs/sdk/forms#DocumentForm">export interface DocumentForm {
+    readonly definition: FormDefinition;
+    answers(): FormAnswers;
+    validate(): readonly FormIssue[];
+    fill(answers: FormAnswers, options?: Readonly&lt;{
+        signal?: AbortSignal;
+    }&gt;): Promise&lt;void&gt;;
+    complete(options?: Readonly&lt;{
+        signal?: AbortSignal;
+    }&gt;): Promise&lt;Readonly&lt;{
+        bytes: Uint8Array&lt;ArrayBuffer&gt;;
+        answers: FormAnswers;
+    }&gt;&gt;;
+}</code></pre></details></section><section id="form-ui"><h2>Form filling and design</h2><p>Mount inputs and a preview, or author a form and persist its document and definition together.</p><p>Import from <code>@onodocs/editor/forms</code>.</p><details><summary><code>openForm</code></summary><pre><code data-api="@onodocs/editor/forms#openForm">export declare function openForm(options: FormOptions): Promise&lt;FormView&gt;;</code></pre></details><details><summary><code>createFormDesigner</code></summary><pre><code data-api="@onodocs/editor/forms#createFormDesigner">export declare function createFormDesigner(options: FormDesignerOptions): FormDesigner;</code></pre></details></section><section id="review"><h2>Review and comparison</h2><p>Use trusted reviewer identity and check supported Word exchange. Direct document operations do not provide editor undo history. <a href="https://onodocs.com/developers/review/">Review guide</a>.</p><p>Import from <code>@onodocs/sdk</code>.</p><details><summary><code>DocumentReviewCommand</code></summary><pre><code data-api="@onodocs/sdk#DocumentReviewCommand">export type DocumentReviewCommand = ReviewCommand&lt;DocumentSelection&gt;;</code></pre></details><details><summary><code>DocumentReviewResult</code></summary><pre><code data-api="@onodocs/sdk#DocumentReviewResult">export interface DocumentReviewResult extends DocumentChangeResult {
+    readonly review: DocumentReview;
+}</code></pre></details><details><summary><code>compareDocuments</code></summary><pre><code data-api="@onodocs/sdk#compareDocuments">export declare function compareDocuments(before: ArrayBuffer | Uint8Array | Blob, after: InspectedDocument, options?: OpenDocumentOptions): Promise&lt;readonly DocumentDifference[]&gt;;</code></pre></details></section><section id="extraction"><h2>Extract content</h2><p>Extraction produces text, Markdown and source references for navigation or editing. Markdown source links are opt-in with <code>sourceLinks: true</code>. <a href="https://onodocs.com/developers/extract-docx-text-tables/">Extraction guide</a>.</p><p>Import from <code>@onodocs/sdk</code>.</p><details><summary><code>extractDocument</code></summary><pre><code data-api="@onodocs/sdk#extractDocument">export declare function extractDocument(document: InspectedDocument &amp; {
+    readonly geometry?: import("../core/index.js").DocumentGeometry;
+}, options?: ExtractionOptions): DocumentExtraction;</code></pre></details></section><section id="server"><h2>Server rendering</h2><p>Reuse the renderer, dispose individual documents and close the renderer on shutdown. Requires playwright-core and installed Chrome/Chromium. <a href="https://onodocs.com/developers/deployment/#server">Node example</a> · <a href="https://onodocs.com/developers/pdf-export/">PDF output</a>.</p><p>Import from <code>@onodocs/sdk/server</code>.</p><details><summary><code>createRenderer</code></summary><pre><code data-api="@onodocs/sdk/server#createRenderer">export declare function createRenderer(options?: RendererOptions): Promise&lt;ServerRenderer&gt;;</code></pre></details></section><section id="http"><h2>HTTP service</h2><p>Provide authentication and durable storage around process-local document sessions. <a href="https://onodocs.com/developers/deployment/#http">Protocol and deployment</a>.</p><p>Import from <code>@onodocs/sdk/http</code>.</p><details><summary><code>createHttpService</code></summary><pre><code data-api="@onodocs/sdk/http#createHttpService">export declare function createHttpService(options: HttpServiceOptions): {
+    handle(request: IncomingMessage, response: ServerResponse): Promise&lt;void&gt;;
+    dispose(): Promise&lt;void&gt;;
+};</code></pre></details></section><section id="collaboration"><h2>Collaboration service</h2><p>Provide authorization and atomic document/receipt storage. <a href="https://onodocs.com/developers/collaboration/">Service and recovery contracts</a>.</p><p>Import from <code>@onodocs/sdk/collaboration</code>.</p><details><summary><code>createCollaborationService</code></summary><pre><code data-api="@onodocs/sdk/collaboration#createCollaborationService">export declare function createCollaborationService&lt;Context&gt;(options: CollaborationOptions&lt;Context&gt;): {
+    exchange(documentId: string, request: CollaborationRequest, context: Context): Promise&lt;CollaborationReply&gt;;
+};</code></pre></details></section><section id="collaborative-editor"><h2>Collaborative editor</h2><p>Keep recovery identities distinct per document, user and tab. Shared checkpoints reset local snapshot Undo.</p><p>Import from <code>@onodocs/editor/collaboration</code>.</p><details><summary><code>openCollaborativeEditor</code></summary><pre><code data-api="@onodocs/editor/collaboration#openCollaborativeEditor">export declare function openCollaborativeEditor(options: CollaborativeEditorOptions): Promise&lt;CollaborativeEditor&gt;;</code></pre></details><details><summary><code>createCollaborationTransport</code></summary><pre><code data-api="@onodocs/editor/collaboration#createCollaborationTransport">export declare function createCollaborationTransport(url: string, fetcher?: typeof fetch): CollaborativeEditorOptions["exchange"];</code></pre></details><details><summary><code>createCollaborationRecovery</code></summary><pre><code data-api="@onodocs/editor/collaboration#createCollaborationRecovery">export declare function createCollaborationRecovery(key: string): CollaborationRecovery;</code></pre></details></section><section id="agent"><h2>Agent browser integration</h2><p>Optional assistant UI and authorized editor bridge. <a href="https://onodocs.com/developers/document-agent/">Installation, lifecycle and data flow</a>.</p><p>Import from <code>@onodocs/agent</code>.</p><details><summary><code>createAgent</code></summary><pre><code data-api="@onodocs/agent#createAgent">export declare function createAgent(options: AgentOptions): DocumentAgent;</code></pre></details><details><summary><code>AgentOptions</code></summary><pre><code data-api="@onodocs/agent#AgentOptions">export interface AgentOptions {
+    readonly container: HTMLElement;
+    readonly editor: WordEditor;
+    readonly transport: AgentTransport;
+    readonly transcriptUrl?: string;
+    readonly pageContext?: "metadata" | "image" | "text";
+    readonly pageImageDpi?: number;
+    readonly attachments?: {
+        readonly accept: string;
+        readonly maxBytes: number;
+        upload(file: File, signal: AbortSignal): Promise&lt;AgentAttachment&gt;;
+        remove?(attachment: AgentAttachment): Promise&lt;void&gt;;
+    };
+    readonly onEvent?: (event: AgentEvent) =&gt; void;
+}</code></pre></details><details><summary><code>agentRibbonCommand</code></summary><pre><code data-api="@onodocs/agent#agentRibbonCommand">export declare function agentRibbonCommand(toggle: () =&gt; void): NonNullable&lt;EditorOptions["commands"]&gt;[number];</code></pre></details><details><summary><code>createHttpTransport</code></summary><pre><code data-api="@onodocs/agent#createHttpTransport">export declare function createHttpTransport(endpoint: string, options?: RequestInit, bridge?: () =&gt; ApiBridge): AgentTransport;</code></pre></details><details><summary><code>createEditorApiBridge</code></summary><pre><code data-api="@onodocs/agent#createEditorApiBridge">export declare function createEditorApiBridge(editor: WordEditor, authorize: (call: ApiCall, signal: AbortSignal) =&gt; void | Promise&lt;void&gt;, pageImageDpi?: number): ApiBridge;</code></pre></details></section><section id="agent-server"><h2>Agent backend</h2><p>Authenticate and authorize turns, reserve and settle usage, and persist conversation state. Model credentials remain server-side.</p><p>Import from <code>@onodocs/agent/server</code>.</p><details><summary><code>runAgentTurn</code></summary><pre><code data-api="@onodocs/agent/server#runAgentTurn">export declare function runAgentTurn(host: AgentTurnHost, conversation: AgentConversation, request: AgentRequest, cancellation: AbortSignal): AsyncGenerator&lt;AgentEvent&gt;;</code></pre></details><details><summary><code>AgentTurnHost</code></summary><pre><code data-api="@onodocs/agent/server#AgentTurnHost">export interface AgentTurnHost {
+    readonly provider: AgentProvider;
+    readonly pageImages?: boolean;
+    readonly bridge: ApiBridge;
+    readonly limits?: AgentLimits | false;
+    readonly resultPropertyCharacters?: number;
+    readonly instructions?: string;
+    readonly attachments?: (message: AgentRequest["message"], signal: AbortSignal) =&gt; Promise&lt;readonly Json[]&gt;;
+    reserve(inputBytes: number, outputTokens: number, signal: AbortSignal): Promise&lt;string&gt;;
+    settle(reservation: string, usage: AgentUsage): Promise&lt;void&gt;;
+    commit(conversation: AgentConversation): Promise&lt;void&gt;;
+}</code></pre></details><details><summary><code>agentEventResponse</code></summary><pre><code data-api="@onodocs/agent/server#agentEventResponse">export declare function agentEventResponse(events: AsyncIterable&lt;AgentEvent&gt;, signal: AbortSignal): Response;</code></pre></details><details><summary><code>createApiBridge</code></summary><pre><code data-api="@onodocs/agent/server#createApiBridge">export declare function createApiBridge(options: ApiBridgeOptions): ApiBridge;</code></pre></details></section><section id="agent-provider"><h2>Model provider</h2><p>Connect your configured provider and billing account. Optional capabilities depend on the supplied host.</p><p>Import from <code>@onodocs/agent/openai</code>.</p><details><summary><code>createOpenAIProvider</code></summary><pre><code data-api="@onodocs/agent/openai#createOpenAIProvider">export declare function createOpenAIProvider(options: OpenAIAgentOptions): AgentProvider;</code></pre></details></section><section id="entry-points"><h2>Entry points</h2><p>Choose <code>@onodocs/sdk</code> for document data, <code>@onodocs/sdk/browser</code> for browser layout and export, <code>@onodocs/sdk/server</code> for Node rendering, and <code>@onodocs/canvas</code> for presentation. Editor and Agent are separate packages. Forms, HTTP and collaboration use the optional entry points listed above. See <a href="https://onodocs.com/developers/deployment/">deployment patterns</a> for runtime requirements.</p></section><section id="attachments"><h2>HTML attachments</h2><p>Attach application controls to a content fragment or page. Keep the returned attachment to move or dispose it. These HTML overlays are excluded from Word, image and PDF output. <a href="https://onodocs.com/developers/sdk/#anchors">Attachment example</a>.</p><p>Import from <code>@onodocs/canvas</code>.</p><details><summary><code>DocumentAttachment</code></summary><pre><code data-api="@onodocs/canvas#DocumentAttachment">export interface DocumentAttachment {
+    readonly element: HTMLElement;
+    readonly disposed: boolean;
+    dispose(): void;
+}</code></pre></details><details><summary><code>AttachmentOptions</code></summary><pre><code data-api="@onodocs/canvas#AttachmentOptions">export type AttachmentOptions = Readonly&lt;{
+    anchor: ViewAnchor;
+    offset?: DocumentPoint;
+    size?: PageSize;
+    interactive?: boolean;
+}&gt; &amp; (Readonly&lt;{
+    placement?: "overlay";
+    inset?: never;
+    gap?: never;
+}&gt; | Readonly&lt;{
+    placement: Extract&lt;AttachmentPlacement, `inside-${string}`&gt;;
+    inset?: number;
+    gap?: never;
+}&gt; | Readonly&lt;{
+    placement: Extract&lt;AttachmentPlacement, `outside-${string}`&gt;;
+    gap?: number;
+    inset?: never;
+}&gt;);</code></pre></details></section><section id="pages"><h2>Pages</h2><p>Canvas pages wrap the document source for mounting and export. Page indices start at zero. Use the document view for scrolling and selection. <a href="https://onodocs.com/developers/pdf-export/">Output guide</a>.</p><p>Import from <code>@onodocs/canvas</code>.</p><details><summary><code>DocumentPage</code></summary><pre><code data-api="@onodocs/canvas#DocumentPage">export interface DocumentPage {
+    readonly index: number;
+    readonly size: PageSize;
+    readonly interaction: PageInteraction;
+    render(canvas: HTMLCanvasElement, options?: Readonly&lt;{
+        dpi?: number;
+        region?: Readonly&lt;{
+            x: number;
+            y: number;
+            width: number;
+            height: number;
+        }&gt;;
+        background?: "white" | "transparent";
+        signal?: AbortSignal;
+    }&gt;): Promise&lt;void&gt;;
+}</code></pre></details></section><section id="geometry"><h2>Geometry</h2><p>Resolve content fragments and hit tests against the current layout. Geometry uses twips: 1,440 per inch. Refresh stored geometry after edits, font changes or layout-view changes. <a href="https://onodocs.com/developers/sdk/#geometry">Coordinates and selections</a>.</p><p>Import from <code>@onodocs/sdk</code>.</p><details><summary><code>DocumentGeometry</code></summary><pre><code data-api="@onodocs/sdk#DocumentGeometry">export interface DocumentGeometry {
+    pageMargins(index: number): DocumentPageMargins;
+    page(index: number): PageInteraction;
+    ranges(pageIndex: number, options?: Readonly&lt;{
+        stories?: readonly import("../semantic-api/index.js").DocumentStoryKind[];
+    }&gt;): readonly DocumentTextRange[];
+    paragraphFrames(paragraph: DocumentParagraph): readonly DocumentParagraphFrame[];
+    fragments(anchor: DocumentAnchor): readonly DocumentFragment[];
+    hitTest(pageIndex: number, point: DocumentPoint): DocumentHit | undefined;
+}</code></pre></details></section><section id="fonts"><h2>Fonts</h2><p>Supply document fonts through browser options. Font family, weight and style affect line breaks and pagination; editor interface fonts are configured separately. <a href="https://onodocs.com/developers/sdk/#fonts">Font loading and deployment</a>.</p><p>Import from <code>@onodocs/sdk/browser</code>.</p><details><summary><code>BrowserOptions</code></summary><pre><code data-api="@onodocs/sdk/browser#BrowserOptions">export interface BrowserOptions extends OpenDocumentOptions, PageDisplayListOptions {
+    readonly layoutView?: DocumentLayoutView;
+    readonly fonts?: FontSources;
+    readonly defaultFont?: string;
+    readonly defaultFontSize?: number;
+    readonly onProgress?: (progress: DocumentProgress) =&gt; void;
+}</code></pre></details></section><section id="licensing"><h2>Licensing</h2><p>Pass the production license through document options; Editor accepts it under <code>document.licenseKey</code>. Omitting it enables watermarked evaluation. The Editor source is MIT; the SDK and Canvas keep their commercial terms. <a href="https://onodocs.com/pricing/">License options</a>.</p><p>Import from <code>@onodocs/sdk</code>.</p><details><summary><code>LicenseOptions</code></summary><pre><code data-api="@onodocs/sdk#LicenseOptions">export interface LicenseOptions {
+    readonly licenseKey?: string;
+}</code></pre></details><details><summary><code>LicenseStatus</code></summary><pre><code data-api="@onodocs/sdk#LicenseStatus">export type LicenseStatus = Readonly&lt;{
+    mode: "evaluation";
+    reason: EvaluationReason;
+}&gt; | Readonly&lt;{
+    mode: "trial";
+    license: Extract&lt;LicenseClaims, {
+        kind: "trial";
+    }&gt;;
+}&gt; | Readonly&lt;{
+    mode: "commercial";
+    license: Extract&lt;LicenseClaims, {
+        kind: "commercial";
+    }&gt;;
+}&gt; | Readonly&lt;{
+    mode: "demo";
+    license: Extract&lt;LicenseClaims, {
+        kind: "demo";
+    }&gt;;
+}&gt;;</code></pre></details></section><section id="stages"><h2>Loading progress</h2><p>Use <code>onProgress</code> to show loading activity or mount available pages while opening continues. Await the open operation before full-document work. Abort loading with its signal, and dispose documents and views when leaving. <a href="https://onodocs.com/developers/sdk/#lifecycle">Lifecycle guide</a>.</p><p>Import from <code>@onodocs/sdk/browser</code>.</p><details><summary><code>DocumentProgress</code></summary><pre><code data-api="@onodocs/sdk/browser#DocumentProgress">export interface DocumentProgress {
+    readonly stage: "parsing" | "fonts" | "layout" | "ready";
+    readonly phase?: LayoutProgress["phase"];
+    readonly iteration?: number;
+    readonly completed?: number;
+    readonly total?: number;
+    readonly document: DocumentSource;
+}</code></pre></details></section></article></div></main>
+<footer class="site-footer"><span>OnoDocs · Ion OÜ</span><nav aria-label="Footer"><a href="https://onodocs.com/releases/">Releases</a><a href="https://onodocs.com/refunds/">Refunds</a><a href="https://onodocs.com/privacy/">Privacy</a><a href="https://onodocs.com/terms/">License &amp; terms</a><a href="https://onodocs.com/developers/">Documentation</a><a href="https://onodocs.com/support/">Support</a></nav></footer><script type="module" src="../copy.js"></script>
+</body></html>

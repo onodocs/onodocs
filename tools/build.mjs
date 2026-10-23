@@ -33,6 +33,10 @@ for (const directory of ["docx-viewer", "javascript-viewer"]) {
   await mkdir(join(outdir, directory), { recursive: true });
   for (const file of ["index.html", "style.css"]) await copyFile(`examples/docx-viewer/${file}`, join(outdir, directory, file));
 }
+await mkdir(join(outdir, "samples/react-docx-editor"), { recursive: true });
+for (const file of ["index.html", "style.css"]) await copyFile(`examples/react-docx-editor/${file}`, join(outdir, "samples/react-docx-editor", file));
+await copyFile("examples/view-document/sample.docx", join(outdir, "samples/react-docx-editor/sample.docx"));
+workflowEntries["samples/react-docx-editor/main"] = "examples/react-docx-editor/main.jsx";
 await mkdir(join(outdir, "react-docx-viewer"), { recursive: true });
 for (const file of ["index.html", "style.css"]) await copyFile(`examples/react-docx-viewer/${file}`, join(outdir, "react-docx-viewer", file));
 await copyFile("examples/view-document/sample.docx", join(outdir, "react-docx-viewer/sample.docx"));

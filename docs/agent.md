@@ -1,38 +1,57 @@
-# Document agent
+# Document Agent
 
-`@onodocs/agent` is an optional commercial package, under the same application scope as the SDK. Model usage is supplied and paid for by the host application.
+`@onodocs/agent` is an optional commercial package under the SDK's named-application scope. Your application supplies and pays for its model backend. Ordinary Editor use needs no model service. The [integration guide](https://onodocs.com/developers/document-agent/) and [public API reference](https://onodocs.com/developers/api/#agent) cover the browser and server entry points.
 
-The browser entry provides `createAgent`, `agentRibbonCommand`, `createEditorApiBridge`, and `createHttpTransport`. The independent `@onodocs/agent/server` export provides `runAgentTurn`, `agentEventResponse`, `createApiBridge`, and persistent accounting contracts. `@onodocs/agent/openai` provides `createOpenAIProvider`; it uses fetch and requires no provider SDK.
+## Install and run
 
-Create the ribbon command before creating your editor, then mount the sidebar in your application's adjacent panel container. Its transport receives a stable request ID, message, optional authorized attachment IDs, and cancellation signal. Use the application editor's existing autosave and change handlers.
+SDK, Canvas and Editor are published to npm. Agent currently ships as the matching GitHub archive:
 
-```js
-import { createAgent, agentRibbonCommand, createHttpTransport, createEditorApiBridge } from "@onodocs/agent";
-import { createEditor } from "@onodocs/editor";
-let agent;
-const editor = createEditor({ container: document.querySelector("#document"), commands: [agentRibbonCommand(() => agent.toggle())] });
-await editor.open(bytes);
-agent = createAgent({ container: document.querySelector("#assistant"), editor, transport: createHttpTransport("/api/agent", { credentials: "same-origin" }, () => createEditorApiBridge(editor, authorizeDocumentCall)) });
+```sh
+npm install @onodocs/editor
+npm install https://github.com/onodocs/onodocs/releases/download/sdk-v0.5.12/onodocs-agent-0.5.12.tgz
 ```
 
-The host authenticates requests, authorizes documents and methods, serializes turns, deduplicates request IDs, persists conversation state, and supplies atomic storage. `runAgentTurn` requires reservation and settlement hooks; it has no unlimited accounting default. Every model continuation reserves capacity before a call. Failed or ambiguous calls retain their reservation. Provider retries are disabled; any host retry needs a new reservation.
+Use matching package releases; see [release notes](https://onodocs.com/releases/). To run this repository's complete example, run `npm install`, provide `OPENAI_API_KEY` in the server environment, then run `npm run example:agent`. Open the printed loopback URL. Never put the key in a browser module. The example includes a backend, SQLite usage records and TXT/DOCX attachments; replace demonstration identities and trust assumptions for production.
 
-`createOpenAIProvider({apiKey, model: "gpt-6-luna"})` accepts a server-only key or credential callback, optional endpoint and fetch implementation. `AgentProvider.respond` receives model instructions, conversation items, output allowance and abort signal. It returns text, ordered tool calls, provider continuation items, and usage. Additional providers implement that interface.
+## Connect an editor
 
-The model has one function, `call_api`, with a target, public member name and JSON-encoded positional arguments. Public methods, property types and argument schemas are generated from SDK, editor, query, extraction, geometry and view declarations during every build. `node tools/generate-agent-reference.mjs --check` verifies freshness. A returned `$handle` belongs to the current bridge and document snapshot. Read properties through `$get`. Use the literal returned handle ID as a call target and `{$handle: id}` only inside arguments. Read targets again after edits. Generated argument types describe the API to the model; they are not a second runtime validator. After resolving handles, the dispatcher passes arguments directly to the public method. Tool failures preserve the original exception name, message, stack, cause and enumerable details in the JSON error result. Source/semantic/layout internals, raw DOM, callback functions and host lifecycle operations require host capabilities; arbitrary JavaScript and prototype traversal are unavailable. Missing runtime capabilities return errors, not fabricated results.
+```js
+import { createEditor } from "@onodocs/editor";
+import { createAgent, agentRibbonCommand, createHttpTransport, createEditorApiBridge } from "@onodocs/agent";
 
-Use `createEditorApiBridge` for browser edits. It routes document edits and reviews through editor history, rendering, change notifications and autosave, and checks the queued document snapshot. Existing tracked-change restrictions remain in force. Read-only applications omit mutation authorization. Hosts must limit mutation authority to user-requested changes and must not treat document contents as instructions.
+let agent;
+const editor = createEditor({
+  container: document.querySelector("#document"),
+  commands: [agentRibbonCommand(() => agent?.toggle())]
+});
+await editor.open(bytes);
+agent = createAgent({
+  container: document.querySelector("#assistant"), editor,
+  transport: createHttpTransport("/api/agent", { credentials: "same-origin" },
+    () => createEditorApiBridge(editor, authorizeDocumentCall))
+});
+```
 
-Attachments use a host-provided upload callback with accepted file types and a size limit. The callback returns a session-authorized ID, display name and media type. The server resolves IDs into provider inputs; files never replace the editable document implicitly. Initial integration supports UTF-8 text and DOCX context extracted with the public SDK. Arbitrary files, external URLs and cross-session IDs are unsupported. Hosts own retention and cleanup. The Node example expires attachments after 24 hours on the next request and supports removing an attachment before sending.
+Supply empty, sized hosts, document bytes and the application's authorization callback. Implement `/api/agent` on your own backend. Dispose Agent and Editor on unmount. The AI Agent command appears before Undo. Use the editor bridge so changes enter history, rendering and application change/autosave handlers.
 
-Stop cancels further work. Closing the sidebar preserves conversation display and selection; disposal aborts uploads and the active turn. Navigation uses public view APIs and does not create document history entries.
+## Host the service
 
-The demo allocation is capped at USD 5 globally, USD 0.15 per session, and USD 0.50 per trusted IP per UTC day, additionally capped at 2,000/30/150 provider requests. Amounts are stored in millionths of a US dollar. Reservations conservatively treat input UTF-8 bytes plus protocol overhead as tokens and allow cache-write pricing. Session and global limits never reset when a browser refreshes. Hosts call `expireUsageAddresses` during request handling or scheduled maintenance to remove IP records after seven days; daily limits reset at midnight UTC. These are configurable application policies, not SDK document limits.
+`@onodocs/agent/server` exposes `runAgentTurn`, `agentEventResponse`, `createApiBridge` and accounting contracts. `@onodocs/agent/openai` supplies `createOpenAIProvider({ apiKey, model })`; its fetch-based provider needs no provider SDK. Additional providers implement `AgentProvider`.
 
-## Local example
+Authenticate users, authorize each document and method, serialize turns, deduplicate request IDs, and supply atomic persistence. The turn host requires reservation, settlement and conversation-commit callbacks. Reserve before each model continuation. Retain reservations when charges are uncertain; an application retry needs its own reservation. Use the complete [example backend](../examples/document-agent/serve.mjs) to see the contracts in context.
 
-Run `npm run example:agent` with an existing `OPENAI_API_KEY` in the server environment. Open the printed loopback URL. The example supports TXT and DOCX attachments, a persistent SQLite usage ledger and browser-owned documents. Its sample backend trusts tool results from that document owner; do not use that trust model for a public sample-only service.
+## Tools and execution
 
-## Available host capabilities
+The model uses the package's current public TypeScript declarations. `api_call` invokes a method with JSON-encoded positional arguments; `api_get` reads properties. Handles belong to their bridge and document snapshot. Reacquire queries and ranges after changes. `document.content` covers all stories; `document.body` covers the body; `document.snapshot()` captures a query. Mutations return observed results, including relevant content and selection.
 
-The generated inventory covers public document, editor, query/results, extraction, geometry and view members, including inherited and specialized query types. A browser editor supplies document edits, reviews, text updates, replace-all, undo/redo, selection and rendering through its ordinary lifecycle. Source, semantic and layout internals, raw DOM access, function callbacks, disposal and opening unrelated resources remain host capabilities. Data-only SDK hosts cannot render or provide a DOM editor. The public demo executes data operations on its authoritative server document and proxies permitted presentation operations to the browser. These are host availability limits, not a separate set of AI document actions.
+Browser integrations can use `api_script` to inspect and edit through document, editor and view APIs. It runs in an isolated module worker with a 32 MiB heap and 30-second deadline, without network, storage, credentials or host JavaScript. Return a plain object whose top-level values are strings; explicitly serialize projected arrays/objects. Deploy `script-worker.js` and its chunks or use a worker-aware bundler, with CSP permitting workers and WebAssembly. Server-only hosts must supply an isolated executor to offer scripting.
+
+Stop cancels further work. Completed edits can remain after Stop or a later error; they remain undoable. Inspect observed results and correct unintended changes. An atomic SDK batch is atomic, but an entire multi-call script is not. Document text and attachments are untrusted data and never permission for unrelated actions.
+
+## Context and privacy
+
+The transport sends prompts and required document context to your backend and provider. The default context is text. `pageContext: "image"` additionally supplies a page image; optional `pageImages: true` on the turn host and a compatible editor bridge enable requested page inspection. Hosts own authorization, retention, logs and usage limits.
+
+Attachments use host uploads returning session-authorized IDs. Supported TXT/DOCX context does not silently replace the editable document. Reject unrelated URLs and cross-session references; implement retention and deletion in your application.
+
+The [hosted website demo](https://onodocs.com/samples/document-agent/) uses approved fictional samples and authoritative server documents, with uploads/attachments disabled. It supports individual API calls and limited browser presentation, rather than browser-worker scripts. Its finite session, daily IP and global allowances are demo policies, not SDK document limits. See the [website disclosure](https://onodocs.com/privacy/#document-agent). Your own integration follows your provider and data policies.
