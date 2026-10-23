@@ -4,7 +4,7 @@ import OpenAI from "openai";
 
 if (!process.argv[2] || !process.env.OPENAI_MODEL) throw new Error("Set OPENAI_MODEL and run node --env-file=.env draft-email.mjs document.docx");
 const doc = await openDocument(await readFile(process.argv[2]));
-const data = doc.query.tables().where({ headers: ["Deliverable", "Owner", "Due"] }).one().textRows;
+const data = doc.content.tables().where({ headers: ["Deliverable", "Owner", "Due"] }).one().textRows;
 const client = new OpenAI();
 const response = await client.responses.create({
   model: process.env.OPENAI_MODEL,

@@ -12,7 +12,7 @@ const approvalDate = controls.querySelector("#approval-date");
 const submitButton = controls.querySelector("#save-form");
 const deliveryInput = document.querySelector("#delivery-input");
 
-const fields = doc.query.contentControls()
+const fields = doc.content.contentControls()
   .where({ tag: "delivery-date" }).map(field => {
     const input = deliveryInput.content.firstElementChild.cloneNode(true);
     input.value = field.text;
@@ -24,12 +24,12 @@ const fields = doc.query.contentControls()
   });
 
 view.attach(approval, {
-  anchor: doc.geometry.fragments(doc.query.findText("Client approval:").one())[0],
+  anchor: doc.geometry.fragments(doc.content.findText("Client approval:").one())[0],
   placement: "outside-right", gap: 80,
   size: { width: 420, height: 420 }
 });
 view.attach(approvalDate, {
-  anchor: doc.geometry.fragments(doc.query.findText("Date:").one())[0],
+  anchor: doc.geometry.fragments(doc.content.findText("Date:").one())[0],
   placement: "outside-right", gap: 80,
   size: { width: 1800, height: 420 }
 });
@@ -67,7 +67,7 @@ submitButton.addEventListener("click", () => {
 };
 
 await doc.update(Object.entries(data).map(([tag, text]) => ({
-  target: doc.query.contentControls().where({ tag }).one(),
+  target: doc.content.contentControls().where({ tag }).one(),
   text
 })));` },
   workflows: { title: "Queries and text output", path: "/samples/workflows/workflows.html", guide: "node", codeTitle: "", context: "", code: "" },

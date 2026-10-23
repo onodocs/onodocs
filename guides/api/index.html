@@ -30,7 +30,7 @@ openDocument(input: ArrayBuffer | Uint8Array | Blob, options?: BrowserOptions): 
 interface DocumentTextUpdate {
   readonly target: string | DocumentEditableElement | DocumentTextRange;
   readonly text: string;
-}</code></pre><p>Available on inspected, browser, and server documents. The target is a run, paragraph, cell, content control, its query ID, or a search range. <code>DocumentEditableElement</code> is the union of those four element types. Element targets must contain ordinary text in one paragraph. Text inherits the first selected run’s formatting. Tabs and newlines are supported. Range replacements preserve text outside the range and its formatting; an empty range inserts text. Offsets use the original paragraph’s UTF-16 positions and cannot split surrogate pairs.</p><pre><code>const customer = doc.query.contentControls().where({ tag: "customer" }).one();
+}</code></pre><p>Available on inspected, browser, and server documents. The target is a run, paragraph, cell, content control, its query ID, or a search range. <code>DocumentEditableElement</code> is the union of those four element types. Element targets must contain ordinary text in one paragraph. Text inherits the first selected run’s formatting. Tabs and newlines are supported. Range replacements preserve text outside the range and its formatting; an empty range inserts text. Offsets use the original paragraph’s UTF-16 positions and cannot split surrogate pairs.</p><pre><code>const customer = doc.content.contentControls().where({ tag: "customer" }).one();
 await doc.update({ target: customer, text: "Willow Design" });</code></pre><p>Batches reject overlapping or missing targets, generated fields, and multi-paragraph replacements without changing document content. Disjoint ranges in one run can be updated together. Unchanged updates preserve snapshots, formatting, and attachments. Updates execute in submission order. Browser updates rebuild layout and refresh views; existing HTML attachments are removed and can be reattached with fresh anchors.</p><p>For server updates, obtain target elements, IDs, or ranges by inspecting the same input with the analysis entry point. Exported page images and PDFs reflect updates. Use <code>save()</code> to export the current DOCX. The editor supports ordinary structural edits, and browser/server saves refresh supported fields. See <a href="https://onodocs.com/developers/document-workflows/">editing, templates, review and forms</a> for the supported workflows and limits.</p>
 </section>
 <section aria-labelledby="views"><h2 id="views">DocumentView</h2>
@@ -59,9 +59,9 @@ interface ViewOptions {
   };
 }</code></pre><pre><code>const hit = view.hitTest({ x: event.clientX, y: event.clientY });
 if (hit) {
-  const element = doc.query.get(hit.elementId);
-  const cell = element ? doc.query.within(element).closest("cell").optional() : undefined;
-}</code></pre><p>Resolve hit IDs through <code>doc.query.get</code> when the processing SDK is available. Canvas hit results use published IDs and work independently of the semantic model. Text hits resolve to a run or paragraph; table whitespace resolves to a cell or table. The optional caret uses the same UTF-16 offsets as text queries. Generated field appearances omit a caret when no source position can be represented. Raster drawings without a semantic hit identity and blank page space return no element. Invalid page indices throw.</p>
+  const element = doc.content.get(hit.elementId);
+  const cell = element ? doc.content.within(element).closest("cell").optional() : undefined;
+}</code></pre><p>Resolve hit IDs through <code>doc.content.get</code> when the processing SDK is available. Canvas hit results use published IDs and work independently of the semantic model. Text hits resolve to a run or paragraph; table whitespace resolves to a cell or table. The optional caret uses the same UTF-16 offsets as text queries. Generated field appearances omit a caret when no source position can be represented. Raster drawings without a semantic hit identity and blank page space return no element. Invalid page indices throw.</p>
 </section>
 <section aria-labelledby="server"><h2 id="server">Server rendering</h2>
 <pre><code>createRenderer(options?: RendererOptions): Promise&lt;ServerRenderer&gt;

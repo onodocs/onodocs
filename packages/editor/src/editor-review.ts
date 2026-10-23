@@ -1,5 +1,3 @@
-/** Spec: spec/features/document-modes.md */
-/** Spec: spec/features/document-review.md */
 import type { WordEditor } from "./editor.js";
 import type { DocumentReview, ReviewIdentity } from "@onodocs/sdk";
 import { compareDocuments, type DocumentDifference, type RevisionHistoryStore } from "@onodocs/sdk";
@@ -19,13 +17,15 @@ export function createReviewPanel(root: ShadowRoot, editor: WordEditor, options:
   status.className = "review-status"; status.setAttribute("role", "status"); header.append(heading); panel.append(header, tabs, content, status); root.append(panel);
   const style = document.createElement("style"); style.textContent = `
 :host([data-review-open=true]){display:grid;grid-template-columns:minmax(0,1fr) 350px}:host([data-review-open=true])>nav,:host([data-review-open=true])>footer{grid-column:1/-1;min-width:0}:host([data-review-open=true])>main{grid-column:1;grid-row:2;width:calc(100% - 40px)}
-.review-panel{min-width:0;grid-column:2;grid-row:2;align-self:start;position:sticky;top:164px;max-height:calc(100vh - 180px);min-height:300px;display:flex;flex-direction:column;margin:20px 16px 20px 0;background:white;border:1px solid #d7dce2;border-radius:8px;box-shadow:0 2px 8px #17212d08;overflow:hidden}.review-panel header{display:flex;align-items:center;justify-content:space-between;padding:14px 16px 8px}.review-panel h2{font-size:18px;margin:0}.review-panel h3{font-size:14px;margin:0 0 10px}.review-panel p{white-space:pre-wrap;overflow-wrap:anywhere;margin:6px 0;line-height:1.5}.review-panel small{color:#66717f;line-height:1.5}.review-panel article>small{display:block;margin-top:8px}.review-panel button{border:1px solid #dce1e6;height:auto;min-height:32px;padding:5px 9px}.review-panel button.primary{background:var(--onodocs-accent,#a33327);color:white;border-color:transparent}.review-panel button.primary:hover{background:#87291f}.review-panel button.quiet{border-color:transparent;color:#566373}.review-panel button:disabled{opacity:.45}.review-tabs{display:flex;gap:2px;padding:0 10px;border-bottom:1px solid #e4e7eb}.review-tabs button{flex:1;border:0;border-radius:0;border-bottom:2px solid transparent;font-size:12px;padding:10px 5px}.review-tabs button[aria-selected=true]{border-bottom-color:var(--onodocs-accent,#a33327);color:var(--onodocs-accent,#a33327);font-weight:600}.review-content{padding:16px;overflow:auto;min-height:0}.review-panel .review-summary{color:#66717f;font-size:12px;margin:0 0 12px}.review-panel .review-empty{padding:20px 0;color:#66717f}.review-panel .review-actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}.review-panel article{padding:14px 12px;border:1px solid #e1e5ea;border-radius:6px;margin-top:12px;background:#fff}.review-panel article[data-active=true]{border-color:var(--onodocs-accent,#a33327);box-shadow:0 0 0 1px var(--onodocs-accent,#a33327)}.review-panel article[data-resolved=true]{background:#f6f7f9}.review-panel .review-author{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px}.review-panel .review-author strong{font-weight:600;overflow-wrap:anywhere}.review-panel .review-badge{background:#edf3f0;color:#376656;font-size:11px;padding:3px 6px;border-radius:4px;white-space:nowrap}.review-panel .reply{margin-top:12px;padding-left:10px;border-left:2px solid #e4e7eb}.review-panel label{display:grid;gap:6px;margin-top:12px}.review-panel input,.review-panel textarea{position:static;opacity:1;width:100%;height:auto;min-height:36px;padding:8px;border:1px solid #cbd3dc;background:white;border-radius:5px;resize:vertical;font:inherit;line-height:1.5;pointer-events:auto}.review-panel textarea{min-height:76px}.review-panel input[type=file]{font-size:12px}.review-panel .review-toggle{display:flex;align-items:center;gap:8px;font-size:12px;color:#66717f;margin:12px 0}.review-panel input[type=checkbox]{width:16px;min-height:16px;margin:0}.review-panel .review-status:empty{display:none}.review-panel .review-status{padding:10px 16px;border-top:1px solid #e4e7eb;margin:0;font-size:12px}.review-panel .comparison-before{border-left:3px solid #bd655a;padding-left:9px}.review-panel .comparison-after{border-left:3px solid #418877;padding-left:9px}
+.review-panel{min-width:0;grid-column:2;grid-row:2;align-self:start;position:sticky;top:var(--editor-toolbar-height,164px);max-height:calc(100dvh - var(--editor-toolbar-height,164px) - 20px);min-height:300px;display:flex;flex-direction:column;margin:20px 16px 20px 0;background:white;border:1px solid #d7dce2;border-radius:8px;box-shadow:0 2px 8px #17212d08;overflow:hidden}.review-panel header{display:flex;align-items:center;justify-content:space-between;padding:14px 16px 8px}.review-panel h2{font-size:18px;margin:0}.review-panel h3{font-size:14px;margin:0 0 10px}.review-panel p{white-space:pre-wrap;overflow-wrap:anywhere;margin:6px 0;line-height:1.5}.review-panel small{color:#66717f;line-height:1.5}.review-panel article>small{display:block;margin-top:8px}.review-panel button{border:1px solid #dce1e6;height:auto;min-height:32px;padding:5px 9px}.review-panel button.primary{background:var(--onodocs-accent,#a33327);color:white;border-color:transparent}.review-panel button.primary:hover{background:#87291f}.review-panel button.quiet{border-color:transparent;color:#566373}.review-panel button:disabled{opacity:.45}.review-tabs{display:flex;gap:2px;padding:0 10px;border-bottom:1px solid #e4e7eb}.review-tabs button{flex:1;border:0;border-radius:0;border-bottom:2px solid transparent;font-size:12px;padding:10px 5px}.review-tabs button[aria-selected=true]{border-bottom-color:var(--onodocs-accent,#a33327);color:var(--onodocs-accent,#a33327);font-weight:600}.review-content{padding:16px;overflow:auto;min-height:0}.review-panel .review-filters{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}.review-panel .review-filters label{margin:0;font-size:12px}.review-panel .review-filters select{border:1px solid #cbd3dc;min-width:0;width:100%;background:white}.review-panel .review-summary{color:#66717f;font-size:12px;margin:0 0 12px}.review-panel .review-empty{padding:20px 0;color:#66717f}.review-panel .review-actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}.review-panel article{padding:14px 12px;border:1px solid #e1e5ea;border-radius:6px;margin-top:12px;background:#fff}.review-panel article[data-active=true]{border-color:var(--onodocs-accent,#a33327);box-shadow:0 0 0 1px var(--onodocs-accent,#a33327)}.review-panel article[data-resolved=true]{background:#f6f7f9}.review-panel .review-author{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px}.review-panel .review-author strong{font-weight:600;overflow-wrap:anywhere}.review-panel .review-badge{background:#edf3f0;color:#376656;font-size:11px;padding:3px 6px;border-radius:4px;white-space:nowrap}.review-panel .reply{margin-top:12px;padding-left:10px;border-left:2px solid #e4e7eb}.review-panel label{display:grid;gap:6px;margin-top:12px}.review-panel input,.review-panel textarea{position:static;opacity:1;width:100%;height:auto;min-height:36px;padding:8px;border:1px solid #cbd3dc;background:white;border-radius:5px;resize:vertical;font:inherit;line-height:1.5;pointer-events:auto}.review-panel textarea{min-height:76px}.review-panel input[type=file]{font-size:12px}.review-panel .review-toggle{display:flex;align-items:center;gap:8px;font-size:12px;color:#66717f;margin:12px 0}.review-panel input[type=checkbox]{width:16px;min-height:16px;margin:0}.review-panel .review-status:empty{display:none}.review-panel .review-status{padding:10px 16px;border-top:1px solid #e4e7eb;margin:0;font-size:12px}.review-panel .comparison-before{border-left:3px solid #bd655a;padding-left:9px}.review-panel .comparison-after{border-left:3px solid #418877;padding-left:9px}
 @media(max-width:900px){:host([data-review-open=true]){grid-template-columns:minmax(0,1fr)}:host([data-review-open=true])>main{grid-column:1;grid-row:3;width:calc(100% - 24px)}.review-panel{grid-column:1;grid-row:2;position:static;max-height:460px;min-height:0;margin:12px}.review-panel button{min-height:44px}.review-content{padding:12px 16px}.review-panel header{padding-top:12px}}
 `; root.append(style);
   let state: DocumentReview | undefined, activeTab: ReviewPanelTab = "comments", activeComment: string | undefined, activeRevision: string | undefined, showResolved = false;
+  let authorFilter = editor.reviewFilter.author, typeFilter = editor.reviewFilter.revisionType ?? "all", activeRevisionSelection: string | undefined;
   let comparison: { query: unknown; name: string; differences: readonly DocumentDifference[] } | undefined;
   const drafts = new Map<string, string>(), tabButtons = new Map<ReviewPanelTab, HTMLButtonElement>();
-  const run = (action: () => Promise<unknown>) => { status.textContent = ""; void action().catch(error => { if (!signal.aborted) status.textContent = error instanceof Error ? error.message : String(error); }); };
+  let pending = Promise.resolve();
+  const run = (action: () => Promise<unknown>) => { pending = pending.then(async () => { if (signal.aborted) return; status.textContent = ""; await action(); }).catch(error => { if (!signal.aborted) status.textContent = error instanceof Error ? error.message : String(error); }); };
   function button(parent: HTMLElement, label: string, action: () => Promise<unknown>, disabled = false, className = "", navigates = false): HTMLButtonElement {
     const node = document.createElement("button"); node.type = "button"; node.textContent = label; node.disabled = disabled; node.className = className;
     node.addEventListener("click", () => run(async () => {
@@ -49,11 +49,19 @@ export function createReviewPanel(root: ShadowRoot, editor: WordEditor, options:
   }
   async function refresh(): Promise<void> { try { await render(); } catch (error) { if (!signal.aborted) status.textContent = error instanceof Error ? error.message : String(error); } }
   async function show(tab: ReviewPanelTab = activeTab): Promise<void> { activeTab = tab === "history" && !options.history ? "comments" : tab; visibility(true); await refresh(); }
+  function matchesRevision(revision: DocumentReview["revisions"][number]): boolean {
+    return (authorFilter === undefined || revision.author === authorFilter) && (typeFilter === "all" || typeFilter === "text" && ["insert", "delete"].includes(revision.kind) || typeFilter === "moves" && ["moveFrom", "moveTo"].includes(revision.kind) || typeFilter === "format" && !["insert", "delete", "moveFrom", "moveTo"].includes(revision.kind));
+  }
+  function visibleComments() { return state?.comments.filter(comment => comment.parentId === undefined && (authorFilter === undefined || comment.author === authorFilter) && (showResolved || !comment.resolved)) ?? []; }
+  function selected(range: import("@onodocs/sdk").DocumentSelection | undefined): boolean {
+    const selection = editor.selection;
+    return !!range && !!selection && range.start.paragraphId === selection.start.paragraphId && range.end.paragraphId === selection.end.paragraphId && (selection.start.offset === selection.end.offset ? range.start.offset <= selection.start.offset && range.end.offset >= selection.start.offset : range.start.offset < selection.end.offset && range.end.offset > selection.start.offset);
+  }
   function revisionItems() {
     const items: { revision: DocumentReview["revisions"][number]; ids: string[] }[] = [];
-    for (const revision of state?.revisions ?? []) {
+    for (const revision of (state?.revisions ?? []).filter(matchesRevision)) {
       const previous = items.at(-1), before = previous?.revision, end = before?.selection?.end, start = revision.selection?.start;
-      if (previous && before?.kind === "ins" && revision.kind === "ins" && before.author === revision.author && end && start && end.paragraphId === start.paragraphId && end.offset === start.offset) {
+      if (previous && before?.kind === "insert" && revision.kind === "insert" && before.author === revision.author && end && start && end.paragraphId === start.paragraphId && end.offset === start.offset) {
         previous.ids.push(revision.id); previous.revision = { ...before, text: before.text + revision.text, selection: { start: before.selection!.start, end: revision.selection!.end } };
       } else items.push({ revision, ids: [revision.id] });
     }
@@ -61,18 +69,22 @@ export function createReviewPanel(root: ShadowRoot, editor: WordEditor, options:
   }
   async function navigate(kind: "comment" | "change", direction: 1 | -1): Promise<void> {
     await show(kind === "comment" ? "comments" : "changes");
-    const items = kind === "comment" ? state?.comments.filter(c => c.parentId === undefined) : revisionItems().map(item => item.revision);
+    const items = kind === "comment" ? (state?.comments.filter(comment => comment.parentId === undefined && (authorFilter === undefined || comment.author === authorFilter)) ?? []) : revisionItems().map(item => item.revision);
     if (!items?.length) return;
     const current = kind === "comment" ? activeComment : activeRevision, index = items.findIndex(item => item.id === current);
-    const item = items[index < 0 ? direction > 0 ? 0 : items.length - 1 : (index + direction + items.length) % items.length]!;
+    let item = items[index < 0 ? direction > 0 ? 0 : items.length - 1 : (index + direction + items.length) % items.length]!;
     if (kind === "comment") { activeComment = item.id; if ("resolved" in item && item.resolved) showResolved = true; } else activeRevision = item.id;
-    if (item.selection) editor.select(item.selection); await refresh(); content.querySelector('[data-active=true]')?.scrollIntoView({ block: "nearest" });
+    if (kind === "change" && !item.selection && editor.reviewDisplay !== "markup") {
+      const id = item.id; await editor.setReviewDisplay("markup"); item = revisionItems().find(item => item.ids.includes(id))?.revision ?? item;
+    }
+    if (item.selection) editor.select(item.selection); if (kind === "change") activeRevisionSelection = JSON.stringify(editor.selection); await refresh(); content.querySelector('[data-active=true]')?.scrollIntoView({ block: "nearest" });
   }
   async function render(): Promise<void> {
+    authorFilter = editor.reviewFilter.author; typeFilter = editor.reviewFilter.revisionType ?? "all";
     if (!editor.document) { state = undefined; onStateChange?.(); return; }
-    const mode = editor.mode, currentDocument = editor.document, query = currentDocument.query, readOnly = mode !== "edit" && mode !== "review";
+    const mode = editor.mode, currentDocument = editor.document, query = currentDocument.snapshot(), readOnly = mode !== "edit" && mode !== "review";
     const nextState = await currentDocument.readReview({ signal });
-    if (editor.mode !== mode || editor.document?.query !== query || signal.aborted) return;
+    if (editor.mode !== mode || editor.document?.snapshot() !== query || signal.aborted) return;
     state = nextState; onStateChange?.();
     if (panel.hidden) return;
     if (comparison && comparison.query !== query) comparison = undefined;
@@ -80,6 +92,17 @@ export function createReviewPanel(root: ShadowRoot, editor: WordEditor, options:
     const focusedKey = focused?.dataset.draft, start = focused?.selectionStart, end = focused?.selectionEnd, scroll = content.scrollTop;
     for (const [key, tab] of tabButtons) { tab.setAttribute("aria-selected", String(key === activeTab)); tab.tabIndex = key === activeTab ? 0 : -1; }
     content.setAttribute("aria-labelledby", `review-tab-${activeTab}`); content.replaceChildren();
+    if (activeTab === "comments" || activeTab === "changes") {
+      const filters = document.createElement("div"); filters.className = "review-filters"; content.append(filters);
+      const authors = [...new Set([...(activeTab === "comments" ? state.comments : state.revisions).map(item => item.author), ...(authorFilter === undefined ? [] : [authorFilter])])].sort();
+      function filter(label: string, value: string, choices: readonly Readonly<{ value: string; label: string }>[], change: (value: string) => Promise<void>): void {
+        const field = document.createElement("label"), control = document.createElement("select"); field.textContent = label; control.ariaLabel = label;
+        for (const choice of choices) control.add(new Option(choice.label, choice.value)); control.value = value; field.append(control); filters.append(field);
+        control.addEventListener("change", () => { const value = control.value, focused = root.activeElement === control; run(async () => { await change(value); await refresh(); if (focused && root.activeElement?.getAttribute("aria-label") === "Document text") content.querySelector<HTMLSelectElement>(`select[aria-label="${label}"]`)?.focus({ preventScroll: true }); }); }, { signal });
+      }
+      filter("Reviewer", authorFilter === undefined ? "" : `author:${authorFilter}`, [{ value: "", label: "All reviewers" }, ...authors.map(value => ({ value: `author:${value}`, label: value || "Unnamed reviewer" }))], value => { const { author, ...filter } = editor.reviewFilter; return editor.setReviewDisplay(editor.reviewDisplay, undefined, { ...filter, ...(value ? { author: value.slice(7) } : {}) }); });
+      if (activeTab === "changes") filter("Change type", typeFilter, [{ value: "all", label: "All changes" }, { value: "text", label: "Insertions and deletions" }, { value: "moves", label: "Moves" }, { value: "format", label: "Formatting" }], value => { const { revisionType, ...filter } = editor.reviewFilter; return editor.setReviewDisplay(editor.reviewDisplay, undefined, { ...filter, ...(value === "all" ? {} : { revisionType: value as "text" | "moves" | "format" }) }); });
+    }
     if (activeTab === "comments") {
       const threads = state.comments.filter(c => c.parentId === undefined), openCount = threads.filter(c => !c.resolved).length;
       text(content, `${openCount} open ${openCount === 1 ? "thread" : "threads"}`, "p").className = "review-summary";
@@ -88,32 +111,32 @@ export function createReviewPanel(root: ShadowRoot, editor: WordEditor, options:
         button(actions(content), "Post comment", async () => { if (!message.value.trim()) throw new Error("Enter a comment."); if (!editor.selection) throw new Error("Select text to comment on."); const value = message.value; drafts.delete("New comment"); try { await editor.review({ kind: "comment", selection: editor.selection, text: value, identity: options.identity() }); } catch (error) { drafts.set("New comment", value); throw error; } }, false, "primary");
       }
       const filter = document.createElement("label"), checkbox = document.createElement("input"); filter.className = "review-toggle"; checkbox.type = "checkbox"; checkbox.checked = showResolved; checkbox.addEventListener("change", () => { showResolved = checkbox.checked; run(refresh); }, { signal }); filter.append(checkbox, "Show resolved comments"); content.append(filter);
-      const visible = threads.filter(c => showResolved || !c.resolved);
-      if (!visible.length) text(content, threads.length ? "All comments are resolved." : "Select text in the document to start a conversation.").className = "review-empty";
+      const visible = visibleComments();
+      if (!visible.length) text(content, threads.length ? "No comments match these filters." : "Select text in the document to start a conversation.").className = "review-empty";
       const replies = new Map<string, typeof state.comments[number][]>();
       for (const comment of state.comments) if (comment.parentId !== undefined) { const list = replies.get(comment.parentId) ?? []; list.push(comment); replies.set(comment.parentId, list); }
       for (const comment of visible) {
-        const article = document.createElement("article"), author = document.createElement("div"); article.dataset.resolved = String(comment.resolved); article.dataset.active = String(activeComment === comment.id); author.className = "review-author"; text(author, comment.author, "strong"); text(author, comment.resolved ? "Resolved" : "Open", "span").className = "review-badge"; article.append(author); content.append(article);
+        const article = document.createElement("article"), author = document.createElement("div"); article.dataset.resolved = String(comment.resolved); article.dataset.active = String(activeComment === comment.id); author.className = "review-author"; text(author, comment.author || "Unnamed reviewer", "strong"); text(author, comment.resolved ? "Resolved" : "Open", "span").className = "review-badge"; article.append(author); content.append(article);
         text(article, comment.text);
         if (comment.selection) button(article, "Go to comment", async () => { activeComment = comment.id; editor.select(comment.selection!); await refresh(); }, false, "quiet", true);
         for (const reply of replies.get(comment.id) ?? []) { const entry = document.createElement("div"); entry.className = "reply"; text(entry, reply.author, "small"); text(entry, reply.text); article.append(entry); }
         if (!readOnly) {
           if (!comment.resolved) {
-            const reply = input(article, `Reply to ${comment.author}`, `reply:${comment.id}`);
+            const reply = input(article, `Reply to ${comment.author || "unnamed reviewer"}`, `reply:${comment.id}`);
             button(actions(article), "Reply", async () => { if (!reply.value.trim()) throw new Error("Enter a reply."); const value = reply.value; drafts.delete(`reply:${comment.id}`); try { await editor.review({ kind: "reply", id: comment.id, text: value, identity: options.identity() }); } catch (error) { drafts.set(`reply:${comment.id}`, value); throw error; } });
           }
-          const threadActions = actions(article); button(threadActions, comment.resolved ? "Reopen" : "Resolve", () => editor.review({ kind: "resolveComment", id: comment.id, resolved: !comment.resolved })); button(threadActions, "Delete thread", () => editor.review({ kind: "deleteComment", id: comment.id }), false, "quiet");
+          const threadActions = actions(article); button(threadActions, comment.resolved ? "Reopen" : "Resolve", () => editor.review({ kind: "resolveCommentThread", id: comment.id, resolved: !comment.resolved })); button(threadActions, "Delete thread", () => editor.review({ kind: "deleteCommentThread", id: comment.id }), false, "quiet");
         }
       }
     } else if (activeTab === "changes") {
       const items = revisionItems();
       text(content, `${items.length} pending ${items.length === 1 ? "change" : "changes"}`, "p").className = "review-summary";
       text(content, mode === "edit" ? state.tracking ? "Your text and formatting edits are being recorded." : "Turn on Track changes in the Review ribbon before editing to record your changes." : "Switch to Editing to record new changes.", "p").className = "review-summary";
-      if (state.revisions.length) { const all = actions(content); button(all, "Accept all", () => editor.review({ kind: "revision", accept: true }), readOnly); button(all, "Reject all", () => editor.review({ kind: "revision", accept: false }), readOnly); }
-      else text(content, "No changes to review.").className = "review-empty";
+      if (items.length) { const all = actions(content); button(all, "Accept shown", () => decide(true, "shown"), readOnly); button(all, "Reject shown", () => decide(false, "shown"), readOnly); }
+      else text(content, state.revisions.length ? "No changes match these filters." : "No changes to review.").className = "review-empty";
       for (const { revision, ids } of items) {
-        const article = document.createElement("article"); article.dataset.active = String(activeRevision === revision.id); content.append(article); text(article, revision.author, "strong"); text(article, ({ ins: "Inserted text", del: "Deleted text", rPrChange: "Formatting change", pPrChange: "Paragraph formatting" } as Record<string, string>)[revision.kind] ?? "Document change", "p").className = "review-summary"; text(article, revision.text);
-        if (revision.selection) button(article, "Go to change", async () => { activeRevision = revision.id; editor.select(revision.selection!); await refresh(); }, false, "quiet", true);
+        const article = document.createElement("article"); article.dataset.active = String(activeRevision === revision.id); content.append(article); text(article, revision.author || "Unnamed reviewer", "strong"); text(article, ({ insert: "Inserted text", delete: "Deleted text", moveFrom: "Moved from here", moveTo: "Moved here", format: "Formatting change", paragraphFormat: "Paragraph formatting" } as Record<string, string>)[revision.kind] ?? "Document change", "p").className = "review-summary"; text(article, revision.text);
+        if (revision.selection) button(article, "Go to change", async () => { activeRevision = revision.id; editor.select(revision.selection!); activeRevisionSelection = JSON.stringify(editor.selection); await refresh(); }, false, "quiet", true);
         const decisions = actions(article); button(decisions, "Accept", () => editor.review({ kind: "revision", ids, accept: true }), readOnly, "primary"); button(decisions, "Reject", () => editor.review({ kind: "revision", ids, accept: false }), readOnly);
       }
     } else if (activeTab === "compare") {
@@ -128,14 +151,30 @@ export function createReviewPanel(root: ShadowRoot, editor: WordEditor, options:
     } else if (options.history) {
       text(content, "Version history", "h3"); text(content, "Save a named version before making changes. Compare or restore it later.", "p").className = "review-summary";
       if (!readOnly) { const label = input(content, "Version label"); button(actions(content), "Save version", async () => { if (!label.value.trim()) throw new Error("Enter a version label."); const value = label.value, bytes = await editor.save(); await options.history!.save({ id: crypto.randomUUID(), label: value, ...options.identity() }, bytes, signal); drafts.delete("Version label"); await refresh(); }, false, "primary"); }
+      const list = document.createElement("div"); content.append(list);
       const versions = await options.history.list(signal);
-      if (editor.mode !== mode || editor.document?.query !== query || panel.hidden || activeTab !== "history") return;
-      if (!versions.length) text(content, "No saved versions yet.").className = "review-empty";
-      for (const version of versions) { const article = document.createElement("article"); content.append(article); text(article, version.label, "strong"); text(article, version.author, "p"); text(article, new Date(version.date).toLocaleString(), "small"); const controls = actions(article); button(controls, "Compare version", async () => compare(await options.history!.load(version.id, signal), version.label)); button(controls, "Restore version", async () => { await editor.restore(await options.history!.load(version.id, signal)); }, mode !== "edit"); }
+      if (editor.mode !== mode || editor.document?.snapshot() !== query || panel.hidden || activeTab !== "history" || list.parentNode !== content || signal.aborted) return;
+      if (!versions.length) text(list, "No saved versions yet.").className = "review-empty";
+      for (const version of versions) { const article = document.createElement("article"); list.append(article); text(article, version.label, "strong"); text(article, version.author, "p"); text(article, new Date(version.date).toLocaleString(), "small"); const controls = actions(article); button(controls, "Compare version", async () => compare(await options.history!.load(version.id, signal), version.label)); button(controls, "Restore version", async () => { await editor.restore(await options.history!.load(version.id, signal)); }, mode !== "edit"); }
     }
     content.scrollTop = scroll;
     if (focusedKey) for (const node of content.querySelectorAll<HTMLInputElement | HTMLTextAreaElement>("[data-draft]")) if (node.dataset.draft === focusedKey) { node.focus(); if (start !== null && start !== undefined) node.setSelectionRange(start, end ?? start); break; }
   }
-  async function compare(bytes: Uint8Array<ArrayBuffer>, name: string): Promise<void> { const current = editor.document!, query = current.query, differences = await compareDocuments(bytes, current, { signal }); if (editor.document !== current || current.query !== query) return; comparison = { query, name, differences }; await show("compare"); }
-  return { get state() { return state; }, async setMode() { visibility(editor.mode === "review"); await refresh(); }, async toggle() { visibility(!!panel.hidden); await refresh(); }, show, navigate, async newComment() { await show("comments"); content.querySelector<HTMLTextAreaElement>('textarea[aria-label="New comment"]')?.focus(); }, refresh };
+  async function decide(accept: boolean, scope: "current" | "next" | "shown" | "all"): Promise<void> {
+    const items = revisionItems(), current = items.find(item => item.ids.includes(activeRevision ?? "")), active = activeRevisionSelection === JSON.stringify(editor.selection) && current ? current : items.find(item => selected(item.revision.selection)) ?? current ?? items[0];
+    const ids = scope === "all" ? undefined : scope === "shown" ? items.flatMap(item => item.ids) : active?.ids;
+    if (scope !== "all" && !ids?.length) throw new Error("No changes match the current selection or filters.");
+    const index = active ? items.indexOf(active) : 0;
+    await editor.review({ kind: "revision", accept, ...(ids ? { ids } : {}) });
+    const remaining = revisionItems(), next = remaining[Math.min(index, remaining.length - 1)]; activeRevision = next?.revision.id;
+    if (scope === "next" && next?.revision.selection) editor.select(next.revision.selection); activeRevisionSelection = JSON.stringify(editor.selection);
+    await refresh();
+  }
+  async function deleteComment(): Promise<void> {
+    const comments = visibleComments(), comment = comments.find(comment => selected(comment.selection)) ?? comments.find(comment => comment.id === activeComment) ?? comments[0];
+    if (!comment) throw new Error("Choose a comment thread first.");
+    await editor.review({ kind: "deleteCommentThread", id: comment.id }); activeComment = undefined; await refresh();
+  }
+  async function compare(bytes: Uint8Array<ArrayBuffer>, name: string): Promise<void> { const current = editor.document!, query = current.snapshot(), differences = await compareDocuments(bytes, current, { signal }); if (editor.document !== current || current.snapshot() !== query) return; comparison = { query, name, differences }; await show("compare"); }
+  return { hide() { visibility(false); }, get state() { return state; }, async setMode() { visibility(editor.mode === "review"); await refresh(); }, async toggle() { visibility(!!panel.hidden); await refresh(); }, show, navigate, decide, deleteComment, get filters() { return { author: authorFilter, type: typeFilter, resolved: showResolved }; }, async setFilters(author: string | undefined, type: string, resolved: boolean) { await editor.setReviewDisplay(editor.reviewDisplay, undefined, { ...(author === undefined ? {} : { author }), ...(type === "all" ? {} : { revisionType: type as "text" | "moves" | "format" }) }); showResolved = resolved; await show("changes"); }, async newComment() { await show("comments"); content.querySelector<HTMLTextAreaElement>('textarea[aria-label="New comment"]')?.focus(); }, refresh };
 }

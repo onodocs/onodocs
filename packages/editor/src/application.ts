@@ -1,5 +1,3 @@
-/** Spec: spec/features/application-integration.md */
-/** Spec: spec/features/document-review.md */
 import { createEditor, type EditorOptions, type WordEditor } from "./editor.js";
 
 export interface RecoveryStore {
@@ -39,7 +37,7 @@ export async function openApplicationEditor(options: ApplicationOptions): Promis
   function notify(event: ApplicationEvent): void { try { options.onEvent?.(event); } catch (error) { console.error(error); } }
   function emit(type: "ready" | "change" | "saving" | "saved" | "disposed"): void { notify({ type, state: state() }); }
   function failed(error: unknown): void { if (!disposed) notify({ type: "error", error, state: state() }); }
-  const editor = createEditor({ ...options, document: { ...options.document, signal }, toolbar: options.toolbar ?? ["save", "pdf", "undo", "redo", "bold", "italic", "underline", "font", "size", "color", "alignment", "style", "list", "table", "tableTools", "link", "image", "imageTools", "page", "header", "footer", "find", "replace", ...(options.review ? ["review"] : [])], onError: failed, onChange: changed });
+  const editor = createEditor({ ...options, document: { ...options.document, signal }, onError: failed, onChange: changed });
   function changed(): void {
     signal.throwIfAborted();
     revision++; emit("change");

@@ -1,6 +1,6 @@
 # Customize the Editor
 
-The complete Editor source lives in [packages/editor](../packages/editor). It includes the ribbon, comments and revision pane, template and form controls, application sessions, and collaboration client.
+This repository is the source of truth for the Editor package. The complete Editor source lives in [packages/editor](../packages/editor). It includes the ribbon, comments and revision pane, template and form controls, application sessions, and collaboration client.
 
 The OnoDocs-authored Editor code and its build files use the [MIT License](../packages/editor/LICENSE). You may modify and redistribute that code, including in commercial products. Preserve its copyright notice and [third-party notices](../packages/editor/THIRD-PARTY-NOTICES).
 
@@ -14,9 +14,9 @@ Use Node.js 22.18 or newer. From this repository's root, run:
 npm --prefix packages/editor run build
 ```
 
-The build installs dependencies, compiles TypeScript and declarations, and packs the Editor under `~/.tmp/onodocs/editor-source/`. It prints the resulting package path and an `npm install` command for your application. Dependencies and generated files stay outside this checkout. No repository-wide setup is required.
+The build installs dependencies, compiles TypeScript and declarations, and packs the Editor under `~/.tmp/onodocs/editor-source/`. It prints the resulting package path and an `npm install` command for your application. Dependencies and generated files stay outside this checkout. No repository-wide setup is required. The build uses published SDK and Canvas packages; a private engine checkout is not required.
 
-Install the printed archive in your application. The public entry points remain:
+Install the printed archive in your application. To try it with this repository's samples without changing their dependency lockfile, run `npm install --no-save --package-lock=false /path/to/onodocs-editor.tgz`, then `npm start`. Run `npm ci` to return the samples to published dependencies. The public entry points remain:
 
 ```ts
 import { createEditor, createTemplateEditor } from "@onodocs/editor";
@@ -25,7 +25,7 @@ import { createFormDesigner, openForm } from "@onodocs/editor/forms";
 import { openCollaborativeEditor } from "@onodocs/editor/collaboration";
 ```
 
-Use the [document editor](../examples/editor), [template editor](../examples/template-editor), or [application workflows](document-workflows.md) to exercise your changes. Run `npm start` at the repository root after setup to open the sample catalogue. For a customized published package, choose your own package name and version and remove `private: true` before building. After renaming the package, replace `@onodocs/editor` in your application's imports with the new name, keeping any `/application`, `/forms`, or `/collaboration` suffix.
+Use the [document editor](../examples/editor), [template editor](../examples/template-editor), or [application workflows](document-workflows.md) to exercise your changes. Run `npm start` at the repository root after setup to open the sample catalogue. For a customized published package, choose your own package name and version before building. After renaming the package, replace `@onodocs/editor` in your application's imports with the new name, keeping any `/application`, `/forms`, or `/collaboration` suffix.
 
 To build against local SDK and Canvas package archives, pass their absolute paths:
 
@@ -34,6 +34,8 @@ npm --prefix packages/editor run build -- --sdk /path/to/sdk.tgz --canvas /path/
 ```
 
 Those overrides apply to the local build. The packed Editor still declares the dependency versions from its source `package.json`.
+
+For live editing with the optional AI Agent, run `npm ci` and `npm run example:agent:watch` from the repository root. Open `http://127.0.0.1:5198/`; changes in `packages/editor/src` rebuild and reload automatically. Set `OPENAI_API_KEY` in the server environment to use the agent.
 
 ## Choose what to change
 

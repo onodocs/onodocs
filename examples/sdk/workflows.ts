@@ -20,10 +20,10 @@ async function load() {
     const signal = controller.signal;
     doc = await openDocument(sample, { signal, licenseKey: await demoLicense(signal) });
     if (controller.signal.aborted) return;
-    deliveries = doc.query.tables().where({ headers: ["Deliverable", "Owner", "Due"] }).one().textRows;
+    deliveries = doc.content.tables().where({ headers: ["Deliverable", "Owner", "Due"] }).one().textRows;
     const tasks = deliveries.slice(1).map(([task, owner, due]) => ({ task: task!, owner: owner!, due: due! }));
-    document.querySelector("#ast-output")!.textContent = tree(doc.query.one());
-    document.querySelector("#ascii-output")!.textContent = toAscii(doc.query.one());
+    document.querySelector("#ast-output")!.textContent = tree(doc.content.one());
+    document.querySelector("#ascii-output")!.textContent = toAscii(doc.content.one());
     document.querySelector("#ai-context")!.textContent = JSON.stringify(deliveries, null, 2);
     const cards = document.querySelector("#delivery-cards")!;
     for (const task of tasks) {

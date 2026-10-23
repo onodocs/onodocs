@@ -14,3 +14,7 @@ API documentation.
 Changes should use the exported SDK APIs. This repository does not contain the
 rendering engine. Run `npm run typecheck`, `npm run build` and the affected
 sample before proposing changes. Contributions are licensed under LICENSE.
+
+The Editor implementation is maintained in `packages/editor`. Run `npm --prefix packages/editor run build` to build a customized package against the published SDK and Canvas APIs. See [Editor customization](docs/editor-source.md). UI checks verify behavior; screenshots are for manual review, not matching tests.
+
+Editor releases use an `editor-v<version>` GitHub release with the prepared `onodocs-editor-<version>.tgz` archive. The publishing workflow publishes that archive without rebuilding it. SDK/Canvas releases use separate `sdk-v<version>` releases.

@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-10-23: Editor source and 0.5.12
+
+- The current MIT-licensed Editor source and independent build are maintained in `packages/editor`, including the compact ribbon, document views, tables, drawings, equations, charts and review workflows.
+- Build your own Editor package with `npm --prefix packages/editor run build`; no private SDK source is needed. See [customization instructions](docs/editor-source.md).
+- Samples use SDK, Canvas and Editor 0.5.12 from npm. The optional agent uses the matching public release archive.
+
+
 ## 2026-10-08: Inline browser editor and SDK/Canvas 0.3.0
 
 - Standalone browser editor sample with inline typing, text formatting, paragraph splitting and joining, clipboard, undo/redo and DOCX download.

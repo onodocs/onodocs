@@ -48,16 +48,16 @@ view = canvasDocument.view;</code></pre><p>Early pages can change as pagination 
 <section aria-labelledby="licensing"><h2 id="licensing">Embed a license</h2><p>One application license covers SDK, Canvas and self-hosted capabilities for the named product, including its frontend, backend, background jobs and collaboration. See <a href="https://onodocs.com/terms/">application scope and redistribution terms</a>.</p><p>Pass the license key issued by OnoDocs when opening a document. It can be included in your application bundle. Verification happens offline and requires HTTPS or localhost in a browser.</p><pre><code>const doc = await openDocument(bytes, { licenseKey: "YOUR_SIGNED_LICENSE" });</code></pre><p>Without a key, the SDK runs in non-production evaluation mode with watermarked output. A trial key removes the watermark for 30 days. Commercial keys keep working indefinitely for covered SDK releases. Request a trial or choose a commercial license on the <a href="https://onodocs.com/pricing/">pricing page</a>.</p></section>
 <section aria-labelledby="extraction-guide"><h2 id="extraction-guide">Extract text and tables</h2><p>Follow the <a href="https://onodocs.com/developers/extract-docx-text-tables/">JavaScript and TypeScript DOCX extraction guide</a> to read paragraphs, select tables by headers and export JSON in the browser or Node.js. The guide includes a live demo and <a href="https://github.com/onodocs/onodocs/tree/main/examples/docx-extraction">complete sample source</a>.</p></section>
 <section aria-labelledby="queries"><h2 id="queries">Inspect document content</h2>
-<pre><code>const paragraphs = doc.query.paragraphs().all();
-const dates = doc.query.contentControls().where({ tag: "delivery-date" }).all();
-const matches = doc.query.findText("Client approval:").all();</code></pre><p>Choose an element type, filter it, then select the results. Use <code>one()</code> when exactly one match is required, <code>optional()</code> for zero or one, and <code>all()</code> for every match.</p><h3>Read a table</h3><pre><code>const table = doc.query.tables()
+<pre><code>const paragraphs = doc.content.paragraphs().all();
+const dates = doc.content.contentControls().where({ tag: "delivery-date" }).all();
+const matches = doc.content.findText("Client approval:").all();</code></pre><p>Choose an element type, filter it, then select the results. Use <code>one()</code> when exactly one match is required, <code>optional()</code> for zero or one, and <code>all()</code> for every match.</p><h3>Read a table</h3><pre><code>const table = doc.content.tables()
   .where({ headers: ["Deliverable", "Owner", "Due"] }).one();
-const rows = table.textRows.slice(1);</code></pre><p><code>textRows</code> includes the header row, so <code>slice(1)</code> selects the data rows. Query again after updates to read current values.</p><h3>Scope a query</h3><pre><code>const cells = doc.query.within(table).cells().all();
-const headers = doc.query.stories().where({ story: "header" }).paragraphs().all();</code></pre><p>Queries work independently of rendering. See <a href="https://onodocs.com/developers/api/#queries">query selectors and filters</a>, <a href="https://onodocs.com/developers/api/#elements">document elements</a>, and <a href="https://onodocs.com/developers/api/#text-ranges">text ranges</a>.</p>
+const rows = table.textRows.slice(1);</code></pre><p><code>textRows</code> includes the header row, so <code>slice(1)</code> selects the data rows. Query again after updates to read current values.</p><h3>Scope a query</h3><pre><code>const cells = doc.content.within(table).cells().all();
+const headers = doc.content.stories().where({ story: "header" }).paragraphs().all();</code></pre><p>Queries work independently of rendering. See <a href="https://onodocs.com/developers/api/#queries">query selectors and filters</a>, <a href="https://onodocs.com/developers/api/#elements">document elements</a>, and <a href="https://onodocs.com/developers/api/#text-ranges">text ranges</a>.</p>
 </section>
 <section aria-labelledby="anchors"><h2 id="anchors">Attach HTML controls</h2>
 <p>Define ordinary controls in HTML, then anchor them to document content. This example uses the first <code>delivery-date</code> control in the supplied project brief.</p><pre><code>&lt;input id="delivery-date" aria-label="Delivery date"&gt;
-&lt;button id="submit"&gt;Submit&lt;/button&gt;</code></pre><pre><code>const field = doc.query.contentControls().where({ tag: "delivery-date" }).first();
+&lt;button id="submit"&gt;Submit&lt;/button&gt;</code></pre><pre><code>const field = doc.content.contentControls().where({ tag: "delivery-date" }).first();
 const input = document.querySelector("#delivery-date");
 input.value = field.text;
 view.attach(input, { anchor: doc.geometry.fragments(field)[0] });
@@ -69,7 +69,7 @@ view.attach(document.querySelector("#submit"), {
 });</code></pre><p>Placement, size, and spacing use document geometry. Your application handles the controls’ values and events. Content spanning multiple fragments needs an explicit fragment anchor; see <a href="https://onodocs.com/developers/api/#attachments">attachment options</a>.</p><p>The <a href="https://onodocs.com/#sample=form">Custom form sample</a> shows editable delivery dates, approval, and submission.</p>
 </section>
 <section aria-labelledby="updates"><h2 id="updates">Update text and fill templates</h2>
-<p>Create a tagged content control in Word, then fill it with application data. For this example, open the <a href="https://onodocs.com/samples/sdk/template.docx" download="">booking template</a> instead of <code>sample.docx</code>.</p><pre><code>const customer = doc.query.contentControls().where({ tag: "customer" }).one();
+<p>Create a tagged content control in Word, then fill it with application data. For this example, open the <a href="https://onodocs.com/samples/sdk/template.docx" download="">booking template</a> instead of <code>sample.docx</code>.</p><pre><code>const customer = doc.content.contentControls().where({ tag: "customer" }).one();
 
 await doc.update({ target: customer, text: "Willow Design" });</code></pre><p>Updates refresh the rendered pages. Read queries and geometry again afterward, and reattach any HTML controls. The original file stays unchanged. Save the current document with <code>await doc.save()</code>. For generation with repeated sections, images and conditional content, see the <a href="https://onodocs.com/developers/document-workflows/#generation">template workflow</a>. See <a href="https://onodocs.com/developers/api/#updates">update targets and constraints</a>.</p>
 </section>
@@ -80,8 +80,8 @@ view.setZoom("fit-width");
 const canvas = document.createElement("canvas");
 await canvasDocument.pages[0].render(canvas, { dpi: 144 });</code></pre><p>Page indices are zero based. Page coordinates use twips: 1440 units per inch.</p><h3>Find the content under a click</h3><pre><code>view.element.addEventListener("click", event =&gt; {
   const hit = view.hitTest({ x: event.clientX, y: event.clientY });
-  console.log(hit ? doc.query.get(hit.elementId) : undefined);
-});</code></pre><h3>Search and reveal a match</h3><pre><code>const match = doc.query.findText(/approval/i).first();
+  console.log(hit ? doc.content.get(hit.elementId) : undefined);
+});</code></pre><h3>Search and reveal a match</h3><pre><code>const match = doc.content.findText(/approval/i).first();
 const fragment = match &amp;&amp; doc.geometry.fragments(match)[0];
 if (fragment) view.scrollTo(fragment, { block: "center" });</code></pre><p>See <a href="https://onodocs.com/developers/api/#views">coordinate conversion</a> and <a href="https://onodocs.com/developers/api/#geometry">geometry and hit results</a> for return values and offset units.</p>
 </section>
@@ -178,9 +178,9 @@ window.addEventListener("pagehide", event =&gt; {
 import { openDocument } from "@onodocs/sdk";
 
 const doc = await openDocument(await readFile(process.argv[2]));
-const paragraphs = doc.query.paragraphs().map(paragraph =&gt; paragraph.text);
+const paragraphs = doc.content.paragraphs().map(paragraph =&gt; paragraph.text);
 console.log(paragraphs);
-console.log(`${doc.query.tables().count()} tables`);</code></pre><p>The same query API works in the browser. For source facts and document structure, use <code>doc.source</code> and <code>doc.semantic</code>. See <a href="https://onodocs.com/developers/api/#documents">document properties</a>.</p>
+console.log(`${doc.content.tables().count()} tables`);</code></pre><p>The same query API works in the browser. For source facts and document structure, use <code>doc.source</code> and <code>doc.semantic</code>. See <a href="https://onodocs.com/developers/api/#documents">document properties</a>.</p>
 </section>
 <section aria-labelledby="server"><h2 id="server">Render on the server</h2>
 <p>Server rendering requires <code>playwright-core</code> and a separately installed Chrome or Chromium:</p><pre><code>npm install @onodocs/sdk playwright-core</code></pre><p>Save as <code>render.mjs</code> and run <code>node render.mjs document.docx</code>.</p><pre><code>import { readFile, writeFile } from "node:fs/promises";

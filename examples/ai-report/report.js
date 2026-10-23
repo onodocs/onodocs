@@ -16,10 +16,10 @@ export const reportParagraphs = [
 export async function createReport(options) {
   const document = await createDocument(options);
   try {
-    const caret = { paragraphId: document.query.paragraphs().one().id, offset: 0 };
+    const caret = { paragraphId: document.content.paragraphs().one().id, offset: 0 };
     await document.edit({ kind: "replace", selection: { start: caret, end: caret }, text: reportParagraphs.join("\n") });
     for (const index of [0, 2, 6]) {
-      const paragraph = document.query.paragraphs().at(index);
+      const paragraph = document.content.paragraphs().at(index);
       const selection = { start: { paragraphId: paragraph.id, offset: 0 }, end: { paragraphId: paragraph.id, offset: paragraph.text.length } };
       await document.edit({ kind: "style", selection, style: "Heading1" });
     }

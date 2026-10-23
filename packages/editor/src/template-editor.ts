@@ -1,4 +1,3 @@
-/** Spec: spec/features/template-authoring.md */
 import { createEditor, type EditorOptions, type WordEditor } from "./editor.js";
 import { openTemplate } from "@onodocs/sdk/browser";
 import { templateTag, type TemplateBinding } from "@onodocs/sdk";
@@ -47,7 +46,6 @@ button,input,select{font:inherit;color:inherit}button{cursor:pointer;border:1px 
   const field = get<HTMLSelectElement>('[aria-label="Data field"]'), section = get<HTMLInputElement>('[aria-label="Section name"]'), scope = get<HTMLSelectElement>('[aria-label="Template content scope"]'), format = get<HTMLSelectElement>('[aria-label="Value format"]'), currency = get<HTMLInputElement>('[aria-label="Currency"]'), width = get<HTMLInputElement>('[aria-label="Template image width"]'), height = get<HTMLInputElement>('[aria-label="Template image height"]'), image = get<HTMLInputElement>('[aria-label="Sample image"]');
   const inspector = get<HTMLFormElement>(".inspector"), status = get<HTMLOutputElement>("output"), list = get<HTMLDivElement>(".field-list");
   let sample: unknown = structuredClone(options.sampleData ?? { customer: "Willow Design", amount: 1250, date: "2026-10-08", includeNote: true, items: [{ name: "Design", price: 1250 }], logo: null });
-  const imageTargets = new Map<string, { record: Record<string, unknown>; key: string }[]>();
   let templateBytes: Uint8Array<ArrayBuffer> | undefined, previewing = false, disposed = false, busy = false, selectedId = "", kind: TemplateBinding["kind"] = "value", panel = "list";
   const lifetime = new AbortController();
   const templateCommands = [
@@ -86,7 +84,7 @@ button,input,select{font:inherit;color:inherit}button{cursor:pointer;border:1px 
   function bindingName(value: TemplateBinding): string { return fieldName("name" in value ? value.name + (value.kind === "include" && value.path?.length ? ` · ${value.path.join(".")}` : "") : value.path.join(".") || "Current item"); }
   function refreshBindings(): void {
     list.replaceChildren();
-    for (const control of editor.document?.query.contentControls() ?? []) {
+    for (const control of editor.document?.content.contentControls() ?? []) {
       if (!control.tag?.startsWith("onodocs:")) continue;
       let value: TemplateBinding;
       try { value = JSON.parse(control.tag.slice(8)); if (!fieldKinds[value.kind]) continue; } catch { continue; }
@@ -94,7 +92,7 @@ button,input,select{font:inherit;color:inherit}button{cursor:pointer;border:1px 
       button.type = "button"; button.className = "field-item"; button.dataset.controlId = control.id;
       title.textContent = bindingName(value); type.textContent = fieldKinds[value.kind].name;
       if (value.kind === "value" && value.path.length === 1 && control.parent) {
-        const parent = editor.document!.query.within(control.parent).closest("contentControl").first();
+        const parent = editor.document!.content.within(control.parent).closest("contentControl").first();
         if (parent?.tag?.startsWith("onodocs:")) {
           try { const container: TemplateBinding = JSON.parse(parent.tag.slice(8)); title.textContent = `${bindingName(container)} · ${bindingName(value)}`; } catch { }
         }
@@ -107,8 +105,7 @@ button,input,select{font:inherit;color:inherit}button{cursor:pointer;border:1px 
   }
   function refreshFields(selected = field.value): void {
     field.replaceChildren(new Option("Choose a data field", ""));
-    imageTargets.clear();
-    const query = editor.document?.query;
+    const query = editor.document?.content;
     let owner = selectedId ? query?.get(selectedId)?.parent : editor.selection ? query?.get(editor.selection.start.paragraphId) : undefined;
     let reusableContext: string | undefined;
     while (owner) {
@@ -121,22 +118,13 @@ button,input,select{font:inherit;color:inherit}button{cursor:pointer;border:1px 
       }
       owner = owner.parent;
     }
-    function collectImages(value: unknown, path: string[]): void {
-      if (Array.isArray(value)) { for (const child of value) collectImages(child, []); }
-      else if (value !== null && typeof value === "object" && !isSampleImage(value)) for (const [key, child] of Object.entries(value)) {
-        const childPath = [...path, key], id = JSON.stringify(childPath);
-        if (child === null || isSampleImage(child)) { const targets = imageTargets.get(id) ?? []; targets.push({ record: value as Record<string, unknown>, key }); imageTargets.set(id, targets); }
-        else collectImages(child, childPath);
-      }
-    }
-    collectImages(sample, []);
     const context = Array.isArray(sample) ? sample[0] : sample;
     function visit(value: unknown, path: string[], label: string): void {
-      const collection = Array.isArray(value), object = value !== null && typeof value === "object", picture = isSampleImage(value);
+      const collection = Array.isArray(value), object = value !== null && typeof value === "object" && !(value instanceof Date), picture = isSampleImage(value);
       const allowed = kind === "repeat" ? collection : kind === "if" ? typeof value === "boolean" || collection : kind === "image" ? value === null || picture : kind === "include" ? true : !object;
       if (allowed && path.length) field.add(new Option(label, JSON.stringify(path)));
       if (collection) {
-        if (value[0] && typeof value[0] === "object") for (const [key, child] of Object.entries(value[0])) visit(child, [key], `${reusableContext ?? `${label} item`} · ${key}`);
+        if (value[0] && typeof value[0] === "object" && !(value[0] instanceof Date)) for (const [key, child] of Object.entries(value[0])) visit(child, [key], `${reusableContext ?? `${label} item`} · ${key}`);
         else if (value.length && kind === "value") field.add(new Option(reusableContext ?? `${label} item`, "[]"));
       } else if (object && !picture) for (const [key, child] of Object.entries(value)) visit(child, [...path, key], label ? `${label}.${key}` : key);
     }
@@ -146,8 +134,8 @@ button,input,select{font:inherit;color:inherit}button{cursor:pointer;border:1px 
     field.value = selected;
   }
   function selectionSummary(): void {
-    const range = editor.selection, paragraph = range && editor.document?.query.get(range.start.paragraphId);
-    const control = selectedId && editor.document?.query.get(selectedId);
+    const range = editor.selection, paragraph = range && editor.document?.content.get(range.start.paragraphId);
+    const control = selectedId && editor.document?.content.get(selectedId);
     get(".selection-note span").textContent = control ? control.text.slice(0, 200) || "Selected field" : paragraph?.kind === "paragraph" ? range!.start.paragraphId === range!.end.paragraphId ? paragraph.text.slice(range!.start.offset, range!.end.offset) || paragraph.text || "Empty paragraph" : "Multiple paragraphs selected" : "Select content in the document.";
   }
   function showFields(): void {
@@ -169,14 +157,14 @@ button,input,select{font:inherit;color:inherit}button{cursor:pointer;border:1px 
   }
   function addField(value: TemplateBinding["kind"]): void {
     kind = value; selectedId = ""; format.value = "text"; field.value = "";
-    const p = editor.selection && editor.document?.query.get(editor.selection.start.paragraphId);
-    const inTable = p && editor.document?.query.within(p).closest("table").first();
+    const p = editor.selection && editor.document?.content.get(editor.selection.start.paragraphId);
+    const inTable = p && editor.document?.content.within(p).closest("table").first();
     scope.value = kind === "repeat" && inTable ? "row" : ["value", "image"].includes(kind) ? "selection" : "paragraph";
     refreshFields(""); showFields(); showPanel("inspector"); field.focus(); report("");
   }
   function editBinding(id: string): void {
-    const control = editor.document?.query.get(id); if (control?.kind !== "contentControl") return;
-    const query = editor.document!.query, paragraphs = query.within(control).paragraphs().all();
+    const control = editor.document?.content.get(id); if (control?.kind !== "contentControl") return;
+    const query = editor.document!.content, paragraphs = query.within(control).paragraphs().all();
     let content = control.children[0]; while (content?.kind === "contentControl") content = content.children[0];
     scope.value = content?.kind === "row" ? "row" : content?.kind === "table" ? "table" : paragraphs.length ? "paragraph" : "selection";
     if (paragraphs.length) editor.select({ start: { paragraphId: paragraphs[0]!.id, offset: 0 }, end: { paragraphId: paragraphs.at(-1)!.id, offset: paragraphs.at(-1)!.text.length } });
@@ -241,9 +229,10 @@ button,input,select{font:inherit;color:inherit}button{cursor:pointer;border:1px 
       } else if (name === "new") { await editor.newDocument(); templateBytes = undefined; previewing = false; selectedId = ""; get(".filename").textContent = "Untitled template"; mode(); refreshBindings(); report("Select document content, then add a field."); }
       else if (name === "bind" || name === "remove") {
         if (previewing) throw new Error("Return to the template before changing fields.");
-        const control = selectedId && editor.document?.query.get(selectedId);
+        const control = selectedId && editor.document?.content.get(selectedId);
         const value: TemplateBinding = name === "remove" && control && control.kind === "contentControl" ? JSON.parse(control.tag!.slice(8)) : binding();
-        await editor.execute({ kind: "template", ...(selectedId ? { controlId: selectedId } : {}), tag: templateTag(value), title: "name" in value ? `${value.kind}: ${value.name}` : `${value.kind}: ${value.path.join(".")}`, scope: scope.value as "selection" | "paragraph" | "row" | "table", action: name === "remove" ? "remove" : selectedId ? "update" : "wrap" });
+        const properties = { tag: templateTag(value), title: "name" in value ? `${value.kind}: ${value.name}` : `${value.kind}: ${value.path.join(".")}` };
+        await editor.execute(name === "remove" ? { kind: "contentControl", action: "unwrap", controlId: selectedId } : selectedId ? { kind: "contentControl", action: "update", controlId: selectedId, ...properties } : { kind: "contentControl", action: "wrap", scope: scope.value as "selection" | "paragraph" | "row" | "table", ...properties });
         selectedId = ""; showPanel("list"); refreshBindings(); report(name === "remove" ? "Field removed. The document content is unchanged." : "Field saved in the template.");
       } else if (name === "data") {
         const result = await editTemplateData(root, sample, lifetime.signal);
@@ -273,9 +262,18 @@ button,input,select{font:inherit;color:inherit}button{cursor:pointer;border:1px 
   root.querySelectorAll<HTMLButtonElement>("button[data-action]").forEach(button => button.addEventListener("click", () => { void action(button.dataset.action!); }, { signal: lifetime.signal }));
   inspector.addEventListener("submit", event => { event.preventDefault(); void action("bind"); }, { signal: lifetime.signal });
   image.addEventListener("change", () => {
-    const file = image.files?.[0], targets = imageTargets.get(field.value);
+    const file = image.files?.[0], selected = field.value, targets: { record: Record<string, unknown>; key: string }[] = [];
     if (file && !["image/png", "image/jpeg"].includes(file.type)) { image.value = ""; report("Choose a PNG or JPEG image.", true); return; }
-    if (file && targets?.length) void file.arrayBuffer().then(bytes => { for (const { record, key } of targets) record[key] = { bytes: new Uint8Array(bytes), mediaType: file.type }; image.value = ""; report("Sample image loaded."); }).catch(error => report(String(error), true));
+    function collectImages(value: unknown, path: string[]): void {
+      if (Array.isArray(value)) { for (const child of value) collectImages(child, []); }
+      else if (value !== null && typeof value === "object" && !isSampleImage(value)) for (const [key, child] of Object.entries(value)) {
+        const childPath = [...path, key];
+        if (child === null || isSampleImage(child)) { if (JSON.stringify(childPath) === selected) targets.push({ record: value as Record<string, unknown>, key }); }
+        else collectImages(child, childPath);
+      }
+    }
+    if (file) collectImages(sample, []);
+    if (file && targets.length) void file.arrayBuffer().then(bytes => { for (const { record, key } of targets) record[key] = { bytes: new Uint8Array(bytes), mediaType: file.type }; image.value = ""; report("Sample image loaded."); }).catch(error => report(String(error), true));
   }, { signal: lifetime.signal });
   format.addEventListener("change", showFields, { signal: lifetime.signal });
   editor.element.addEventListener("pointerup", () => { if (panel === "inspector") requestAnimationFrame(selectionSummary); }, { signal: lifetime.signal });

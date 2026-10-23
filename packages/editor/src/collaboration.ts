@@ -1,5 +1,5 @@
-/** Spec: spec/features/document-collaboration.md */
-import { createEditor, type EditorChange, type EditorMode, type EditorOptions, type WordEditor } from "./editor.js";
+import { createEditor, type EditorChange, type EditorMode, type EditorOptions, type EditorSynchronization, type WordEditor } from "./editor.js";
+import type { DocumentParagraph, DocumentQuery } from "@onodocs/sdk";
 import { CollaborationAccessError, decodeCollaborationBytes, encodeCollaborationBytes, type CollaborationMutation, type CollaborationOperation, type CollaborationRange, type CollaborationReply, type CollaborationRequest, type CollaborationSnapshot } from "@onodocs/sdk/collaboration";
 
 export interface CollaborationDraft {
@@ -74,16 +74,27 @@ export async function openCollaborativeEditor(options: CollaborativeEditorOption
   } });
   try { await editor.open(decodeCollaborationBytes(draft?.bytes ?? shared.bytes)); } catch (error) { editor.dispose(); host.remove(); throw error; }
   let displayedToken = shared.token;
+  const paragraphQueries = new WeakMap<DocumentQuery<"document">, { values: readonly DocumentParagraph[]; indices: ReadonlyMap<string, number> }>();
+  function paragraphs() {
+    const query = editor.document!.content;
+    let result = paragraphQueries.get(query);
+    if (!result) { const values = query.paragraphs().all(); result = { values, indices: new Map(values.map((paragraph, index) => [paragraph.id, index])) }; paragraphQueries.set(query, result); }
+    return result;
+  }
+  function synchronization(bytes?: string): EditorSynchronization | undefined {
+    const allowedModes = modes();
+    if (bytes || allowedModes.length !== editor.allowedModes.length || allowedModes.some((mode, index) => mode !== editor.allowedModes[index])) return { ...(bytes ? { bytes: decodeCollaborationBytes(bytes) } : {}), allowedModes };
+    return undefined;
+  }
   function render(): void {
     status.textContent = ({ connected: "All changes saved", pending: "Saving changes", offline: draft ? "Offline. Your draft is retained; reconnect to retry." : "Offline. Reconnect to refresh shared presence.", conflict: "Changes conflict with the shared document. Your draft is retained. Download it before using the shared copy, or explicitly publish it over the current shared copy.", forbidden: draft ? "Permission changed. Your draft is retained for download." : "Access to this shared document is unavailable." })[state];
     members.textContent = accessRevoked ? "" : shared.presence.map(member => `${member.name} (${member.role}${member.selection === undefined ? "" : `, paragraph ${member.selection.start.paragraph + 1}`})`).join(" · ");
     actions.hidden = !draft;
     publish.disabled = accessRevoked || !draft || shared.identity.role !== "edit" || !["conflict", "forbidden"].includes(state);
     editorHost.inert = state === "conflict" || state === "forbidden";
-    const paragraphs = editor.document!.query.paragraphs().all();
     const overlays = state === "connected" && !draft && displayedToken === shared.token ? shared.presence.flatMap(member => {
       if (member.session === session && member.user === shared.identity.id || member.selection?.token !== displayedToken) return [];
-      const range = member.selection, start = paragraphs[range.start.paragraph], end = paragraphs[range.end.paragraph];
+      const range = member.selection, values = paragraphs().values, start = values[range.start.paragraph], end = values[range.end.paragraph];
       if (!start || !end) return [];
       let hash = 0; for (const character of member.user) hash = (hash * 31 + character.charCodeAt(0)) | 0;
       return [{ selection: { start: { paragraphId: start.id, offset: range.start.offset }, end: { paragraphId: end.id, offset: range.end.offset } }, label: member.name, color: ["#8b3ab8", "#176d60", "#b34327", "#2556b8", "#a21b65", "#795514"][Math.abs(hash) % 6]! }];
@@ -110,25 +121,25 @@ export async function openCollaborativeEditor(options: CollaborativeEditorOption
       await editor.synchronize(async () => {
         await changes;
         try {
-          const paragraphs = editor.document!.query.paragraphs().all(), range = editor.selection;
-          const start = paragraphs.findIndex(value => value.id === range?.start.paragraphId), end = paragraphs.findIndex(value => value.id === range?.end.paragraphId);
-          const selection = !draft && displayedToken === shared.token && range && start >= 0 && end >= 0 ? { token: displayedToken, start: { paragraph: start, offset: range.start.offset }, end: { paragraph: end, offset: range.end.offset } } : undefined;
+          const range = !draft && displayedToken === shared.token ? editor.selection : undefined, indices = range ? paragraphs().indices : undefined;
+          const start = range && indices!.get(range.start.paragraphId), end = range && indices!.get(range.end.paragraphId);
+          const selection = range && start !== undefined && end !== undefined ? { token: displayedToken, start: { paragraph: start, offset: range.start.offset }, end: { paragraph: end, offset: range.end.offset } } : undefined;
           const sending = draft && !["conflict", "forbidden"].includes(state);
           if (sending) { draft = { ...draft!, attempted: true }; await options.recovery.write(draft); }
           const reply = await options.exchange({ session, token: shared.token, ...(selection ? { selection } : {}), ...(sending ? { mutation: draft!.mutation } : {}) }, AbortSignal.any([lifetime.signal, AbortSignal.timeout(5000)]));
           accessRevoked = false;
           const changed = reply.document.token !== displayedToken; shared = { ...reply.document, bytes: reply.document.bytes ?? shared.bytes };
           if (sending && reply.status === "saved") {
-            if (draft!.later) { state = "conflict"; render(); return { allowedModes: modes() }; }
-            await options.recovery.remove(); draft = undefined; state = "connected"; render();
-            undoDrafts.length = redoDrafts.length = 0; displayToken = shared.token; return { bytes: decodeCollaborationBytes(shared.bytes), allowedModes: modes() };
+            if (draft!.later) { state = "conflict"; return synchronization(); }
+            await options.recovery.remove(); draft = undefined; state = "connected";
+            undoDrafts.length = redoDrafts.length = 0; displayToken = shared.token; return synchronization(shared.bytes);
           }
           if (sending && (reply.status === "conflict" || reply.status === "forbidden")) state = reply.status;
           else if (!draft) state = "connected";
           if (shared.identity.role === "view" && draft) state = "forbidden";
           if (changed && !draft) { undoDrafts.length = redoDrafts.length = 0; displayToken = shared.token; }
-          render(); return { ...(changed && !draft ? { bytes: decodeCollaborationBytes(shared.bytes) } : {}), allowedModes: modes() };
-        } catch (error) { if (!disposed) { accessRevoked ||= error instanceof CollaborationAccessError; state = accessRevoked ? "forbidden" : "offline"; render(); options.onError?.(error); } return accessRevoked ? { allowedModes: ["view"] } : undefined; }
+          return synchronization(changed && !draft ? shared.bytes : undefined);
+        } catch (error) { if (!disposed) { accessRevoked ||= error instanceof CollaborationAccessError; state = accessRevoked ? "forbidden" : "offline"; options.onError?.(error); } return accessRevoked ? synchronization() : undefined; }
       }).then(() => { if (displayToken) displayedToken = displayToken; render(); }, error => { if (!disposed) { state = "offline"; render(); options.onError?.(error); } });
     },
     exportDraft() { return draft ? decodeCollaborationBytes(draft.bytes) : undefined; },
@@ -138,7 +149,7 @@ export async function openCollaborativeEditor(options: CollaborativeEditorOption
         const current = (await options.exchange({ session }, lifetime.signal)).document;
         if (!current.bytes) throw new Error("The shared document has no content.");
         shared = { ...current, bytes: current.bytes }; accessRevoked = false;
-        await options.recovery.remove(); draft = undefined; undoDrafts.length = redoDrafts.length = 0; state = "connected"; render(); return { bytes: decodeCollaborationBytes(shared.bytes), allowedModes: modes() };
+        await options.recovery.remove(); draft = undefined; undoDrafts.length = redoDrafts.length = 0; state = "connected"; render(); return synchronization(shared.bytes);
       });
       displayedToken = shared.token; render();
     },
@@ -163,14 +174,15 @@ function toOperation(change: EditorChange): CollaborationOperation | undefined {
   const command = change.edit ?? change.review;
   if (!command) return;
   let range: CollaborationRange | undefined;
-  if ("selection" in command) {
-    if (command.selection.start.paragraphId !== command.selection.end.paragraphId) return;
-    const paragraph = change.paragraphs?.findIndex(value => value.id === command.selection.start.paragraphId) ?? -1;
+  if ("selection" in command && command.selection) {
+    const selection = command.selection;
+    if (selection.start.paragraphId !== selection.end.paragraphId) return;
+    const paragraph = change.paragraphs?.findIndex(value => value.id === selection.start.paragraphId) ?? -1;
     if (paragraph < 0) return;
-    range = { paragraph, before: change.paragraphs![paragraph]!.text, start: command.selection.start.offset, end: command.selection.end.offset };
+    range = { paragraph, before: change.paragraphs![paragraph]!.text, start: selection.start.offset, end: selection.end.offset };
   }
   if (change.edit?.kind === "replace" && range && !change.edit.formatting && !/[\r\n]/.test(change.edit.text)) return { kind: "replace", ...range, text: change.edit.text };
-  if (change.review && ["comment", "reply", "resolveComment", "deleteComment", "revision", "trackChanges"].includes(change.review.kind)) return { kind: "review", command: change.review, ...(range ? { range } : {}) };
+  if (change.review && ["comment", "reply", "resolveCommentThread", "deleteCommentThread", "revision", "trackChanges"].includes(change.review.kind)) return { kind: "review", command: change.review, ...(range ? { range } : {}) };
   return undefined;
 }
 

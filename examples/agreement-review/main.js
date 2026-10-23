@@ -33,13 +33,13 @@ async function prepareReview() {
   try {
     const author = { ...reviewers.alex, date: "2026-10-09T09:00:00Z" };
     for (const [quote, text] of [["launch support", "Please confirm that launch support includes the first week after go-live."], ["one-hour handoff session", "Could we record the handoff for colleagues who cannot attend?"]]) {
-      const match = document.query.findText(quote).one();
+      const match = document.content.findText(quote).one();
       await document.review({ kind: "comment", selection: { start: { paragraphId: match.paragraph.id, offset: match.start }, end: { paragraphId: match.paragraph.id, offset: match.end } }, text, identity: author });
     }
     const thread = (await document.readReview()).comments[0];
     await document.review({ kind: "reply", id: thread.id, text: "Yes, we can include five business days of launch support.", identity: { ...reviewers.sam, date: "2026-10-09T09:30:00Z" } });
     for (const [quote, text] of [["14 days", "30 days"], ["12 November 2026", "19 November 2026"]]) {
-      const match = document.query.findText(quote).one();
+      const match = document.content.findText(quote).one();
       await document.review({ kind: "trackedReplace", selection: { start: { paragraphId: match.paragraph.id, offset: match.start }, end: { paragraphId: match.paragraph.id, offset: match.end } }, text, identity: author });
     }
     await document.review({ kind: "trackChanges", enabled: true });

@@ -7,11 +7,11 @@
 <section id="text"><h2>Read plain text and typed paragraphs</h2><p>Open a browser <code>File</code>, an <code>ArrayBuffer</code> or a <code>Uint8Array</code>. Query the document’s text and structure without a canvas, fonts or page layout.</p><pre><code>import { openDocument } from "@onodocs/sdk";
 
 const doc = await openDocument(file);
-const body = doc.query.stories().where({ story: "body" });
+const body = doc.content.stories().where({ story: "body" });
 const text = body.map(story =&gt; story.text).join("\n");
 const paragraphs = body.paragraphs().map(paragraph =&gt; ({
   text: paragraph.text,
-  style: paragraph.style
+  style: paragraph.styleId
 }));</code></pre><p><code>file</code> is the selected browser <code>File</code>. The <a href="https://github.com/onodocs/onodocs/blob/main/examples/docx-extraction/main.ts">complete browser sample</a> supplies the file picker. Paragraph text joins its runs, so formatting changes do not split a sentence into separate records. Paragraph queries include paragraphs inside tables and content controls.</p><p>Body text includes table-cell text, so appending the tables would duplicate it. Plain text preserves imported text and paragraph boundaries, not the page layout.</p></section>
 <section id="tables"><h2>Extract tables as arrays of rows and cells</h2><pre><code>const tables = body.tables().map(table =&gt; table.textRows);</code></pre><p>The result is an array of tables containing rows of cell strings. <code>textRows</code> includes the first row. It does not guess whether that row contains headers or convert dates, numbers or currencies. Convert those values in your application if needed.</p><p>For structural access, use <code>table.rows</code>, <code>row.cells</code> and each cell's <code>children</code>. A merged or nested table is not necessarily a rectangular spreadsheet. <code>textRows</code> lists the imported cells without repeating values across merged spans. Nested table text can occur inside an outer cell, while <code>tables()</code> also returns nested tables. Choose the level your application needs before flattening.</p></section>
 <section id="records"><h2>Find a table by its headers and map rows to JSON</h2><p>The sample brief uses the first-row labels Deliverable, Owner and Due. Match those labels in their exact order, then remove the header row and map the remaining cells:</p><pre><code>const matches = body.tables().where({
@@ -25,11 +25,11 @@ const deliveryTables = matches.map(table =&gt;
 <section id="implementation"><h2>Share extraction logic between browser and Node.js</h2><p>The same function selects the text, paragraphs and tables for JSON output in both environments:</p><pre><code>import type { InspectedDocument } from "@onodocs/sdk";
 
 export function extractContent(doc: InspectedDocument) {
-  const body = doc.query.stories().where({ story: "body" });
+  const body = doc.content.stories().where({ story: "body" });
   const tables = body.tables();
   return {
     text: body.map(story =&gt; story.text).join("\n"),
-    paragraphs: body.paragraphs().map(paragraph =&gt; ({ text: paragraph.text, style: paragraph.style })),
+    paragraphs: body.paragraphs().map(paragraph =&gt; ({ text: paragraph.text, style: paragraph.styleId })),
     tables: tables.map(table =&gt; table.textRows),
     deliveryTables: tables.where({ headers: ["Deliverable", "Owner", "Due"] }).map(table =&gt;
       table.textRows.slice(1).map(([deliverable = "", owner = "", due = ""]) =&gt; ({ deliverable, owner, due }))
@@ -44,7 +44,7 @@ import { extractContent } from "./extract.js";
 const doc = await openDocument(await readFile(process.argv[2]));
 try { console.log(JSON.stringify(extractContent(doc), null, 2)); }
 finally { doc.dispose(); }</code></pre><p>No browser or page rendering is required. The <a href="https://github.com/onodocs/onodocs/blob/main/examples/docx-extraction/node.js">complete Node.js command</a> includes an authored document and accepts a path to your own file. If you add an upload endpoint, authentication, storage and deletion belong to your application.</p></section>
-<section id="queries"><h2>Scope stories and search paragraph text</h2><p>Body, headers, footers, notes and textboxes are separate stories. Query them deliberately when defining the contents of an export. A header story contains the header once, even when it repeats on several pages.</p><pre><code>const headers = doc.query.stories().where({ story: "header" })
+<section id="queries"><h2>Scope stories and search paragraph text</h2><p>Body, headers, footers, notes and textboxes are separate stories. Query them deliberately when defining the contents of an export. A header story contains the header once, even when it repeats on several pages.</p><pre><code>const headers = doc.content.stories().where({ story: "header" })
   .paragraphs().map(paragraph =&gt; paragraph.text);
 
 const matches = body.findText(/launch/gi).map(range =&gt; ({

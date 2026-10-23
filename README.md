@@ -42,7 +42,7 @@ Open **http://127.0.0.1:5174/samples.html**. Setup installs matching SDK, Canvas
 | Report review | [main.js](examples/ai-report/main.js) | Show source evidence and approve predetermined local suggestions |
 | Node.js analysis | [analyze.ts](examples/analyze.ts) | Read document content without a browser |
 
-The browser file-picker samples keep selected documents in the browser. The backend viewer reads a file on your server and sends prepared pages to the frontend. The samples do not call an AI service or send emails. See [sample setup and commands](docs/samples.md) and [document workflow setup](docs/document-workflows.md).
+The browser file-picker samples keep selected documents in the browser. The backend viewer reads a file on your server and sends prepared pages to the frontend. Most samples run locally without an AI service. The optional document-agent sample sends document context to your configured model backend; it requires your own server configuration. See [sample setup and commands](docs/samples.md) and [document workflow setup](docs/document-workflows.md).
 
 Framework projects require Node.js 24 LTS (24.15 or later). Razor Pages and Blazor also need the .NET 10 SDK. Each project includes its application shell, document, startup commands and cleanup. See the [framework setup instructions](docs/samples.md#framework-applications).
 

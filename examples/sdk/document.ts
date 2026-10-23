@@ -83,14 +83,14 @@ function attachFields() {
   const approvalDate = controls.querySelector<HTMLInputElement>("#approval-date")!;
   const submitButton = controls.querySelector<HTMLButtonElement>("#save-form")!;
   const deliveryInput = document.querySelector<HTMLTemplateElement>("#delivery-input")!;
-  const fields = doc.query.contentControls().where({ tag: "delivery-date" }).map(field => {
+  const fields = doc.content.contentControls().where({ tag: "delivery-date" }).map(field => {
     const input = deliveryInput.content.firstElementChild!.cloneNode(true) as HTMLInputElement;
     input.value = field.text;
     view!.attach(input, { anchor: doc.geometry.fragments(field)[0]!, placement: "inside-center-left", size: { width: 1640, height: 420 } });
     return { deliverable: field.title, input };
   });
-  view!.attach(approval, { anchor: doc.geometry.fragments(doc.query.findText("Client approval:").one())[0]!, placement: "outside-right", gap: 80, size: { width: 420, height: 420 } });
-  view!.attach(approvalDate, { anchor: doc.geometry.fragments(doc.query.findText("Date:").one())[0]!, placement: "outside-right", gap: 80, size: { width: 1800, height: 420 } });
+  view!.attach(approval, { anchor: doc.geometry.fragments(doc.content.findText("Client approval:").one())[0]!, placement: "outside-right", gap: 80, size: { width: 420, height: 420 } });
+  view!.attach(approvalDate, { anchor: doc.geometry.fragments(doc.content.findText("Date:").one())[0]!, placement: "outside-right", gap: 80, size: { width: 1800, height: 420 } });
   view!.attach(submitButton, { anchor: doc.pages[0]!, placement: "inside-bottom-right", inset: 480, size: { width: 2400, height: 600 } });
   approval.addEventListener("change", () => {
     const today = new Date();
@@ -132,7 +132,7 @@ async function perform(action: (doc: BrowserDocument, signal: AbortSignal) => Pr
 for (const name of ["viewer", "template"]) document.querySelector<HTMLElement>(`#${name}-controls`)!.hidden = mode !== name;
 document.querySelector("#fill-template")!.addEventListener("click", () => void perform(async (doc, signal) => {
   const data = bookings[document.querySelector<HTMLSelectElement>("#template-data")!.value as keyof typeof bookings];
-  await doc.update(Object.entries(data).map(([tag, text]) => ({ target: doc.query.contentControls().where({ tag }).one(), text })), { signal }); window.dispatchEvent(new CustomEvent("onodocs-demo-outcome", { detail: "demo_generate" }));
+  await doc.update(Object.entries(data).map(([tag, text]) => ({ target: doc.content.contentControls().where({ tag }).one(), text })), { signal }); window.dispatchEvent(new CustomEvent("onodocs-demo-outcome", { detail: "demo_generate" }));
 }));
 for (const button of document.querySelectorAll("[data-save-pdf]")) button.addEventListener("click", () => void perform(async (doc, signal) => {
   const filename = `${documentName}.pdf`;

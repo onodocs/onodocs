@@ -1,0 +1,37 @@
+export interface QuickPart { readonly id: string; readonly name: string; readonly category: string; readonly text: string; readonly html: string; }
+
+export function showQuickParts(root: ShadowRoot, initial: readonly QuickPart[], save: (parts: readonly QuickPart[]) => void, capture: () => Promise<Pick<QuickPart, "text" | "html">>, insert: (part: QuickPart) => Promise<void>, signal: AbortSignal): void {
+  const dialog = document.createElement("dialog"), form = document.createElement("form"); form.className = "quick-parts-form";
+  const heading = document.createElement("h2"); heading.textContent = "Quick Parts";
+  const search = document.createElement("input"); search.type = "search"; search.placeholder = "Search name or category"; search.setAttribute("aria-label", "Search Quick Parts");
+  const body = document.createElement("div"), list = document.createElement("select"), detail = document.createElement("div"), preview = document.createElement("p"); body.className = "quick-parts-body"; list.size = 8; list.setAttribute("aria-label", "Saved Quick Parts"); preview.className = "quick-part-preview"; preview.setAttribute("aria-label", "Quick Part preview");
+  const name = document.createElement("input"), category = document.createElement("input");
+  for (const [input, text] of [[name, "Name"], [category, "Category"]] as const) { const label = document.createElement("label"); label.textContent = text; label.append(input); detail.append(label); }
+  category.value = "General"; detail.append(preview); body.append(list, detail);
+  const help = document.createElement("p"); help.className = "design-help"; help.textContent = "Save selected formatted text, table cells, a picture or a chart for reuse. Fields are saved as displayed text. Select table cells to retain a table's structure.";
+  const error = document.createElement("p"), status = document.createElement("p"); error.setAttribute("role", "alert"); error.hidden = true; status.setAttribute("role", "status"); status.className = "design-help";
+  const actions = document.createElement("div"), tools = document.createElement("div"); actions.className = "dialog-actions"; tools.className = "quick-part-tools";
+  function button(label: string, parent: HTMLElement, action: () => Promise<void>): HTMLButtonElement { const value = document.createElement("button"); value.type = "button"; value.textContent = label; const glyph = label === "Update details" ? '<path d="m4 16 12-12 4 4L8 20H4zM13 7l4 4"/>' : label === "Delete" ? '<path d="M3 6h18M9 6V3h6v3M5 6l1 15h12l1-15M10 10v7M14 10v7"/>' : undefined; if (glyph) { const icon = document.createElementNS("http://www.w3.org/2000/svg", "svg"); icon.setAttribute("viewBox", "0 0 24 24"); icon.setAttribute("fill", "none"); icon.setAttribute("stroke", "currentColor"); icon.setAttribute("stroke-width", "1.5"); icon.setAttribute("aria-hidden", "true"); icon.innerHTML = glyph; value.prepend(icon); } value.addEventListener("click", () => { void run(action); }); parent.append(value); return value; }
+  let parts = [...initial], selected: string | undefined, busy = false;
+  const rename = button("Update details", tools, async () => { const item = current(); if (!item) throw new Error("Choose a saved Quick Part."); const values = details(); commit(parts.map(part => part.id === item.id ? { ...part, ...values } : part)); status.textContent = "Quick Part details updated."; });
+  const remove = button("Delete", tools, async () => { const item = current(); if (!item) return; commit(parts.filter(part => part.id !== item.id)); selected = undefined; name.value = ""; category.value = "General"; render(); status.textContent = "Quick Part deleted."; }); remove.className = "destructive";
+  detail.append(tools);
+  button("Save selection", actions, async () => { const values = details(); const content = await capture(); if (!content.html && !content.text) throw new Error("Select content to save."); const previous = current(), replace = previous?.name === values.name && previous.category === values.category; const item = { id: replace ? previous.id : crypto.randomUUID(), ...values, ...content }; commit(replace ? parts.map(part => part.id === item.id ? item : part) : [...parts, item]); selected = item.id; search.value = ""; render(); status.textContent = "Selection saved. It can now be inserted into other documents."; });
+  button("Close", actions, async () => close());
+  const apply = button("Insert", actions, async () => { const item = current(); if (!item) throw new Error("Choose a saved Quick Part."); await insert(item); close(); }); apply.className = "quick-part-insert";
+  function current(): QuickPart | undefined { return parts.find(part => part.id === selected); }
+  function details(): Pick<QuickPart, "name" | "category"> { const value = { name: name.value.trim(), category: category.value.trim() || "General" }; if (!value.name) throw new Error("Enter a name for the Quick Part."); if (parts.some(part => part.id !== selected && part.name.toLocaleLowerCase() === value.name.toLocaleLowerCase() && part.category.toLocaleLowerCase() === value.category.toLocaleLowerCase())) throw new Error("Choose a unique name in this category."); return value; }
+  function commit(next: QuickPart[]): void { save(next); parts = next; render(); }
+  function render(): void {
+    const needle = search.value.toLocaleLowerCase(); list.replaceChildren(...parts.filter(part => `${part.name} ${part.category}`.toLocaleLowerCase().includes(needle)).sort((a, b) => a.category.localeCompare(b.category) || a.name.localeCompare(b.name)).map(part => new Option(`${part.category} · ${part.name}`, part.id)));
+    if (selected && ![...list.options].some(option => option.value === selected)) selected = undefined;
+    list.value = selected ?? ""; const item = current(); preview.textContent = item ? item.text || "Picture or empty formatted content" : parts.length ? "Choose a saved part to preview and insert it, or enter a new name to save the current selection." : "Your reusable content will appear here.";
+    rename.disabled = remove.disabled = apply.disabled = !item || busy;
+  }
+  list.addEventListener("change", () => { selected = list.value || undefined; const item = current(); name.value = item?.name ?? ""; category.value = item?.category ?? "General"; render(); });
+  search.addEventListener("input", render);
+  async function run(action: () => Promise<void>): Promise<void> { if (busy) return; busy = true; error.hidden = true; for (const control of form.querySelectorAll<HTMLButtonElement | HTMLInputElement | HTMLSelectElement>("button,input,select")) control.disabled = true; try { await action(); } catch (failure) { error.textContent = failure instanceof Error ? failure.message : String(failure); error.hidden = false; } finally { busy = false; for (const control of form.querySelectorAll<HTMLButtonElement | HTMLInputElement | HTMLSelectElement>("button,input,select")) control.disabled = false; render(); } }
+  function close(): void { dialog.close(); dialog.remove(); signal.removeEventListener("abort", close); }
+  dialog.addEventListener("cancel", event => { event.preventDefault(); if (!busy) close(); }); form.addEventListener("submit", event => { event.preventDefault(); apply.click(); }); signal.addEventListener("abort", close, { once: true });
+  form.append(heading, search, body, help, status, error, actions); dialog.append(form); root.append(dialog); render(); dialog.showModal(); search.focus();
+}

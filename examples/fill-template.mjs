@@ -6,7 +6,7 @@ if (!input || !output || !tag || text === undefined) throw new Error('Usage: nod
 
 const document = await openDocument(await readFile(input), { licenseKey: process.env.ONODOCS_LICENSE_KEY });
 try {
-  await document.update({ target: document.query.contentControls().where({ tag }).one(), text });
+  await document.update({ target: document.content.contentControls().where({ tag }).one(), text });
   await writeFile(output, await document.save());
 } finally {
   document.dispose();
