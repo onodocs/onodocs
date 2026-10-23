@@ -23,6 +23,7 @@ Open http://127.0.0.1:5174/samples.html. Setup installs matching SDK, Canvas and
 | Templates and generation | `examples/proposal/main.js` | Design a template, enter data, then edit the generated document |
 | Document forms | `examples/document-forms/main.js` | Form design, recipient completion, drafts and project export |
 | Agreement review | `examples/agreement-review/main.js` | Comments, suggestions, comparison and version history |
+| Document agent | `examples/document-agent/main.js` | Conversational public API access, editor history, provider backend and TXT/DOCX attachments |
 | Scripted report review | `examples/ai-report/main.js` | Evidence and individual suggestions beside the editor |
 | TypeScript DOCX viewer | `examples/docx-viewer/main.ts` | Local files, progressive loading, selection, cancellation and cleanup |
 | JavaScript DOCX viewer | `examples/docx-viewer/main.js` | The same complete viewer in JavaScript |
@@ -156,3 +157,7 @@ After setup, run `node examples/fill-template.mjs template.docx completed.docx c
 The [HTTP service](../examples/http-service/server.mjs) uses the SDK server and HTTP entries. Install Google Chrome, set `ONODOCS_SERVICE_TOKEN`, then run `node examples/http-service/server.mjs` from the repository root. The default address is `http://127.0.0.1:5191`. `HOST`, `PORT`, `CHROMIUM_PATH` and `ONODOCS_LICENSE_KEY` configure the service.
 
 The [JavaScript](../examples/http-service/client.mjs), [Python](../examples/http-service/client.py) and [C#](../examples/http-service/client.cs) clients open a Word document and export PDF. Run `node examples/http-service/client.mjs input.docx output.pdf`, `python examples/http-service/client.py input.docx output.pdf`, or `dotnet run --file examples/http-service/client.cs -- input.docx output.pdf` with the same service token. Keep this credential on the backend; production browser clients need application-owned authentication.
+
+## Document agent
+
+The optional agent example runs its own backend. With matching local or published SDK, Canvas, Editor and Agent packages installed, set `OPENAI_API_KEY` in the server environment and run `npm run example:agent`. Open the printed loopback address. See [the integration guide](agent.md) for storage, metering, provider and attachment policies. Node.js 22.18 or newer is required for the example SQLite store.

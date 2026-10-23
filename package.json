@@ -12,17 +12,19 @@
     "build": "node tools/build.mjs",
     "typecheck": "tsc --noEmit",
     "analyze": "node examples/analyze.ts",
-    "extract": "node examples/docx-extraction/node.ts"
+    "extract": "node examples/docx-extraction/node.ts",
+    "example:agent": "node examples/document-agent/serve.mjs"
   },
   "dependencies": {
-    "@onodocs/canvas": "0.5.10",
-    "@onodocs/editor": "0.5.10",
-    "@onodocs/sdk": "0.5.10",
+    "@onodocs/canvas": "file:C:/Users/mihha/.tmp/onodocs/releases/onodocs-canvas-0.5.12.tgz",
+    "@onodocs/editor": "file:C:/Users/mihha/.tmp/onodocs/releases/onodocs-editor-0.5.12.tgz",
+    "@onodocs/sdk": "file:C:/Users/mihha/.tmp/onodocs/releases/onodocs-sdk-0.5.12.tgz",
     "fflate": "0.8.3",
     "pdf-lib": "1.17.1",
     "playwright-core": "1.62.1",
     "react": "19.3.0",
-    "react-dom": "19.3.0"
+    "react-dom": "19.3.0",
+    "@onodocs/agent": "file:C:/Users/mihha/.tmp/onodocs/releases/onodocs-agent-0.5.12.tgz"
   },
   "devDependencies": {
     "@types/node": "^25.9.9",
