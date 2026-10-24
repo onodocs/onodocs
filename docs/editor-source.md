@@ -33,7 +33,7 @@ To build against local SDK and Canvas package archives, pass their absolute path
 npm --prefix packages/editor run build -- --sdk /path/to/sdk.tgz --canvas /path/to/canvas.tgz
 ```
 
-Those overrides apply to the local build. The packed Editor still declares the dependency versions from its source `package.json`.
+Add `--out /path/to/archives` to choose where the completed archive is written. Those overrides apply to the local build. The packed Editor still declares the dependency versions from its source `package.json`.
 
 For live editing with the optional AI Agent, run `npm ci` and `npm run example:agent:watch` from the repository root. Open `http://127.0.0.1:5198/`; changes in `packages/editor/src` rebuild and reload automatically. Set `OPENAI_API_KEY` in the server environment to use the agent.
 

@@ -1,5 +1,5 @@
 import { createEditor } from "@onodocs/editor";
-import { demoLicense } from "../sdk/license";
+import { createAgent, agentRibbonCommand } from "@onodocs/agent";
 import report from "./sample.docx";
 import brief from "../view-document/sample.docx";
 import plan from "./plan.docx";
@@ -9,6 +9,8 @@ if (new URLSearchParams(location.search).has("embedded")) {
   document.querySelector(".sample-picker").hidden = true;
 }
 
+const showAgent = new URLSearchParams(location.search).has("agent");
+let agent;
 const lifetime = new AbortController();
 const container = document.querySelector("#app");
 const status = document.querySelector("#status");
@@ -17,8 +19,16 @@ const samples = { report: { bytes: report, name: "Project report.docx" }, brief:
 let sampleDocument;
 let selectedSample = "";
 let dirty = false;
-export const editor = createEditor({ container, document: { licenseKey: await demoLicense(lifetime.signal), signal: lifetime.signal }, allowedModes: ["view", "edit"], onChange: () => { dirty = true; window.dispatchEvent(new CustomEvent("onodocs-demo-outcome", { detail: "demo_edit" })); }, onError: () => { window.dispatchEvent(new CustomEvent("onodocs-demo-outcome", { detail: "demo_error" })); } });
+export const editor = createEditor({ container, commands: showAgent ? [agentRibbonCommand(() => agent.toggle())] : [], document: { signal: lifetime.signal }, allowedModes: ["view", "edit"], onChange: () => { dirty = true; window.dispatchEvent(new CustomEvent("onodocs-demo-outcome", { detail: "demo_edit" })); }, onError: () => { window.dispatchEvent(new CustomEvent("onodocs-demo-outcome", { detail: "demo_error" })); } });
 
+if (showAgent) {
+  document.body.classList.add("agent-editor");
+  const assistant = document.createElement("div");
+  assistant.id = "assistant";
+  assistant.slot = "sidebar";
+  editor.element.append(assistant);
+  agent = createAgent({ container: assistant, editor, pageContext: "metadata", transport: { async *run() { yield { type: "error", message: "AI assistance is not connected on this page yet. Document editing remains available." }; } } });
+}
 async function openSample(name) {
   const sample = samples[name];
   if (!sample) return;
@@ -44,5 +54,5 @@ async function openSample(name) {
 }
 
 picker.addEventListener("change", () => { void openSample(picker.value); });
-window.addEventListener("pagehide", event => { if (!event.persisted) { lifetime.abort(); editor.dispose(); } });
+window.addEventListener("pagehide", event => { if (!event.persisted) { lifetime.abort(); agent?.dispose(); editor.dispose(); } });
 void openSample("report");

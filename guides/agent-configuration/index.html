@@ -1,0 +1,73 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Configure the AI Agent | OnoDocs</title><meta name="description" content="Configure the Agent's model provider, instructions, application tools, permissions, context, limits and interface."><link rel="canonical" href="https://onodocs.com/developers/agent-configuration/"><meta property="og:type" content="website"><meta property="og:site_name" content="OnoDocs"><meta property="og:title" content="Configure the AI Agent | OnoDocs"><meta property="og:description" content="Configure the Agent's model provider, instructions, application tools, permissions, context, limits and interface."><meta property="og:url" content="https://onodocs.com/developers/agent-configuration/"><link rel="stylesheet" href="../style.css"><link rel="icon" type="image/svg+xml" href="../brand-mark.svg"><meta name="referrer" content="strict-origin"></head>
+<body><a class="skip-link" href="#main">Skip to content</a><header class="site-header"><a class="brand" href="https://onodocs.com/" aria-label="OnoDocs home"><img class="brand-mark" src="../brand-mark.svg" width="28" height="28" alt="O">noDocs</a><nav aria-label="Main"><a href="https://onodocs.com/editor/">Editor</a><a href="https://onodocs.com/examples/">Demos</a><a href="https://onodocs.com/developers/" aria-current="page">Docs</a><a href="https://onodocs.com/pricing/">Pricing</a><a href="https://onodocs.com/support/">Support</a><a class="github-link" href="https://github.com/onodocs/onodocs" aria-label="OnoDocs on GitHub"><img src="../github-mark.svg" width="18" height="18" alt=""></a></nav></header>
+<main id="main">
+<section class="page-intro"><p class="eyebrow">Developer guide</p><h1>Configure the AI Agent</h1><p>Choose the model, supply application instructions and tools, and control how the Agent accesses documents and application data.</p></section>
+<div class="doc-layout"><nav class="doc-nav" aria-label="Documentation sections"><a href="#provider">Provider and model</a><a href="#instructions">Application instructions</a><a href="#tools">Additional tools</a><a href="#permissions">Permissions and side effects</a><a href="#limits">Limits and conversation history</a><a href="#context">Context and attachments</a><a href="#interface">Interface</a></nav>
+<article class="prose">
+<p>The server host owns providers, tools and operating policy. The browser panel owns presentation and context capture. Start with the <a href="https://onodocs.com/developers/document-agent/">Agent integration guide</a> for installation, transport and the complete backend example.</p>
+<section id="provider"><h2>Provider and model</h2><p>The built-in OpenAI adapter uses fetch without a provider SDK. Keep credentials on the server.</p>
+<pre><code>import { createOpenAIProvider } from "@onodocs/agent/openai";
+
+const provider = createOpenAIProvider({
+  apiKey: () =&gt; process.env.OPENAI_API_KEY,
+  model: process.env.OPENAI_MODEL
+});</code></pre>
+<p>Set both environment variables before starting the server, then pass <code>provider</code> to your <code>AgentTurnHost</code>.</p>
+<div class="table-scroll"><table><thead><tr><th scope="col">Option</th><th scope="col">Purpose</th></tr></thead><tbody>
+<tr><td><code>model</code></td><td>Model identifier for your configured service.</td></tr>
+<tr><td><code>apiKey</code></td><td>A credential string or synchronous/asynchronous credential callback.</td></tr>
+<tr><td><code>endpoint</code></td><td>Full Responses API URL. A compatible gateway must support the same request and response format.</td></tr>
+<tr><td><code>fetch</code></td><td>Your fetch implementation, for application networking and instrumentation.</td></tr>
+<tr><td><code>reasoningEffort</code></td><td><code>none</code>, <code>low</code>, <code>medium</code> or <code>high</code>; defaults to <code>low</code>.</td></tr>
+<tr><td><code>serviceTier</code></td><td><code>auto</code>, <code>default</code>, <code>flex</code>, <code>priority</code> or <code>fast</code>.</td></tr>
+</tbody></table></div>
+<p>Use option values supported by your model and endpoint. For a different provider protocol, implement <code>AgentProvider.respond</code>. It receives instructions, conversation items, tool definitions, an output allowance and an abort signal; it returns text, ordered calls, continuation items and token usage.</p>
+<p>The runner adds user messages and <code>function_call_output</code> items to the conversation. Your adapter translates those and prior provider output into its provider's format. Return document operations as <code>{ id, call: { target, method, args } }</code> and application tools as <code>{ id, tool: { name, arguments } }</code>. Preserve call IDs and report reliable usage for settlement.</p></section>
+<section id="instructions"><h2>Application instructions</h2><p>Set <code>AgentTurnHost.instructions</code> to describe your product's terminology, response style and editing conventions. The runner appends tool-result guidance and the bridge's generated document API reference.</p>
+<pre><code>const instructions = [
+  "Use concise language.",
+  "Inspect the current selection before editing.",
+  "Preserve the document's existing formatting.",
+  "Use get_clause for approved clause wording."
+].join("\n");</code></pre>
+<p>Pass this string to the host with the corresponding tool registered. Instructions guide the model; authorization callbacks enforce what it may do. Document contents, attachments and tool results remain untrusted data.</p></section>
+<section id="tools"><h2>Additional tools</h2>
+<p><code>AgentTurnHost.tools</code> adds application functions alongside the built-in document tools. Each tool supplies a name, description, JSON Schema and server callback. Only the definition is sent to the model.</p>
+<pre><code>import { runAgentTurn, agentEventResponse } from "@onodocs/agent/server";
+
+const getClause = {
+  name: "get_clause",
+  description: "Read an approved clause by its identifier.",
+  parameters: {
+    type: "object",
+    properties: { id: { type: "string", enum: ["payment"] } },
+    required: ["id"],
+    additionalProperties: false
+  },
+  execute(input, signal) {
+    signal.throwIfAborted();
+    if (!input || typeof input !== "object" || Array.isArray(input) || input.id !== "payment") {
+      throw new TypeError("Unknown clause identifier.");
+    }
+    return { text: "Payment is due within 30 days of the invoice date." };
+  }
+};
+
+const events = runAgentTurn({ ...host, provider, instructions, tools: [getClause] }, conversation, request, signal);
+return agentEventResponse(events, signal);</code></pre>
+<p>This excerpt belongs in your authenticated server request handler. <code>host</code> is the configured host from the integration guide, including its document bridge and required <code>reserve</code>, <code>settle</code> and <code>commit</code> callbacks. <code>conversation</code>, <code>request</code> and <code>signal</code> come from that handler.</p>
+<p>Callbacks return JSON or a promise of JSON. Validate arguments and authorize access inside the callback; JSON Schema describes arguments to the model and does not enforce application permissions. Pass the abort signal to I/O. The OpenAI adapter preserves supplied schemas using non-strict function calling, including optional properties.</p>
+<p>Names must be unique, contain 1–64 ASCII letters, digits, underscores or hyphens, and avoid <code>api_call</code>, <code>api_get</code>, <code>api_script</code> and <code>get_page_image</code>. Custom providers receive definitions in <code>ProviderRequest.tools</code> and return the application-tool call format described above.</p>
+<p>Tools run sequentially and share the turn's operation count, cancellation, result limits and usage accounting. Definitions count toward context size. Callback failures become tool error results, allowing the model to correct arguments or explain the failure.</p></section>
+<section id="permissions"><h2>Permissions and side effects</h2><p>Authorize document operations through <code>createEditorApiBridge(editor, authorizeDocumentCall)</code>, or your server bridge. Application tools execute separately: select tools for the current user and enforce data access inside their callbacks.</p><p>Document Undo covers editor changes. It does not reverse an application's database writes or external actions. Stop prevents further work and signals cancellation; completed effects can remain. The application owns any required confirmation, idempotency and recovery.</p></section>
+<section id="limits"><h2>Limits and conversation history</h2><p>Override selected limits by spreading <code>defaultAgentLimits</code> into <code>AgentTurnHost.limits</code>. Defaults are 4,000 message bytes, 160,000 context bytes, 24,000 result bytes, 12 model rounds, 16 operations, 90 seconds and 1,200 output tokens per model call.</p>
+<pre><code>import { defaultAgentLimits } from "@onodocs/agent/server";
+
+const limits = { ...defaultAgentLimits, calls: 12, outputTokens: 2000 };</code></pre>
+<p><code>resultPropertyCharacters</code> separately caps each top-level result property at 4,000 serialized characters by default. Large values are truncated; tools should return only relevant fields. Setting <code>limits: false</code> removes turn limits, but reservation and settlement callbacks are still required.</p>
+<p>The host supplies previous <code>conversation.input</code> and persists completed continuation items through <code>commit</code>. It controls retention, turn serialization and request deduplication. There is no automatic conversation summarization; oversized context ends the turn. Reserve usage before every model continuation and settle reported usage afterward. Keep reservations when charges are uncertain.</p></section>
+<section id="context"><h2>Context and attachments</h2><p><code>createAgent.pageContext</code> chooses <code>metadata</code> (the default), <code>text</code> or <code>image</code>. Metadata includes document counts, the visible page and selection. Text adds extracted context; image adds the current page render. <code>pageImageDpi</code> defaults to 96. Tools can still read authorized document content in metadata mode.</p><p>Server <code>pageImages: true</code> enables on-demand page-image calls when the bridge supports capture. Browser <code>attachments</code> configures accepted types, size, upload and optional removal callbacks; server <code>attachments</code> resolves session-authorized references into provider input. The host owns upload validation, storage and deletion. See <a href="https://onodocs.com/developers/document-agent/#privacy">data flow and attachments</a>.</p></section>
+<section id="interface"><h2>Interface</h2><p><code>createAgent</code> mounts in your container and accepts an editor, transport, optional <code>transcriptUrl</code> and <code>onEvent</code> callback. Use <code>toggle</code>, <code>stop</code> and <code>dispose</code> for visibility and lifecycle. Closing the panel preserves the displayed conversation; disposal cancels its active work.</p><p>Style the host element and inherit <code>--onodocs-agent-height</code>, <code>--onodocs-color</code>, <code>--onodocs-toolbar-background</code>, <code>--onodocs-selection</code> and <code>--onodocs-accent</code>. The panel uses Shadow DOM. Its title, labels and composer placeholder currently have no configuration options.</p><p>For a fully custom chat interface, consume <code>AgentTransport</code> and <code>AgentEvent</code> directly and use the same document bridge and backend. The <a href="https://onodocs.com/developers/api/">API reference</a> covers published exports.</p></section>
+</article></div></main>
+<footer class="site-footer"><span>OnoDocs · Ion OÜ</span><nav aria-label="Footer"><a href="https://onodocs.com/releases/">Releases</a><a href="https://onodocs.com/refunds/">Refunds</a><a href="https://onodocs.com/privacy/">Privacy</a><a href="https://onodocs.com/terms/">License &amp; terms</a><a href="https://onodocs.com/developers/">Documentation</a><a href="https://onodocs.com/support/">Support</a></nav></footer><script type="module" src="../copy.js"></script>
+</body></html>

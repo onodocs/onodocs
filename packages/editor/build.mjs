@@ -5,7 +5,7 @@ import { homedir } from "node:os";
 import { join, resolve } from "node:path";
 import { parseArgs } from "node:util";
 
-const { values } = parseArgs({ options: { sdk: { type: "string" }, canvas: { type: "string" } } });
+const { values } = parseArgs({ options: { sdk: { type: "string" }, canvas: { type: "string" }, out: { type: "string" } } });
 const root = import.meta.dirname, npm = process.env.npm_execpath;
 if (!npm) throw new Error("Run npm run build from packages/editor.");
 const manifest = JSON.parse(await readFile(join(root, "package.json"), "utf8"));
@@ -25,6 +25,8 @@ await writeFile(join(output, "package.json"), JSON.stringify(installed, null, 2)
 execFileSync(process.execPath, [npm, "install", "--ignore-scripts", "--no-audit", "--no-fund"], { cwd: output, stdio: "inherit", windowsHide: true });
 execFileSync(process.execPath, [join(output, "node_modules/typescript/bin/tsc"), "--project", join(output, "tsconfig.json")], { cwd: output, stdio: "inherit", windowsHide: true });
 await writeFile(join(output, "package.json"), JSON.stringify({ ...manifest, scripts: {}, devDependencies: {} }, null, 2) + "\n");
-const [packed] = JSON.parse(execFileSync(process.execPath, [npm, "pack", "--ignore-scripts", "--pack-destination", workspace, "--json"], { cwd: output, stdio: ["ignore", "pipe", "inherit"], encoding: "utf8", windowsHide: true }));
+const archives = values.out ? resolve(values.out) : workspace;
+await mkdir(archives, { recursive: true });
+const [packed] = JSON.parse(execFileSync(process.execPath, [npm, "pack", "--ignore-scripts", "--pack-destination", archives, "--json"], { cwd: output, stdio: ["ignore", "pipe", "inherit"], encoding: "utf8", windowsHide: true }));
 console.log(`Built editor: ${output}`);
-console.log(`Install in your application: npm install "${join(workspace, packed.filename)}"`);
+console.log(`Install in your application: npm install "${join(archives, packed.filename)}"`);

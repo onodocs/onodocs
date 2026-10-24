@@ -296,10 +296,17 @@
     readonly limits?: AgentLimits | false;
     readonly resultPropertyCharacters?: number;
     readonly instructions?: string;
+    readonly tools?: readonly AgentTool[];
     readonly attachments?: (message: AgentRequest["message"], signal: AbortSignal) =&gt; Promise&lt;readonly Json[]&gt;;
     reserve(inputBytes: number, outputTokens: number, signal: AbortSignal): Promise&lt;string&gt;;
     settle(reservation: string, usage: AgentUsage): Promise&lt;void&gt;;
     commit(conversation: AgentConversation): Promise&lt;void&gt;;
+}</code></pre></details><details><summary><code>AgentTool</code></summary><pre><code data-api="@onodocs/agent/server#AgentTool">export interface AgentTool extends AgentToolDefinition {
+    execute(arguments_: Json, signal: AbortSignal): Json | Promise&lt;Json&gt;;
+}</code></pre></details><details><summary><code>AgentToolDefinition</code></summary><pre><code data-api="@onodocs/agent/server#AgentToolDefinition">export interface AgentToolDefinition {
+    readonly name: string;
+    readonly description: string;
+    readonly parameters: Readonly&lt;Record&lt;string, Json&gt;&gt;;
 }</code></pre></details><details><summary><code>agentEventResponse</code></summary><pre><code data-api="@onodocs/agent/server#agentEventResponse">export declare function agentEventResponse(events: AsyncIterable&lt;AgentEvent&gt;, signal: AbortSignal): Response;</code></pre></details><details><summary><code>createApiBridge</code></summary><pre><code data-api="@onodocs/agent/server#createApiBridge">export declare function createApiBridge(options: ApiBridgeOptions): ApiBridge;</code></pre></details></section><section id="agent-provider"><h2>Model provider</h2><p>Connect your configured provider and billing account. Optional capabilities depend on the supplied host.</p><p>Import from <code>@onodocs/agent/openai</code>.</p><details><summary><code>createOpenAIProvider</code></summary><pre><code data-api="@onodocs/agent/openai#createOpenAIProvider">export declare function createOpenAIProvider(options: OpenAIAgentOptions): AgentProvider;</code></pre></details></section><section id="entry-points"><h2>Entry points</h2><p>Choose <code>@onodocs/sdk</code> for document data, <code>@onodocs/sdk/browser</code> for browser layout and export, <code>@onodocs/sdk/server</code> for Node rendering, and <code>@onodocs/canvas</code> for presentation. Editor and Agent are separate packages. Forms, HTTP and collaboration use the optional entry points listed above. See <a href="https://onodocs.com/developers/deployment/">deployment patterns</a> for runtime requirements.</p></section><section id="attachments"><h2>HTML attachments</h2><p>Attach application controls to a content fragment or page. Keep the returned attachment to move or dispose it. These HTML overlays are excluded from Word, image and PDF output. <a href="https://onodocs.com/developers/sdk/#anchors">Attachment example</a>.</p><p>Import from <code>@onodocs/canvas</code>.</p><details><summary><code>DocumentAttachment</code></summary><pre><code data-api="@onodocs/canvas#DocumentAttachment">export interface DocumentAttachment {
     readonly element: HTMLElement;
     readonly disposed: boolean;
