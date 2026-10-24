@@ -36,6 +36,8 @@ Supply empty, sized hosts, document bytes and the application's authorization ca
 
 ## Host the service
 
+The Agent starts with a high-level API map. Its built-in `api_read({name, offset?})` tool reads specific roots, members and named types from the generated API reference when needed. Long sections return `nextOffset`. The default total context allowance is 1,000,000 bytes, separate from the host usage limits.
+
 `@onodocs/agent/server` exposes `runAgentTurn`, `agentEventResponse`, `createApiBridge` and accounting contracts. `@onodocs/agent/openai` supplies `createOpenAIProvider({ apiKey, model })`; its fetch-based provider needs no provider SDK. Additional providers implement `AgentProvider`.
 
 Authenticate users, authorize each document and method, serialize turns, deduplicate request IDs, and supply atomic persistence. The turn host requires reservation, settlement and conversation-commit callbacks. Reserve before each model continuation. Retain reservations when charges are uncertain; an application retry needs its own reservation. Use the complete [example backend](../examples/document-agent/serve.mjs) to see the contracts in context.

@@ -28,10 +28,6 @@ if (showAgent) {
   assistant.id = "assistant";
   assistant.slot = "sidebar";
   editor.element.append(assistant);
-  const disclosure = document.createElement("p");
-  disclosure.className = "agent-disclosure";
-  disclosure.innerHTML = 'Messages and requested document content are sent to OpenAI. $0.15 per session, $0.50 per IP daily, within a shared $5 budget. <a href="/privacy/#document-agent" target="_blank" rel="noopener">Privacy</a>';
-  assistant.append(disclosure);
   agent = createAgent({ container: assistant, editor, pageContext: "metadata", transport: createHostedEditorTransport(editor, value => { agentOperation = value; }) });
 }
 async function openSample(name) {
