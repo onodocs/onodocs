@@ -23,7 +23,7 @@ const provider = createOpenAIProvider({
 </tbody></table></div>
 <p>Use option values supported by your model and endpoint. For a different provider protocol, implement <code>AgentProvider.respond</code>. It receives instructions, conversation items, tool definitions, an output allowance and an abort signal; it returns text, ordered calls, continuation items and token usage.</p>
 <p>The runner adds user messages and <code>function_call_output</code> items to the conversation. Your adapter translates those and prior provider output into its provider's format. Return document operations as <code>{ id, call: { target, method, args } }</code> and application tools as <code>{ id, tool: { name, arguments } }</code>. Preserve call IDs and report reliable usage for settlement.</p></section>
-<section id="instructions"><h2>Application instructions</h2><p>Set <code>AgentTurnHost.instructions</code> to describe your product's terminology, response style and editing conventions. The runner appends tool-result guidance and a high-level API map. The built-in <code>api_read</code> tool reads specific API members and types when needed, without loading the complete reference into every request.</p>
+<section id="instructions"><h2>Application instructions</h2><p>Set <code>AgentTurnHost.instructions</code> to describe your product's terminology, response style and editing conventions. The runner appends tool-result guidance and a high-level API map. The built-in <code>api_read</code> tool reads related API members and types together when needed, without loading the complete reference into every request.</p>
 <pre><code>const instructions = [
   "Use concise language.",
   "Inspect the current selection before editing.",

@@ -36,7 +36,7 @@ Supply empty, sized hosts, document bytes and the application's authorization ca
 
 ## Host the service
 
-The Agent starts with a high-level API map. Its built-in `api_read({name, offset?})` tool reads specific roots, members and named types from the generated API reference when needed. Long sections return `nextOffset`. The default total context allowance is 1,000,000 bytes, separate from the host usage limits.
+The Agent starts with a high-level API map. Its built-in `api_read({sections: [{name, offset?}]})` tool reads related sections together: specific roots, members and named types from the generated API reference when needed. Long sections return `nextOffset`. The default total context allowance is 1,000,000 bytes, separate from the host usage limits.
 
 `@onodocs/agent/server` exposes `runAgentTurn`, `agentEventResponse`, `createApiBridge` and accounting contracts. `@onodocs/agent/openai` supplies `createOpenAIProvider({ apiKey, model })`; its fetch-based provider needs no provider SDK. Additional providers implement `AgentProvider`.
 
