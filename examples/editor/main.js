@@ -1,5 +1,6 @@
 import { createEditor } from "@onodocs/editor";
 import { createAgent, agentRibbonCommand } from "@onodocs/agent";
+import { createHostedEditorTransport } from "./agent.js";
 import report from "./sample.docx";
 import brief from "../view-document/sample.docx";
 import plan from "./plan.docx";
@@ -10,7 +11,7 @@ if (new URLSearchParams(location.search).has("embedded")) {
 }
 
 const showAgent = new URLSearchParams(location.search).has("agent");
-let agent;
+let agent, agentOperation = false;
 const lifetime = new AbortController();
 const container = document.querySelector("#app");
 const status = document.querySelector("#status");
@@ -19,7 +20,7 @@ const samples = { report: { bytes: report, name: "Project report.docx" }, brief:
 let sampleDocument;
 let selectedSample = "";
 let dirty = false;
-export const editor = createEditor({ container, commands: showAgent ? [agentRibbonCommand(() => agent.toggle())] : [], document: { signal: lifetime.signal }, allowedModes: ["view", "edit"], onChange: () => { dirty = true; window.dispatchEvent(new CustomEvent("onodocs-demo-outcome", { detail: "demo_edit" })); }, onError: () => { window.dispatchEvent(new CustomEvent("onodocs-demo-outcome", { detail: "demo_error" })); } });
+export const editor = createEditor({ container, commands: showAgent ? [agentRibbonCommand(() => agent.toggle())] : [], document: { signal: lifetime.signal }, allowedModes: ["view", "edit"], onModeChange: () => agent?.stop(), onChange: () => { if (!agentOperation) agent?.stop(); dirty = true; window.dispatchEvent(new CustomEvent("onodocs-demo-outcome", { detail: "demo_edit" })); }, onError: () => { window.dispatchEvent(new CustomEvent("onodocs-demo-outcome", { detail: "demo_error" })); } });
 
 if (showAgent) {
   document.body.classList.add("agent-editor");
@@ -27,7 +28,11 @@ if (showAgent) {
   assistant.id = "assistant";
   assistant.slot = "sidebar";
   editor.element.append(assistant);
-  agent = createAgent({ container: assistant, editor, pageContext: "metadata", transport: { async *run() { yield { type: "error", message: "AI assistance is not connected on this page yet. Document editing remains available." }; } } });
+  const disclosure = document.createElement("p");
+  disclosure.className = "agent-disclosure";
+  disclosure.innerHTML = 'Messages and requested document content are sent to OpenAI. $0.15 per session, $0.50 per IP daily, within a shared $5 budget. <a href="/privacy/#document-agent" target="_blank" rel="noopener">Privacy</a>';
+  assistant.append(disclosure);
+  agent = createAgent({ container: assistant, editor, pageContext: "metadata", transport: createHostedEditorTransport(editor, value => { agentOperation = value; }) });
 }
 async function openSample(name) {
   const sample = samples[name];
@@ -36,6 +41,7 @@ async function openSample(name) {
     picker.value = selectedSample;
     return;
   }
+  agent?.stop();
   picker.disabled = true;
   status.textContent = "Opening sample…";
   try {
