@@ -28,7 +28,7 @@ import { diagramContent, diagramGallery } from "./editor-diagrams.js";
 import { shapeCatalog, shapeGallery } from "./editor-shapes.js";
 import { documentStyleSets, documentSpacingSets, documentStyleCommands, documentThemes, documentFontSets, documentThemeCommands, themeColorLabels, coverPageDesigns, coverPageParagraphs, defaultDesignCommands, type DefaultDocumentDesign } from "./editor-design.js";
 import { showBookmarks } from "./editor-bookmarks.js";
-import { openDocument, type BrowserDocument, type BrowserOptions } from "@onodocs/sdk/browser";
+import { openDocument, type BrowserDocument, type BrowserDocumentState, type BrowserOptions } from "@onodocs/sdk/browser";
 import { createSelectionPane } from "./editor-selection.js";
 import { createOutline } from "./editor-outline.js";
 import { createNavigationPane } from "./editor-navigation.js";
@@ -127,6 +127,7 @@ export interface WordEditor {
   dispose(): void;
 }
 interface Snapshot {
+  readonly state: BrowserDocumentState;
   readonly imageIndex?: number;
   readonly drawingIndex?: number;
   readonly ribbon: string;
@@ -247,6 +248,10 @@ input[data-command="zoom"]::-webkit-inner-spin-button{opacity:1}
   const toolbarSize = new ResizeObserver(updateScrollClearance);
   toolbarSize.observe(toolbar); toolbarSize.observe(preview);
   const lifetime = new AbortController(), undo: Snapshot[] = [], redo: Snapshot[] = [], controls = new Map<string, HTMLButtonElement | HTMLInputElement | HTMLSelectElement>();
+  const historyStates = new Set<BrowserDocumentState>();
+  let createdStates: BrowserDocumentState[] = [];
+  function remember(stack: Snapshot[], entry: Snapshot): void { stack.push(entry); historyStates.add(entry.state); }
+  function clearHistory(stack: Snapshot[]): void { for (const entry of stack.splice(0)) { historyStates.delete(entry.state); entry.state.dispose(); } }
   const ribbonTabs = new Map<string, { button: HTMLButtonElement; panel: HTMLElement; names: readonly string[]; context?: string }>();
   const tableActions = ["insertRow", "insertColumn", "deleteRow", "deleteColumn", "delete"] as const;
   const compactWidth = window.matchMedia("(pointer: coarse)").matches ? 1024 : 760;
@@ -382,7 +387,9 @@ input[data-command="zoom"]::-webkit-inner-spin-button{opacity:1}
     const operation = queue.then(async () => {
       if (disposed) throw new Error("Editor is disposed.");
       changeNotifications = notifications;
-      return action();
+      const states: BrowserDocumentState[] = []; createdStates = states;
+      try { return await action(); }
+      finally { for (const state of states) if (!historyStates.has(state)) state.dispose(); }
     });
     const failed = (error: unknown) => { if (!disposed && !signal?.aborted) { report(error instanceof Error ? error.message : String(error), true); options.onError?.(error); } };
     queue = operation.then(() => {}, failed).finally(() => { pending--; if (!disposed) { input.setAttribute("aria-busy", String(pending > 0)); updateToolbar(); } });
@@ -395,7 +402,7 @@ input[data-command="zoom"]::-webkit-inner-spin-button{opacity:1}
     if (mode !== "form" || !formDefinition) throw new Error("Answers can only be changed in form mode.");
     const previous = await snapshot();
     await documentForm!.fill(answers, { signal: lifetime.signal });
-    undo.push(previous); redo.length = 0; formPanel?.refresh(); await changed({});
+    remember(undo, previous); clearHistory(redo); formPanel?.refresh(); await changed({});
   }
   async function changed(change: EditorChange): Promise<void> {
     readAloud?.close(); readAloud = undefined;
@@ -585,7 +592,7 @@ input[data-command="zoom"]::-webkit-inner-spin-button{opacity:1}
     if (p) for (const run of doc!.content.within(p).runs()) { chosen = run.properties.effective; offset += run.text.length; if (offset > selection!.start.offset || collapsed(selection!) && offset === selection!.start.offset) break; }
     return { ...chosen, ...formatting };
   }
-  async function snapshot(): Promise<Snapshot> { const range = requireSelection(), all = paragraphs(); return { mode, ribbon: activeRibbon, ...(selectedDrawing ? { drawingIndex: requireDocument().content.descendants().all().filter(element => element.kind === "drawing").findIndex(element => element.id === selectedDrawing) } : {}), ...(selectedImage ? { imageIndex: requireDocument().content.images().all().findIndex(image => image.id === selectedImage) } : {}), cells: selectedCells, restoreState: options.captureHistory?.(), bytes: await requireDocument().save({ fields: "preserve" }), start: all.findIndex(p => p.id === range.start.paragraphId), end: all.findIndex(p => p.id === range.end.paragraphId), selection: range, formatting: { ...formatting } }; }
+  async function snapshot(): Promise<Snapshot> { const range = requireSelection(), all = paragraphs(), state = await requireDocument().captureState(); createdStates.push(state); return { state, mode, ribbon: activeRibbon, ...(selectedDrawing ? { drawingIndex: requireDocument().content.descendants().all().filter(element => element.kind === "drawing").findIndex(element => element.id === selectedDrawing) } : {}), ...(selectedImage ? { imageIndex: requireDocument().content.images().all().findIndex(image => image.id === selectedImage) } : {}), cells: selectedCells, restoreState: options.captureHistory?.(), bytes: await requireDocument().save({ fields: "preserve" }), start: all.findIndex(p => p.id === range.start.paragraphId), end: all.findIndex(p => p.id === range.end.paragraphId), selection: range, formatting: { ...formatting } }; }
   async function mount(bytes: ArrayBuffer | Uint8Array | Blob, signal = lifetime.signal): Promise<void> {
     ++linkHoverSequence; preview.removeAttribute("title"); splitPages.removeAttribute("title");
     painter = undefined; painterSample = undefined; paintingBorders = false;
@@ -670,7 +677,7 @@ input[data-command="zoom"]::-webkit-inner-spin-button{opacity:1}
     }
     try { await update?.(); } catch (error) { await restoreSnapshot(previous, scroll); throw error; }
     outlineSelection();
-    undo.push(previous); redo.length = 0; await activeView()?.whenRendered({ visibleOnly: true }); focus(scroll); updateToolbar(); report("Document changed."); await changed({ ...(edit ? { edit } : {}), paragraphs: before });
+    remember(undo, previous); clearHistory(redo); await activeView()?.whenRendered({ visibleOnly: true }); focus(scroll); updateToolbar(); report("Document changed."); await changed({ ...(edit ? { edit } : {}), paragraphs: before });
     await reviewPanel?.refresh();
     return change;
   }
@@ -888,7 +895,8 @@ input[data-command="zoom"]::-webkit-inner-spin-button{opacity:1}
   for (const surface of [preview, splitPages]) surface.addEventListener("pointerdown", selectObject, { capture: true });
   for (const surface of [preview, splitPages]) surface.addEventListener("click", selectObject, { capture: true });
   async function restoreSnapshot(entry: Snapshot, scroll = true): Promise<void> {
-    await mount(entry.bytes);
+    if (entry.state.disposed) await mount(entry.bytes);
+    else { await entry.state.restore(); formPanel?.refresh(); await reviewPanel?.refresh(); }
     const all = paragraphs(), start = all[Math.min(entry.start, all.length - 1)]!, end = all[Math.min(entry.end, all.length - 1)]!;
     selection = { start: { paragraphId: start.id, offset: Math.min(entry.selection.start.offset, start.text.length) }, end: { paragraphId: end.id, offset: Math.min(entry.selection.end.offset, end.text.length) } };
     formatting = entry.formatting; entry.restoreState?.(); focus(scroll); selectedCells = entry.cells; selectedDrawing = entry.drawingIndex === undefined ? undefined : requireDocument().content.descendants().all().filter(element => element.kind === "drawing")[entry.drawingIndex]?.id; selectedImage = entry.imageIndex === undefined ? undefined : requireDocument().content.images().at(entry.imageIndex)?.id; outlineSelection();
@@ -899,7 +907,7 @@ input[data-command="zoom"]::-webkit-inner-spin-button{opacity:1}
     if (!entry) return;
     const ribbon = activeRibbon, choice = ribbonChoice, previous = await snapshot(); await restoreSnapshot(entry, scroll);
     if (signal?.aborted) { await restoreSnapshot(previous, scroll); signal.throwIfAborted(); }
-    from.pop(); to.push({ ...previous, mode: entry.mode }); await changed({ history: direction });
+    from.pop(); historyStates.delete(entry.state); entry.state.dispose(); remember(to, { ...previous, mode: entry.mode }); await changed({ history: direction });
     if (choice === ribbonChoice) activeRibbon = selectedImage && entry.ribbon === "Picture Format" ? entry.ribbon : ribbon; updateToolbar();
   }
   async function replace(text: string, paragraphBreaks = true): Promise<void> { if (selectedCells) return replaceSelectedCells((paragraphBreaks ? text.split("\n") : [text]).map(text => ({ runs: [{ text, formatting }] }))); await apply({ kind: "replace", text, paragraphBreaks, ...(Object.keys(formatting).length ? { formatting } : {}) }); }
@@ -3094,7 +3102,7 @@ input[data-command="zoom"]::-webkit-inner-spin-button{opacity:1}
       }
       if (next.bytes) {
         const start = before.findIndex(p => p.id === range?.start.paragraphId), end = before.findIndex(p => p.id === range?.end.paragraphId);
-        await mount(next.bytes); undo.length = 0; redo.length = 0; formatting = {};
+        await mount(next.bytes); clearHistory(undo); clearHistory(redo); formatting = {};
         const all = paragraphs(), first = all[start], last = all[end];
         if (range && first && last) selection = { start: { paragraphId: first.id, offset: Math.min(range.start.offset, first.text.length) }, end: { paragraphId: last.id, offset: Math.min(range.end.offset, last.text.length) } };
       }
@@ -3136,13 +3144,13 @@ input[data-command="zoom"]::-webkit-inner-spin-button{opacity:1}
           checkOperation(operation); signal.throwIfAborted();
           await mount(bytes, signal);
           signal.throwIfAborted();
-          filename = name; undo.length = 0; redo.length = 0; formatting = {}; focus(operation?.scroll); report("Ready.");
+          filename = name; clearHistory(undo); clearHistory(redo); formatting = {}; focus(operation?.scroll); report("Ready.");
         } catch (error) { signal.throwIfAborted(); throw error; }
         finally { if (opening === controller) opening = undefined; }
       }, true, signal);
     },
-    restore(bytes, operation) { return enqueue(async () => { checkOperation(operation); editable(); const previous = await snapshot(); await mount(bytes); if (operation?.signal?.aborted) { await restoreSnapshot(previous, operation?.scroll); operation.signal.throwIfAborted(); } undo.push(previous); redo.length = 0; formatting = {}; focus(operation?.scroll); await changed({}); report("Version restored."); }); },
-    newDocument(operation) { return enqueue(async () => { checkOperation(operation); if (mode !== "edit") throw new Error("Creating a document requires editing mode."); const signal = operation?.signal ? AbortSignal.any([lifetime.signal, operation.signal]) : lifetime.signal; await mount(await newDocumentBytes(signal), signal); filename = "document.docx"; undo.length = 0; redo.length = 0; formatting = {}; focus(operation?.scroll); report("Ready."); }); },
+    restore(bytes, operation) { return enqueue(async () => { checkOperation(operation); editable(); const previous = await snapshot(); await mount(bytes); if (operation?.signal?.aborted) { await restoreSnapshot(previous, operation?.scroll); operation.signal.throwIfAborted(); } remember(undo, previous); clearHistory(redo); formatting = {}; focus(operation?.scroll); await changed({}); report("Version restored."); }); },
+    newDocument(operation) { return enqueue(async () => { checkOperation(operation); if (mode !== "edit") throw new Error("Creating a document requires editing mode."); const signal = operation?.signal ? AbortSignal.any([lifetime.signal, operation.signal]) : lifetime.signal; await mount(await newDocumentBytes(signal), signal); filename = "document.docx"; clearHistory(undo); clearHistory(redo); formatting = {}; focus(operation?.scroll); report("Ready."); }); },
     execute(command, update, operation) { return enqueue(async () => { checkOperation(operation); const target = command && "selection" in command ? command.selection ?? operation?.selection : operation?.selection; if (target) selection = target; return apply(command, async () => { await update?.(); operation?.signal?.throwIfAborted(); }, operation?.scroll); }); },
     review(command, operation) { return enqueue(async () => {
       checkOperation(operation); requireDocument();
@@ -3152,7 +3160,7 @@ input[data-command="zoom"]::-webkit-inner-spin-button{opacity:1}
       if (operation?.signal?.aborted) { await restoreSnapshot(previous, operation?.scroll); operation.signal.throwIfAborted(); }
       const all = paragraphs(), paragraph = all[Math.min(previous.start, all.length - 1)];
       if (paragraph) { const caret = { paragraphId: paragraph.id, offset: Math.min(previous.selection.start.offset, paragraph.text.length) }; selection = { start: caret, end: caret }; }
-      undo.push(previous); redo.length = 0; focus(operation?.scroll); updateToolbar(); await changed({ review: command, paragraphs: before }); await reviewPanel?.refresh();
+      remember(undo, previous); clearHistory(redo); focus(operation?.scroll); updateToolbar(); await changed({ review: command, paragraphs: before }); await reviewPanel?.refresh();
       return change;
     }); },
     select(range, scroll) { requireDocument(); selectedCells = undefined; selectedDrawing = undefined; selectedImage = undefined; selection = range; focus(scroll); outlineSelection(); updateToolbar(); },
@@ -3172,11 +3180,11 @@ input[data-command="zoom"]::-webkit-inner-spin-button{opacity:1}
         } else selection = (await requireDocument().edit({ kind: "replace", selection: target, text: replacement, paragraphBreaks: false })).selection;
       } operation?.signal?.throwIfAborted(); }
       catch (error) { await mount(previous.bytes); const all = paragraphs(); selection = { start: { paragraphId: all[previous.start]!.id, offset: previous.selection.start.offset }, end: { paragraphId: all[previous.end]!.id, offset: previous.selection.end.offset } }; formatting = previous.formatting; focus(operation?.scroll); throw error; }
-      undo.push(previous); redo.length = 0; focus(operation?.scroll); await changed({ replaceAll: { text, replacement } }); await reviewPanel?.refresh();
+      remember(undo, previous); clearHistory(redo); focus(operation?.scroll); await changed({ replaceAll: { text, replacement } }); await reviewPanel?.refresh();
     }); },
     async undo(operation) { await formPanel?.flush(); return enqueue(() => { checkOperation(operation); return history("undo", operation?.signal, operation?.scroll); }); }, async redo(operation) { await formPanel?.flush(); return enqueue(() => { checkOperation(operation); return history("redo", operation?.signal, operation?.scroll); }); },
     async save() { await formPanel?.flush(); return enqueue(() => requireDocument().save({ onFieldStatus: fieldNotice })); }, async pdf() { await formPanel?.flush(); return enqueue(() => requireDocument().pdf({ onFieldStatus: fieldNotice })); },
-    dispose() { if (disposed) return; disposed = true; outlineView?.dispose(); comparison?.dispose(); selectionPane?.dispose(); lifetime.abort(); toolbarSize.disconnect(); editorSize.disconnect(); continuousSize.disconnect(); clearTimeout(reflowTimer); canvas?.dispose(); doc?.dispose(); undo.length = 0; redo.length = 0; host.remove(); },
+    dispose() { if (disposed) return; disposed = true; outlineView?.dispose(); comparison?.dispose(); selectionPane?.dispose(); lifetime.abort(); toolbarSize.disconnect(); editorSize.disconnect(); continuousSize.disconnect(); clearTimeout(reflowTimer); canvas?.dispose(); doc?.dispose(); clearHistory(undo); clearHistory(redo); host.remove(); },
   };
   if (options.review) { reviewPanel = createReviewPanel(root, result, options.review, lifetime.signal, updateToolbar); void reviewPanel.setMode(); }
   updateToolbar(); report("Open a Word document.");
