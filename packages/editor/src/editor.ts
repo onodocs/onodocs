@@ -127,6 +127,7 @@ export interface WordEditor {
   dispose(): void;
 }
 interface Snapshot {
+  readonly document: BrowserDocument;
   readonly state: BrowserDocumentState;
   readonly imageIndex?: number;
   readonly drawingIndex?: number;
@@ -134,7 +135,6 @@ interface Snapshot {
   readonly cells: StoredCellSelection | undefined;
   readonly restoreState: (() => void) | undefined;
   readonly mode: EditorMode;
-  readonly bytes: Uint8Array<ArrayBuffer>;
   readonly start: number;
   readonly end: number;
   readonly selection: DocumentSelection;
@@ -249,9 +249,21 @@ input[data-command="zoom"]::-webkit-inner-spin-button{opacity:1}
   toolbarSize.observe(toolbar); toolbarSize.observe(preview);
   const lifetime = new AbortController(), undo: Snapshot[] = [], redo: Snapshot[] = [], controls = new Map<string, HTMLButtonElement | HTMLInputElement | HTMLSelectElement>();
   const historyStates = new Set<BrowserDocumentState>();
+  const stateDocuments = new Map<BrowserDocumentState, BrowserDocument>();
+  const retainedDocuments = new Map<BrowserDocument, number>();
+  const documentPolicies = new WeakMap<BrowserDocument, string>();
+  const reviewPolicy = () => JSON.stringify([explicitReviewDisplay ? reviewDisplay : options.document?.revisionView, reviewComments, reviewFilter.author, reviewFilter.revisionType]);
   let createdStates: BrowserDocumentState[] = [];
+  function releaseState(state: BrowserDocumentState): void {
+    const owner = stateDocuments.get(state);
+    if (!owner) return;
+    stateDocuments.delete(state); state.dispose();
+    const remaining = retainedDocuments.get(owner)! - 1;
+    if (remaining) retainedDocuments.set(owner, remaining);
+    else { retainedDocuments.delete(owner); if (owner !== doc) owner.dispose(); }
+  }
   function remember(stack: Snapshot[], entry: Snapshot): void { stack.push(entry); historyStates.add(entry.state); }
-  function clearHistory(stack: Snapshot[]): void { for (const entry of stack.splice(0)) { historyStates.delete(entry.state); entry.state.dispose(); } }
+  function clearHistory(stack: Snapshot[]): void { for (const entry of stack.splice(0)) { historyStates.delete(entry.state); releaseState(entry.state); } }
   const ribbonTabs = new Map<string, { button: HTMLButtonElement; panel: HTMLElement; names: readonly string[]; context?: string }>();
   const tableActions = ["insertRow", "insertColumn", "deleteRow", "deleteColumn", "delete"] as const;
   const compactWidth = window.matchMedia("(pointer: coarse)").matches ? 1024 : 760;
@@ -389,7 +401,7 @@ input[data-command="zoom"]::-webkit-inner-spin-button{opacity:1}
       changeNotifications = notifications;
       const states: BrowserDocumentState[] = []; createdStates = states;
       try { return await action(); }
-      finally { for (const state of states) if (!historyStates.has(state)) state.dispose(); }
+      finally { for (const state of states) if (!historyStates.has(state)) releaseState(state); }
     });
     const failed = (error: unknown) => { if (!disposed && !signal?.aborted) { report(error instanceof Error ? error.message : String(error), true); options.onError?.(error); } };
     queue = operation.then(() => {}, failed).finally(() => { pending--; if (!disposed) { input.setAttribute("aria-busy", String(pending > 0)); updateToolbar(); } });
@@ -592,17 +604,21 @@ input[data-command="zoom"]::-webkit-inner-spin-button{opacity:1}
     if (p) for (const run of doc!.content.within(p).runs()) { chosen = run.properties.effective; offset += run.text.length; if (offset > selection!.start.offset || collapsed(selection!) && offset === selection!.start.offset) break; }
     return { ...chosen, ...formatting };
   }
-  async function snapshot(): Promise<Snapshot> { const range = requireSelection(), all = paragraphs(), state = await requireDocument().captureState(); createdStates.push(state); return { state, mode, ribbon: activeRibbon, ...(selectedDrawing ? { drawingIndex: requireDocument().content.descendants().all().filter(element => element.kind === "drawing").findIndex(element => element.id === selectedDrawing) } : {}), ...(selectedImage ? { imageIndex: requireDocument().content.images().all().findIndex(image => image.id === selectedImage) } : {}), cells: selectedCells, restoreState: options.captureHistory?.(), bytes: await requireDocument().save({ fields: "preserve" }), start: all.findIndex(p => p.id === range.start.paragraphId), end: all.findIndex(p => p.id === range.end.paragraphId), selection: range, formatting: { ...formatting } }; }
+  async function snapshot(): Promise<Snapshot> { const range = requireSelection(), all = paragraphs(), state = await requireDocument().captureState(); createdStates.push(state); const owner = requireDocument(); stateDocuments.set(state, owner); retainedDocuments.set(owner, (retainedDocuments.get(owner) ?? 0) + 1); return { document: owner, state, mode, ribbon: activeRibbon, ...(selectedDrawing ? { drawingIndex: requireDocument().content.descendants().all().filter(element => element.kind === "drawing").findIndex(element => element.id === selectedDrawing) } : {}), ...(selectedImage ? { imageIndex: requireDocument().content.images().all().findIndex(image => image.id === selectedImage) } : {}), cells: selectedCells, restoreState: options.captureHistory?.(), start: all.findIndex(p => p.id === range.start.paragraphId), end: all.findIndex(p => p.id === range.end.paragraphId), selection: range, formatting: { ...formatting } }; }
   async function mount(bytes: ArrayBuffer | Uint8Array | Blob, signal = lifetime.signal): Promise<void> {
     ++linkHoverSequence; preview.removeAttribute("title"); splitPages.removeAttribute("title");
     painter = undefined; painterSample = undefined; paintingBorders = false;
     const next = await openDocument(bytes, { ...options.document, layoutView: layoutPolicy(), commentDisplay: reviewComments ? "markers" : "hidden", reviewFilter, ...(explicitReviewDisplay ? { revisionView: reviewDisplay } : {}), signal: AbortSignal.any([lifetime.signal, signal, ...(options.document?.signal ? [options.document.signal] : [])]) });
     if (disposed) { next.dispose(); throw new Error("Editor is disposed."); }
     if (signal.aborted) { next.dispose(); signal.throwIfAborted(); }
+    documentPolicies.set(next, reviewPolicy());
+    await present(next);
+  }
+  async function present(next: BrowserDocument): Promise<void> {
     for (const outline of objectOutlines.splice(0)) outline.dispose(); selectedDrawing = undefined; selectedImage = undefined; selectedCells = undefined;
     readAloud?.close(); readAloud = undefined;
     const splitScroll = splitPages.scrollTop, primaryScroll = preview.scrollTop, wasSecondary = secondaryActive;
-    canvas?.dispose(); splitView = undefined; secondaryActive = false; doc?.dispose(); doc = next;
+    canvas?.dispose(); splitView = undefined; secondaryActive = false; const previous = doc; doc = next; if (previous && !retainedDocuments.has(previous)) previous.dispose();
     canvas = createDocument(doc, { container: preview, viewOptions: { pageMovement, zoom: zoom === "fit-page" ? "fit-width" : zoom, input, onSelectionChange: next => { if (!secondaryActive) selectionChanged(next); } } });
     if (splitEnabled) { mountSplit(); secondaryActive = wasSecondary; requestAnimationFrame(() => { if (!disposed && splitEnabled) { splitPages.scrollTop = splitScroll; preview.scrollTop = primaryScroll; } }); }
     formPanel?.element.remove(); formPanel = undefined;
@@ -895,8 +911,10 @@ input[data-command="zoom"]::-webkit-inner-spin-button{opacity:1}
   for (const surface of [preview, splitPages]) surface.addEventListener("pointerdown", selectObject, { capture: true });
   for (const surface of [preview, splitPages]) surface.addEventListener("click", selectObject, { capture: true });
   async function restoreSnapshot(entry: Snapshot, scroll = true): Promise<void> {
-    if (entry.state.disposed) await mount(entry.bytes);
-    else { await entry.state.restore(); formPanel?.refresh(); await reviewPanel?.refresh(); }
+    await entry.state.restore();
+    if (documentPolicies.get(entry.document) !== reviewPolicy()) await mount(await entry.document.save({ fields: "preserve" }));
+    else if (doc !== entry.document) { await entry.document.setLayoutView(layoutPolicy()); await present(entry.document); }
+    else { formPanel?.refresh(); await reviewPanel?.refresh(); }
     const all = paragraphs(), start = all[Math.min(entry.start, all.length - 1)]!, end = all[Math.min(entry.end, all.length - 1)]!;
     selection = { start: { paragraphId: start.id, offset: Math.min(entry.selection.start.offset, start.text.length) }, end: { paragraphId: end.id, offset: Math.min(entry.selection.end.offset, end.text.length) } };
     formatting = entry.formatting; entry.restoreState?.(); focus(scroll); selectedCells = entry.cells; selectedDrawing = entry.drawingIndex === undefined ? undefined : requireDocument().content.descendants().all().filter(element => element.kind === "drawing")[entry.drawingIndex]?.id; selectedImage = entry.imageIndex === undefined ? undefined : requireDocument().content.images().at(entry.imageIndex)?.id; outlineSelection();
@@ -907,7 +925,7 @@ input[data-command="zoom"]::-webkit-inner-spin-button{opacity:1}
     if (!entry) return;
     const ribbon = activeRibbon, choice = ribbonChoice, previous = await snapshot(); await restoreSnapshot(entry, scroll);
     if (signal?.aborted) { await restoreSnapshot(previous, scroll); signal.throwIfAborted(); }
-    from.pop(); historyStates.delete(entry.state); entry.state.dispose(); remember(to, { ...previous, mode: entry.mode }); await changed({ history: direction });
+    from.pop(); historyStates.delete(entry.state); releaseState(entry.state); remember(to, { ...previous, mode: entry.mode }); await changed({ history: direction });
     if (choice === ribbonChoice) activeRibbon = selectedImage && entry.ribbon === "Picture Format" ? entry.ribbon : ribbon; updateToolbar();
   }
   async function replace(text: string, paragraphBreaks = true): Promise<void> { if (selectedCells) return replaceSelectedCells((paragraphBreaks ? text.split("\n") : [text]).map(text => ({ runs: [{ text, formatting }] }))); await apply({ kind: "replace", text, paragraphBreaks, ...(Object.keys(formatting).length ? { formatting } : {}) }); }
@@ -3179,7 +3197,7 @@ input[data-command="zoom"]::-webkit-inner-spin-button{opacity:1}
           const caret = { paragraphId: paragraphs()[index]!.id, offset: range.start.offset + replacement.length }; selection = { start: caret, end: caret };
         } else selection = (await requireDocument().edit({ kind: "replace", selection: target, text: replacement, paragraphBreaks: false })).selection;
       } operation?.signal?.throwIfAborted(); }
-      catch (error) { await mount(previous.bytes); const all = paragraphs(); selection = { start: { paragraphId: all[previous.start]!.id, offset: previous.selection.start.offset }, end: { paragraphId: all[previous.end]!.id, offset: previous.selection.end.offset } }; formatting = previous.formatting; focus(operation?.scroll); throw error; }
+      catch (error) { await restoreSnapshot(previous, operation?.scroll); throw error; }
       remember(undo, previous); clearHistory(redo); focus(operation?.scroll); await changed({ replaceAll: { text, replacement } }); await reviewPanel?.refresh();
     }); },
     async undo(operation) { await formPanel?.flush(); return enqueue(() => { checkOperation(operation); return history("undo", operation?.signal, operation?.scroll); }); }, async redo(operation) { await formPanel?.flush(); return enqueue(() => { checkOperation(operation); return history("redo", operation?.signal, operation?.scroll); }); },
